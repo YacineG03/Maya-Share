@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const User = {
     create: (userData, callback) => {
         const hashedPassword = bcrypt.hashSync(userData.motDePasse, 10);
-        const query = 'INSERT INTO Utilisateur (nom, prenom, role, identifiant, motDePasse, email, idHôpital) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        db.query(query, [userData.nom, userData.prenom, userData.role, userData.identifiant, hashedPassword, userData.email, userData.idHôpital], callback);
+        const query = 'INSERT INTO Utilisateur (nom, prenom, role, identifiant, motDePasse, email, idHôpital, telephone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        db.query(query, [userData.nom, userData.prenom, userData.role, userData.identifiant, hashedPassword, userData.email, userData.idHôpital, userData.telephone], callback);
     },
 
     findByIdentifiant: (identifiant, callback) => {
@@ -25,8 +25,8 @@ const User = {
 
     update: (id, userData, callback) => {
         const hashedPassword = userData.motDePasse ? bcrypt.hashSync(userData.motDePasse, 10) : null;
-        const query = 'UPDATE Utilisateur SET nom = ?, prenom = ?, role = ?, motDePasse = COALESCE(?, motDePasse), email = ?, idHôpital = ? WHERE idUtilisateur = ?';
-        db.query(query, [userData.nom, userData.prenom, userData.role, hashedPassword, userData.email, userData.idHôpital, id], callback);
+        const query = 'UPDATE Utilisateur SET nom = ?, prenom = ?, role = ?, motDePasse = COALESCE(?, motDePasse), email = ?, idHôpital = ?, telephone = ? WHERE idUtilisateur = ?';
+        db.query(query, [userData.nom, userData.prenom, userData.role, hashedPassword, userData.email, userData.idHôpital, userData.telephone,id], callback);
     },
 
     updateHôpital: (id, idHôpital, callback) => {
