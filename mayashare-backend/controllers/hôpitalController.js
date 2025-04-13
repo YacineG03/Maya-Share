@@ -1,4 +1,4 @@
-const Hôpital = require('../models/hôpitalModel');
+const Hopital = require('../models/hôpitalModel');
 const Trace = require('../models/traceModel');
 
 exports.createHopital = (req, res) => {
@@ -12,7 +12,7 @@ exports.createHopital = (req, res) => {
     if (!ville || ville.trim() === '') return res.status(400).json({ message: 'La ville est requise.' });
 
     const hôpitalData = { nom, adresse, ville };
-    Hôpital.create(hôpitalData, (err, result) => {
+    Hopital.create(hôpitalData, (err, result) => {
         if (err) return res.status(500).json({ message: 'Erreur lors de la création de l’hôpital.' });
 
         Trace.create({ action: 'création hôpital', idUtilisateur: req.user.id }, (err) => {
@@ -27,7 +27,7 @@ exports.getHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
-    Hôpital.findById(id, (err, results) => {
+    Hopital.findById(id, (err, results) => {
         if (err || results.length === 0) return res.status(404).json({ message: 'Hôpital non trouvé.' });
         res.json(results[0]);
     });
@@ -36,7 +36,7 @@ exports.getHopital = (req, res) => {
 exports.getAllHopitaux = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
-    Hôpital.findAll((err, results) => {
+    Hopital.findAll((err, results) => {
         if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des hôpitaux.' });
         res.json(results);
     });
@@ -54,7 +54,7 @@ exports.updateHopital = (req, res) => {
     if (!ville || ville.trim() === '') return res.status(400).json({ message: 'La ville est requise.' });
 
     const hôpitalData = { nom, adresse, ville };
-    Hôpital.update(id, hôpitalData, (err) => {
+    Hopital.update(id, hôpitalData, (err) => {
         if (err) return res.status(500).json({ message: 'Erreur lors de la mise à jour de l’hôpital.' });
 
         Trace.create({ action: 'modification hôpital', idUtilisateur: req.user.id }, (err) => {
@@ -69,7 +69,7 @@ exports.deleteHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
-    Hôpital.delete(id, (err) => {
+    Hopital.delete(id, (err) => {
         if (err) return res.status(500).json({ message: 'Erreur lors de la suppression de l’hôpital.' });
 
         Trace.create({ action: 'suppression hôpital', idUtilisateur: req.user.id }, (err) => {

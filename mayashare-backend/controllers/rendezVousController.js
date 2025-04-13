@@ -98,7 +98,7 @@ exports.acceptRendezVous = (req, res) => {
                 const idHôpital = medecin.idHôpital;
 
                 // Mettre à jour l’idHôpital du patient
-                User.updateHôpital(results[0].idPatient, idHôpital, (err) => {
+                User.updateHopital(results[0].idPatient, idHôpital, (err) => {
                     if (err) console.error('Erreur lors de la mise à jour de l’idHôpital du patient:', err);
                 });
 

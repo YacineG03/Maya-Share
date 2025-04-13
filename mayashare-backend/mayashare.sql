@@ -12,14 +12,14 @@ CREATE TABLE Utilisateur (
     motDePasse VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL, 
     telephone VARCHAR(20) UNIQUE NOT NULL,
-    idHôpital INT,
-    FOREIGN KEY (idHôpital) REFERENCES Hôpital(idHôpital)
+    idHopital INT,
+    FOREIGN KEY (idHopital) REFERENCES Hopital(idHopital)
 );
 
 
--- Table Hôpital
-CREATE TABLE Hôpital (
-    idHôpital INT AUTO_INCREMENT PRIMARY KEY,
+-- Table Hopital
+CREATE TABLE Hopital (
+    idHopital INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(255) NOT NULL,
     adresse TEXT NOT NULL,
     ville VARCHAR(100) NOT NULL

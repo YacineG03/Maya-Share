@@ -9,7 +9,7 @@ const shareRoutes = require('./routes/shareRoutes');
 const traceRoutes = require('./routes/traceRoutes');
 const dossierRoutes = require('./routes/dossierRoutes');
 const rendezVousRoutes = require('./routes/rendezVousRoutes');
-const hôpitalRoutes = require('./routes/hôpitalRoutes');
+const hopitalRoutes = require('./routes/hopitalRoutes');
 
 const app = express();
 
@@ -52,7 +52,7 @@ app.use('/api/shares', shareRoutes);
 app.use('/api/traces', traceRoutes);
 app.use('/api/dossiers', dossierRoutes);
 app.use('/api/rendezvous', rendezVousRoutes);
-app.use('/api/hopitaux', hôpitalRoutes);
+app.use('/api/hopitaux', hopitalRoutes);
 
 // Démarrer le serveur
 const PORT = process.env.PORT || 5000;
