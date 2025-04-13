@@ -10,10 +10,12 @@ CREATE TABLE Utilisateur (
     role ENUM('Médecin', 'Infirmier', 'Admin', 'Patient') NOT NULL,
     identifiant VARCHAR(255) UNIQUE NOT NULL,
     motDePasse VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL, 
+    telephone VARCHAR(20) UNIQUE NOT NULL,
     idHôpital INT,
     FOREIGN KEY (idHôpital) REFERENCES Hôpital(idHôpital)
 );
+
 
 -- Table Hôpital
 CREATE TABLE Hôpital (

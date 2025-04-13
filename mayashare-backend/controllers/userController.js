@@ -36,6 +36,72 @@ exports.createUser = (req, res) => {
     });
 };
 
+// exports.getAllUsers = (req, res) => {
+//     const allowedRoles = ['Admin', 'Médecin', 'Infirmier'];
+//     if (!allowedRoles.includes(req.user.role)) {
+//         return res.status(403).json({ message: 'Accès interdit.' });
+//     }
+
+//     User.findAll((err, results) => {
+//         if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs.' });
+//         res.json(results);
+//     });
+// };
+
+exports.getAllUsers = (req, res) => {
+    const allowedRoles = ['Admin', 'Médecin', 'Infirmier'];
+    if (!allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({ message: 'Accès interdit.' });
+    }
+
+    const filters = {
+        role: req.query.role,
+        nom: req.query.nom,
+        prenom: req.query.prenom,
+        email: req.query.email,
+        telephone: req.query.telephone,
+        limit: req.query.limit,
+        offset: req.query.offset
+    };
+
+    User.countWithFilters(filters, (err, countResult) => {
+        if (err) return res.status(500).json({ message: 'Erreur lors du comptage des utilisateurs.' });
+
+        const total = countResult[0].total;
+
+        User.findWithFilters(filters, (err, results) => {
+            if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs.' });
+            if (results.length === 0) return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+ 
+                
+            res.json({
+                total,     
+                count: results.length, 
+                users: results
+            });
+        });
+    });
+};
+
+
+exports.getUserById = (req, res) => {
+    const allowedRoles = ['Admin', 'Médecin', 'Infirmier'];
+    if (!allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({ message: 'Accès interdit.' });
+    }
+
+    const id = req.params.id;
+
+    User.findById(id, (err, results) => {
+        if (err || results.length === 0) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        }
+
+        res.json(results[0]);
+    });
+};
+
+
 exports.updateUser = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 

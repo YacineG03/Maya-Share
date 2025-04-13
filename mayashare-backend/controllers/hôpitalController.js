@@ -1,7 +1,7 @@
 const Hôpital = require('../models/hôpitalModel');
 const Trace = require('../models/traceModel');
 
-exports.createHôpital = (req, res) => {
+exports.createHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const { nom, adresse, ville } = req.body;
@@ -23,7 +23,7 @@ exports.createHôpital = (req, res) => {
     });
 };
 
-exports.getHôpital = (req, res) => {
+exports.getHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
@@ -33,7 +33,7 @@ exports.getHôpital = (req, res) => {
     });
 };
 
-exports.getAllHôpitaux = (req, res) => {
+exports.getAllHopitaux = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     Hôpital.findAll((err, results) => {
@@ -42,7 +42,7 @@ exports.getAllHôpitaux = (req, res) => {
     });
 };
 
-exports.updateHôpital = (req, res) => {
+exports.updateHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
@@ -65,7 +65,7 @@ exports.updateHôpital = (req, res) => {
     });
 };
 
-exports.deleteHôpital = (req, res) => {
+exports.deleteHopital = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;

@@ -52,7 +52,7 @@ app.use('/api/shares', shareRoutes);
 app.use('/api/traces', traceRoutes);
 app.use('/api/dossiers', dossierRoutes);
 app.use('/api/rendezvous', rendezVousRoutes);
-app.use('/api/hôpitaux', hôpitalRoutes);
+app.use('/api/hopitaux', hôpitalRoutes);
 
 // Démarrer le serveur
 const PORT = process.env.PORT || 5000;
