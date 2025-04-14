@@ -151,7 +151,7 @@ exports.getRendezVous = (req, res) => {
     });
 };
 exports.getRendezVousByMedecin = (req, res) => {
-    if (req.user.role !== 'Médecin') return res.status(403).json({ message: 'Accès interdit.' });
+    if (req.user.role !== 'Médecin' || req.user.role !== 'Infirmier') return res.status(403).json({ message: 'Accès interdit.' });
 
     RendezVous.findByMedecin(req.user.id, (err, results) => {
         if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.' });
