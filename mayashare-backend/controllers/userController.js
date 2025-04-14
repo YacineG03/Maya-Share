@@ -13,7 +13,6 @@ exports.createUser = (req, res) => {
     const { nom, prenom, role, motDePasse, email, telephone, idHôpital } = req.body;
     const identifiant = generateIdentifiant(nom, prenom);
 
-
     // Validations communes
     if (!nom || nom.trim() === '') return res.status(400).json({ message: 'Le nom est requis.' });
     if (!prenom || prenom.trim() === '') return res.status(400).json({ message: 'Le prénom est requis.' });
@@ -22,25 +21,25 @@ exports.createUser = (req, res) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: 'Adresse e-mail invalide.' });
     if (!telephone || telephone.trim() === '') return res.status(400).json({ message: 'Le numéro de téléphone est requis.' });
 
+    // Définir idHôpital pour Médecin et Infirmier, sinon null pour Patient et Admin
+    const hospitalId = ['Médecin', 'Infirmier'].includes(role) && (!idHôpital || isNaN(idHôpital))
+        ? null // Retournera une erreur si idHôpital est requis mais non valide
+        : idHôpital || null;
+
     // Validation de l’idHôpital pour Médecin et Infirmier
-    if (['Médecin', 'Infirmier'].includes(role)) {
-        if (!idHôpital || isNaN(idHôpital)) {
-            return res.status(400).json({ message: 'L’ID de l’hôpital est requis pour les médecins et infirmiers.' });
-        }
-    } else {
-        // Pour Admin et Patient, idHôpital est null (sauf si défini manuellement pour Admin)
-        idHôpital = idHôpital || null;
+    if (['Médecin', 'Infirmier'].includes(role) && !hospitalId) {
+        return res.status(400).json({ message: 'L’ID de l’hôpital est requis pour les médecins et infirmiers.' });
     }
 
-      // Vérifier si l’identifiant ou l’e-mail existe déjà
-      User.findByEmail(email, (err, results) => {
+    // Vérifier si l’identifiant ou l’e-mail existe déjà
+    User.findByEmail(email, (err, results) => {
         if (err) return res.status(500).json({ message: 'Erreur serveur.' });
         if (results.length > 0) return res.status(400).json({ message: 'Cet email est déjà utilisé.' });
 
-        const userData = { nom, prenom, role, identifiant, motDePasse, email, telephone, idHôpital };
+        const userData = { nom, prenom, role, identifiant, motDePasse, email, telephone, idHôpital: hospitalId };
         User.create(userData, (err, result) => {
             if (err) {
-                console.error("Erreur SQL:", err); // ← Affiche l'erreur dans le terminal
+                console.error("Erreur SQL:", err);
                 return res.status(500).json({ message: 'Erreur lors de la création de l’utilisateur.' });
             }
 

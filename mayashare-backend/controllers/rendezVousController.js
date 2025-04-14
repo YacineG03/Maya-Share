@@ -4,7 +4,6 @@ const Trace = require('../models/traceModel');
 const moment = require('moment');
 const sendEmail = require('../utils/email');
 
-
 exports.createRendezVous = (req, res) => {
     if (req.user.role !== 'Patient') return res.status(403).json({ message: 'Accès interdit.' });
 
@@ -25,15 +24,87 @@ exports.createRendezVous = (req, res) => {
         return res.status(400).json({ message: 'Le motif du rendez-vous est requis.' });
     }
 
-    const rendezVousData = { idPatient: req.user.id, idMedecin, dateRendezVous, motif };
-    RendezVous.create(rendezVousData, (err, result) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la création du rendez-vous.' });
+    // Vérifier que idMedecin correspond à un médecin
+    User.findById(idMedecin, (err, userResults) => {
+       if (err) {
+            console.error('Erreur lors de la vérification du médecin:', err);
+            return res.status(500).json({ message: 'Erreur serveur.' });
+        }
+        if (userResults.length === 0 || userResults[0].role !== 'Médecin') {
+            return res.status(400).json({ message: 'L\'identifiant fourni ne correspond pas à un médecin.' });
+        }
 
-        Trace.create({ action: 'prise de rendez-vous', idUtilisateur: req.user.id }, (err) => {
-            if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+        // Vérifier qu'il n'existe pas de rendez-vous le même jour avec le même médecin
+        RendezVous.checkExistingAppointment(req.user.id, idMedecin, dateRendezVous, (err, results) => {
+            if (err) {
+                console.error('Erreur lors de la vérification des rendez-vous:', err);
+                return res.status(500).json({ message: 'Erreur lors de la vérification des rendez-vous.' });
+            }
+
+            if (results[0].count > 0) {
+                return res.status(400).json({ message: 'Vous avez déjà un rendez-vous avec ce médecin le même jour.' });
+            }
+
+            const rendezVousData = { idPatient: req.user.id, idMedecin, dateRendezVous, motif };
+            RendezVous.create(rendezVousData, (err, result) => {
+                if (err) {
+                    console.error('Erreur SQL:', err);
+                    return res.status(500).json({ message: 'Erreur lors de la création du rendez-vous.' });
+                }
+
+                Trace.create({ action: 'prise de rendez-vous', idUtilisateur: req.user.id }, (err) => {
+                    if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+                });
+
+                // Récupérer les informations du patient
+                User.findById(req.user.id, (err, patientResults) => {
+                    if (err || patientResults.length === 0) {
+                        console.error('Erreur lors de la récupération du patient:', err);
+                        // Continuer sans bloquer la réponse
+                    } else {
+                        const patient = patientResults[0];
+
+                        // Récupérer les informations du médecin et de l’hôpital
+                        RendezVous.getMedecinEtHopital(idMedecin, (err, medecinResults) => {
+                            if (err || medecinResults.length === 0) {
+                                console.error('Erreur lors de la récupération des infos médecin/hôpital:', err);
+                                // Envoyer l’e-mail avec des valeurs par défaut si nécessaire
+                                const subject = 'Confirmation de rendez-vous';
+                                const text = `Bonjour ${patient.nom} ${patient.prenom},\n\n` +
+                                             `Votre rendez-vous le ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été soumis.\n` +
+                                             `Motif : ${motif}\n` +
+                                             `Médecin : Non spécifié\n` +
+                                             `Hôpital : Non spécifié\n` +
+                                             `Adresse : Non spécifiée\n\n` +
+                                             `Vous recevrez une confirmation une fois le rendez-vous accepté.\n\n` +
+                                             `Cordialement,\nMaya Share`;
+                                sendEmail(patient.email, subject, text)
+                                    .then(() => console.log(`E-mail de confirmation envoyé à ${patient.email}`))
+                                    .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
+                                return;
+                            }
+
+                            const medecin = medecinResults[0];
+
+                            const subject = 'Confirmation de rendez-vous';
+                            const text = `Bonjour ${patient.nom} ${patient.prenom},\n\n` +
+                                         `Votre rendez-vous avec le Dr. ${medecin.prenomMedecin} ${medecin.nomMedecin}` +
+                                         ` le ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été soumis.\n\n` +
+                                         `📍 Lieu : ${medecin.nomHopital || 'Hôpital non renseigné'} - ${medecin.adresseHopital || 'Adresse non renseignée'}\n` +
+                                         `📝 Motif : ${motif}\n\n` +
+                                         `Vous recevrez une confirmation une fois le rendez-vous accepté.\n\n` +
+                                         `Cordialement,\nMaya Share`;
+
+                            sendEmail(patient.email, subject, text)
+                                .then(() => console.log(`E-mail de confirmation envoyé à ${patient.email}`))
+                                .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
+                        });
+                    }
+                });
+
+                res.status(201).json({ message: 'Rendez-vous créé avec succès.', id: result.insertId });
+            });
         });
-
-        res.status(201).json({ message: 'Rendez-vous créé avec succès.', id: result.insertId });
     });
 };
 
@@ -156,4 +227,3 @@ exports.declineRendezVous = (req, res) => {
         });
     });
 };
-
