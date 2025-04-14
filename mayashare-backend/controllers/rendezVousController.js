@@ -108,32 +108,48 @@ exports.createRendezVous = (req, res) => {
     });
 };
 
+
+exports.getRendezVousByPatient = (req, res) => {
+    if (req.user.role !== 'Patient') return res.status(403).json({ message: 'Accès interdit.' });
+
+    console.log(`Récupération des rendez-vous pour idPatient: ${req.user.id}`);
+
+    RendezVous.findByPatient(req.user.id, (err, results) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des rendez-vous:', err);
+            return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.', error: err.message });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun rendez-vous trouvé.', rendezVous: [] });
+        }
+        res.json(results);
+    });
+};
+
 exports.getRendezVous = (req, res) => {
     const id = req.params.id;
+    console.log(`Récupération du rendez-vous idRendezVous: ${id} pour utilisateur: ${req.user.id}`);
+
     RendezVous.findById(id, (err, results) => {
-        if (err || results.length === 0) return res.status(404).json({ message: 'Rendez-vous non trouvé.' });
+        if (err) {
+            console.error('Erreur lors de la récupération du rendez-vous:', err);
+            return res.status(500).json({ message: 'Erreur serveur.', error: err.message });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Rendez-vous non trouvé.' });
+        }
 
         const rendezVous = results[0];
         if (req.user.role === 'Patient' && rendezVous.idPatient !== req.user.id) {
-            return res.status(403).json({ message: 'Accès interdit.' });
+            return res.status(403).json({ message: 'Accès interdit : vous ne pouvez pas voir ce rendez-vous.' });
         }
         if (req.user.role === 'Médecin' && rendezVous.idMedecin !== req.user.id) {
-            return res.status(403).json({ message: 'Accès interdit.' });
+            return res.status(403).json({ message: 'Accès interdit : vous ne pouvez pas voir ce rendez-vous.' });
         }
 
         res.json(rendezVous);
     });
 };
-
-exports.getRendezVousByPatient = (req, res) => {
-    if (req.user.role !== 'Patient') return res.status(403).json({ message: 'Accès interdit.' });
-
-    RendezVous.findByPatient(req.user.id, (err, results) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.' });
-        res.json(results);
-    });
-};
-
 exports.getRendezVousByMedecin = (req, res) => {
     if (req.user.role !== 'Médecin') return res.status(403).json({ message: 'Accès interdit.' });
 

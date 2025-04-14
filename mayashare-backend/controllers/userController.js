@@ -3,8 +3,8 @@ const Trace = require('../models/traceModel');
 
 // Fonction pour générer un identifiant unique basé sur le prénom et le nom
 const generateIdentifiant = (nom, prenom) => {
-    const randomNumber = Math.floor(Math.random() * 10000); // Générer un nombre aléatoire
-    return `${prenom.charAt(0)}${nom}${randomNumber}`; // Exemple : PSmith1234
+    const randomNumber = Math.floor(Math.random() * 10000); 
+    return `${prenom.charAt(0)}${nom}${randomNumber}`; 
 };
 
 exports.createUser = (req, res) => {

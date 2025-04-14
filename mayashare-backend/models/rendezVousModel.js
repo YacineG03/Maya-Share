@@ -40,7 +40,7 @@ const RendezVous = {
                 h.adresse AS adresseHopital
             FROM RendezVous rv
             JOIN Utilisateur m ON rv.idMedecin = m.idUtilisateur
-            LEFT JOIN Hopital h ON m.idHôpital = h.idHopital
+            LEFT JOIN Hopital h ON m.idHôpital = h.idHôpital
             WHERE rv.idPatient = ?
             ORDER BY rv.dateRendezVous DESC
         `;
