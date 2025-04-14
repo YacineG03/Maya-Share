@@ -1,4 +1,4 @@
-// src/components/Dashboard/AdminDashboard.js
+// src/components/Admin/AdminDashboard.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,10 +16,10 @@ import {
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import PeopleIcon from "@mui/icons-material/People";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital"; // Icône pour les hôpitaux
 import LogoutIcon from "@mui/icons-material/Logout";
+import AdminGererUtilisateurs from "./AdminGererUser";
 import AdminGererHopital from "./AdminGererHopital";
-import AdminGererUser from "./AdminGererUser";
 
 // Animation variants pour framer-motion
 const sidebarItemVariants = {
@@ -70,22 +70,20 @@ const logoVariants = {
   },
 };
 
-// Couleurs pour la sidebar
 const sidebarColors = {
-  background: "#5D4294", // Violet foncé
-  selectedItem: "#6F51A8", // Violet plus clair pour les éléments sélectionnés
-  hoverItem: "#6F51A8B0", // Violet semi-transparent pour le survol
-  text: "#FFFFFF", // Texte blanc
-  divider: "#FFFFFF33", // Diviseur semi-transparent blanc
+  background: "#5D4294",
+  selectedItem: "#6F51A8",
+  hoverItem: "#6F51A8B0",
+  text: "#FFFFFF",
+  divider: "#FFFFFF33",
 };
 
-// Largeur de la sidebar
 const SIDEBAR_WIDTH = 280;
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState("Gérer les hôpitaux");
-  const [userName, setUserName] = useState("Admin");
+  const [activeSection, setActiveSection] = useState("Gérer les utilisateurs");
+  const [userName, setUserName] = useState("Administrateur");
   const [loading, setLoading] = useState(true);
   const [contentLoaded, setContentLoaded] = useState(false);
 
@@ -97,18 +95,14 @@ function AdminDashboard() {
       return;
     }
 
-    // Simuler la récupération des informations de l'utilisateur
     const fetchUserInfo = async () => {
       try {
-        // Si tu as une API pour récupérer les infos de l'utilisateur, utilise-la ici
-        // const { data } = await getUserInfo();
-        // setUserName(`${data.first_name || data.email.split("@")[0]} ${data.last_name || ""}`);
-        setUserName("Admin"); // Pour l'instant, on utilise une valeur statique
+        setUserName("Administrateur");
       } catch (err) {
         console.error("Erreur lors de la récupération des informations de l'utilisateur :", err);
       } finally {
         setLoading(false);
-        setTimeout(() => setContentLoaded(true), 300); // Délai pour l'animation
+        setTimeout(() => setContentLoaded(true), 300);
       }
     };
 
@@ -116,7 +110,7 @@ function AdminDashboard() {
   }, [navigate]);
 
   const handleLogout = () => {
-    setContentLoaded(false); // Animation de sortie
+    setContentLoaded(false);
     toast.success("Déconnexion réussie ! Vous allez être redirigé...", {
       position: "top-right",
       autoClose: 2000,
@@ -133,7 +127,7 @@ function AdminDashboard() {
   };
 
   const handleNavigation = (section) => {
-    setContentLoaded(false); // Animation de transition entre sections
+    setContentLoaded(false);
     setTimeout(() => {
       setActiveSection(section);
       setContentLoaded(true);
@@ -162,13 +156,12 @@ function AdminDashboard() {
   }
 
   const menuItems = [
-    { text: "Gérer les hôpitaux", icon: <LocalHospitalIcon />, section: "Gérer les hôpitaux" },
     { text: "Gérer les utilisateurs", icon: <PeopleIcon />, section: "Gérer les utilisateurs" },
+    { text: "Gérer les hôpitaux", icon: <LocalHospitalIcon />, section: "Gérer les hôpitaux" },
   ];
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
-      {/* Sidebar avec animations */}
       <Drawer
         variant="permanent"
         sx={{
@@ -248,7 +241,6 @@ function AdminDashboard() {
               ))}
             </List>
 
-            {/* Section inférieure pour la déconnexion uniquement */}
             <Box sx={{ mt: "auto" }}>
               <Divider sx={{ backgroundColor: sidebarColors.divider, mx: 2, mb: 2 }} />
               <List sx={{ px: 2, pb: 2 }}>
@@ -288,11 +280,10 @@ function AdminDashboard() {
         </Slide>
       </Drawer>
 
-      {/* Contenu principal avec animation */}
       <Box
         sx={{
           flexGrow: 1,
-          backgroundColor: "#f5f5f5", // Fond par défaut (sans thème dynamique)
+          backgroundColor: "#f5f5f5",
           height: "100%",
           overflow: "auto",
         }}
@@ -304,8 +295,8 @@ function AdminDashboard() {
           animate={contentLoaded ? "animate" : "exit"}
           style={{ height: "100%" }}
         >
+          {activeSection === "Gérer les utilisateurs" && <AdminGererUtilisateurs />}
           {activeSection === "Gérer les hôpitaux" && <AdminGererHopital />}
-          {activeSection === "Gérer les utilisateurs" && <AdminGererUser />}
         </motion.div>
       </Box>
     </Box>

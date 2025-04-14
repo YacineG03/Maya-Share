@@ -1,3 +1,4 @@
+// src/services/api.js
 import axios from "axios";
 
 // Création d'une instance axios avec l'URL de base
@@ -16,7 +17,6 @@ api.interceptors.request.use((config) => {
   if (token && !isAuthRequest) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log("URL de base de l'API :", api.defaults.baseURL);
   console.log("Requête envoyée:", config); // Log pour déboguer
   return config;
 });
@@ -37,9 +37,14 @@ export const register = (data) =>
 export const getUserInfo = () => api.get("/auth/me");
 
 // Fonctions pour la gestion des utilisateurs
-export const getUsers = () => api.get("/users");
+export const getUsers = (filters) =>
+  api.get("/users", {
+    params: filters,
+  });
 
 export const getUserById = (id) => api.get(`/users/${id}`);
+
+export const createUser = (data) => api.post("/users", data);
 
 export const updateUser = (id, data) => api.put(`/users/${id}`, data);
 
@@ -107,9 +112,6 @@ export const deleteHopital = (id) => api.delete(`/hopitaux/${id}`);
 // Fonction pour récupérer des fichiers (images, dossiers, etc.)
 export const getFile = async (fileName) => {
   const response = await api.get(`/uploads/${fileName}`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
     responseType: "blob",
   });
   return response.data;
