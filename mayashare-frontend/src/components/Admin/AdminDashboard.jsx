@@ -12,16 +12,20 @@ import {
   Divider,
   CircularProgress,
   Slide,
+  Avatar,
+  Tooltip,
+  useTheme,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import PeopleIcon from "@mui/icons-material/People";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital"; // Icône pour les hôpitaux
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import LogoutIcon from "@mui/icons-material/Logout";
+import SettingsIcon from "@mui/icons-material/Settings";
 import AdminGererUtilisateurs from "./AdminGererUser";
 import AdminGererHopital from "./AdminGererHopital";
 
-// Animation variants pour framer-motion
+// Animation variants
 const sidebarItemVariants = {
   initial: { x: -20, opacity: 0 },
   animate: (index) => ({
@@ -30,28 +34,29 @@ const sidebarItemVariants = {
     transition: {
       delay: 0.05 * index,
       duration: 0.4,
-      ease: "easeOut",
+      ease: [0.16, 1, 0.3, 1],
     },
   }),
   hover: {
-    scale: 1.05,
+    scale: 1.02,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     transition: { duration: 0.2 },
   },
 };
 
 const contentVariants = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: 0, y: 10 },
   animate: {
     opacity: 1,
     y: 0,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.16, 1, 0.3, 1],
     },
   },
   exit: {
     opacity: 0,
-    y: -20,
+    y: -10,
     transition: {
       duration: 0.3,
     },
@@ -59,50 +64,56 @@ const contentVariants = {
 };
 
 const logoVariants = {
-  initial: { scale: 0.9, opacity: 0 },
+  initial: { scale: 0.95, opacity: 0 },
   animate: {
     scale: 1,
     opacity: 1,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
+      ease: [0.16, 1, 0.3, 1],
     },
   },
-};
-
-const sidebarColors = {
-  background: "#5D4294",
-  selectedItem: "#6F51A8",
-  hoverItem: "#6F51A8B0",
-  text: "#FFFFFF",
-  divider: "#FFFFFF33",
 };
 
 const SIDEBAR_WIDTH = 280;
 
 function AdminDashboard() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("Gérer les utilisateurs");
-  const [userName, setUserName] = useState("Administrateur");
+  const [userName, setUserName] = useState("Admin");
   const [loading, setLoading] = useState(true);
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [userInitials, setUserInitials] = useState("AD");
+
+  const sidebarColors = {
+    background: "linear-gradient(195deg, #0078D7, #0066B4)",
+    selectedItem: "rgba(255, 255, 255, 0.15)",
+    hoverItem: "rgba(255, 255, 255, 0.1)",
+    text: "#FFFFFF",
+    divider: "rgba(255, 255, 255, 0.12)",
+    avatarBg: "#004E8C",
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      console.log("Token absent dans AdminDashboard, redirection vers /login");
       navigate("/login");
       return;
     }
 
     const fetchUserInfo = async () => {
       try {
-        setUserName("Administrateur");
+        // Simuler une requête API
+        setTimeout(() => {
+          setUserName("Administrateur");
+          setUserInitials("AD");
+          setLoading(false);
+          setTimeout(() => setContentLoaded(true), 300);
+        }, 800);
       } catch (err) {
-        console.error("Erreur lors de la récupération des informations de l'utilisateur :", err);
-      } finally {
+        console.error("Erreur:", err);
         setLoading(false);
-        setTimeout(() => setContentLoaded(true), 300);
       }
     };
 
@@ -111,27 +122,30 @@ function AdminDashboard() {
 
   const handleLogout = () => {
     setContentLoaded(false);
-    toast.success("Déconnexion réussie ! Vous allez être redirigé...", {
+    toast.success("Déconnexion réussie !", {
       position: "top-right",
-      autoClose: 2000,
-      hideProgressBar: false,
+      autoClose: 1500,
+      hideProgressBar: true,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
+      theme: "colored",
     });
     setTimeout(() => {
       localStorage.removeItem("token");
       localStorage.removeItem("role");
       navigate("/login");
-    }, 2000);
+    }, 1800);
   };
 
   const handleNavigation = (section) => {
-    setContentLoaded(false);
-    setTimeout(() => {
-      setActiveSection(section);
-      setContentLoaded(true);
-    }, 300);
+    if (activeSection !== section) {
+      setContentLoaded(false);
+      setTimeout(() => {
+        setActiveSection(section);
+        setContentLoaded(true);
+      }, 200);
+    }
   };
 
   if (loading) {
@@ -142,26 +156,73 @@ function AdminDashboard() {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
+          background: "linear-gradient(135deg, #f5f9ff, #e6f0ff)",
         }}
       >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+          }}
         >
-          <CircularProgress />
+          <svg width={64} height={64} viewBox="0 0 100 100">
+            <motion.circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="#0078D7"
+              strokeWidth="8"
+              fill="none"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, rotate: -90 }}
+              animate={{ pathLength: 1, rotate: 0 }}
+              transition={{
+                duration: 1.5,
+                ease: "easeInOut",
+                repeat: Infinity,
+                repeatType: "loop",
+              }}
+              strokeDasharray="0 1"
+            />
+          </svg>
+          <Typography
+            variant="h6"
+            color="primary"
+            sx={{ fontWeight: 600, mt: 2 }}
+          >
+            Chargement...
+          </Typography>
         </motion.div>
       </Box>
     );
   }
 
   const menuItems = [
-    { text: "Gérer les utilisateurs", icon: <PeopleIcon />, section: "Gérer les utilisateurs" },
-    { text: "Gérer les hôpitaux", icon: <LocalHospitalIcon />, section: "Gérer les hôpitaux" },
+    {
+      text: "Gérer les utilisateurs",
+      icon: <PeopleIcon sx={{ fontSize: "1.25rem" }} />,
+      section: "Gérer les utilisateurs",
+    },
+    {
+      text: "Gérer les hôpitaux",
+      icon: <LocalHospitalIcon sx={{ fontSize: "1.25rem" }} />,
+      section: "Gérer les hôpitaux",
+    },
+    {
+      text: "Paramètres",
+      icon: <SettingsIcon sx={{ fontSize: "1.25rem" }} />,
+      section: "Paramètres",
+    },
   ];
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
+      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -170,30 +231,55 @@ function AdminDashboard() {
           "& .MuiDrawer-paper": {
             width: SIDEBAR_WIDTH,
             boxSizing: "border-box",
-            backgroundColor: sidebarColors.background,
+            background: sidebarColors.background,
             color: sidebarColors.text,
             display: "flex",
             flexDirection: "column",
+            borderRight: "none",
+            boxShadow: "0 4px 20px rgba(0, 120, 215, 0.15)",
           },
         }}
       >
         <Slide direction="right" in={true} timeout={600}>
-          <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 2 }}>
+            {/* Logo & User Profile */}
             <motion.div variants={logoVariants} initial="initial" animate="animate">
-              <Box sx={{ p: 3, textAlign: "left", display: "flex", alignItems: "center" }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mr: 1 }}>
-                  MayaShare
-                </Typography>
-                <Box component="span" sx={{ fontSize: 20 }}>
-                  🩺
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 2,
+                  background: "rgba(255, 255, 255, 0.05)",
+                }}
+              >
+                <Avatar
+                  sx={{
+                    bgcolor: sidebarColors.avatarBg,
+                    width: 42,
+                    height: 42,
+                    fontWeight: 600,
+                  }}
+                >
+                  {userInitials}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    {userName}
+                  </Typography>
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                    Administrateur
+                  </Typography>
                 </Box>
               </Box>
-              <Typography variant="body2" sx={{ px: 3, pb: 2 }}>
-                Salut, {userName}
-              </Typography>
             </motion.div>
-            <Divider sx={{ backgroundColor: sidebarColors.divider, mx: 2 }} />
-            <List sx={{ px: 2, mt: 1, flex: 1 }}>
+
+            <Divider sx={{ borderColor: sidebarColors.divider, my: 1 }} />
+
+            {/* Menu Items */}
+            <List sx={{ px: 1, mt: 1, flex: 1 }}>
               {menuItems.map((item, index) => (
                 <motion.div
                   key={item.section}
@@ -203,100 +289,133 @@ function AdminDashboard() {
                   animate="animate"
                   whileHover="hover"
                 >
-                  <ListItem
-                    onClick={() => handleNavigation(item.section)}
-                    sx={{
-                      borderRadius: 1,
-                      mb: 2,
-                      py: 1.8,
-                      transition: "background-color 0.3s, transform 0.2s",
-                      "&.Mui-selected": {
-                        backgroundColor: sidebarColors.selectedItem,
-                        "&:hover": { backgroundColor: sidebarColors.selectedItem },
-                      },
-                      "&:hover": {
-                        backgroundColor: sidebarColors.hoverItem,
-                      },
-                      backgroundColor:
-                        activeSection === item.section
-                          ? sidebarColors.selectedItem
-                          : "transparent",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <Box sx={{ color: sidebarColors.text }}>{item.icon}</Box>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={item.text}
+                  <Tooltip title={item.text} placement="right" arrow>
+                    <ListItem
+                      onClick={() => handleNavigation(item.section)}
                       sx={{
-                        "& .MuiListItemText-primary": {
-                          fontWeight: activeSection === item.section ? "bold" : "normal",
-                          fontSize: "0.95rem",
+                        borderRadius: 2,
+                        mb: 1,
+                        py: 1.2,
+                        px: 2,
+                        transition: "all 0.3s ease",
+                        "&.Mui-selected": {
+                          background: sidebarColors.selectedItem,
+                          backdropFilter: "blur(5px)",
+                          "&:hover": { background: sidebarColors.selectedItem },
                         },
+                        "&:hover": {
+                          background: sidebarColors.hoverItem,
+                        },
+                        background:
+                          activeSection === item.section
+                            ? sidebarColors.selectedItem
+                            : "transparent",
+                        cursor: "pointer",
                       }}
-                    />
-                  </ListItem>
+                    >
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <Box sx={{ color: sidebarColors.text }}>{item.icon}</Box>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        sx={{
+                          "& .MuiListItemText-primary": {
+                            fontWeight: activeSection === item.section ? 600 : 500,
+                            fontSize: "0.9rem",
+                          },
+                        }}
+                      />
+                    </ListItem>
+                  </Tooltip>
                 </motion.div>
               ))}
             </List>
 
+            {/* Footer / Logout */}
             <Box sx={{ mt: "auto" }}>
-              <Divider sx={{ backgroundColor: sidebarColors.divider, mx: 2, mb: 2 }} />
-              <List sx={{ px: 2, pb: 2 }}>
-                <motion.div
-                  variants={sidebarItemVariants}
-                  custom={menuItems.length}
-                  initial="initial"
-                  animate="animate"
-                  whileHover="hover"
+              <Divider sx={{ borderColor: sidebarColors.divider, my: 1 }} />
+              <motion.div
+                variants={sidebarItemVariants}
+                custom={menuItems.length}
+                initial="initial"
+                animate="animate"
+                whileHover="hover"
+              >
+                <ListItem
+                  onClick={handleLogout}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.2,
+                    px: 2,
+                    transition: "all 0.3s ease",
+                    "&:hover": { background: sidebarColors.hoverItem },
+                    cursor: "pointer",
+                  }}
                 >
-                  <ListItem
-                    onClick={handleLogout}
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <LogoutIcon sx={{ color: sidebarColors.text, fontSize: "1.25rem" }} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Déconnexion"
                     sx={{
-                      borderRadius: 1,
-                      py: 1.5,
-                      transition: "background-color 0.3s",
-                      "&:hover": { backgroundColor: sidebarColors.hoverItem },
-                      cursor: "pointer",
+                      "& .MuiListItemText-primary": {
+                        fontWeight: 500,
+                        fontSize: "0.9rem",
+                      },
                     }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <LogoutIcon sx={{ color: sidebarColors.text }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Déconnexion"
-                      sx={{
-                        "& .MuiListItemText-primary": {
-                          fontSize: "0.95rem",
-                        },
-                      }}
-                    />
-                  </ListItem>
-                </motion.div>
-              </List>
+                  />
+                </ListItem>
+              </motion.div>
             </Box>
           </Box>
         </Slide>
       </Drawer>
 
+      {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
-          backgroundColor: "#f5f5f5",
+          background: "linear-gradient(135deg, #f5f9ff, #e6f0ff)",
           height: "100%",
           overflow: "auto",
+          position: "relative",
         }}
       >
+        {/* Animated background elements */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "40%",
+            height: "40%",
+            background: "radial-gradient(circle, rgba(0, 120, 215, 0.08) 0%, transparent 70%)",
+            zIndex: 0,
+          }}
+        />
+        
         <motion.div
           key={activeSection}
           variants={contentVariants}
           initial="initial"
           animate={contentLoaded ? "animate" : "exit"}
-          style={{ height: "100%" }}
+          style={{ height: "100%", position: "relative", zIndex: 1 }}
         >
-          {activeSection === "Gérer les utilisateurs" && <AdminGererUtilisateurs />}
-          {activeSection === "Gérer les hôpitaux" && <AdminGererHopital />}
+          <Box sx={{ p: 3 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: "#004E8C" }}>
+              {activeSection}
+            </Typography>
+            
+            {activeSection === "Gérer les utilisateurs" && <AdminGererUtilisateurs />}
+            {activeSection === "Gérer les hôpitaux" && <AdminGererHopital />}
+            {activeSection === "Paramètres" && (
+              <Box sx={{ textAlign: "center", py: 10 }}>
+                <Typography variant="h6" color="textSecondary">
+                  Section Paramètres en développement
+                </Typography>
+              </Box>
+            )}
+          </Box>
         </motion.div>
       </Box>
     </Box>

@@ -49,7 +49,7 @@ const itemVariants = {
 const buttonVariants = {
   hover: {
     scale: 1.05,
-    boxShadow: "0px 5px 15px rgba(124, 77, 255, 0.4)",
+    boxShadow: "0px 5px 15px rgba(0, 120, 215, 0.4)",
     transition: { duration: 0.2 },
   },
   tap: {
@@ -146,7 +146,7 @@ function Login({ onSubmit, error, loading }) {
         top: 0,
         left: 0,
         overflow: "hidden",
-        background: "linear-gradient(135deg, #1C2526 0%, #2C3E50 100%)",
+        background: "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
       }}
     >
       <Grid container sx={{ height: "100%", width: "100%", margin: 0, padding: 0 }}>
@@ -159,7 +159,7 @@ function Login({ onSubmit, error, loading }) {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           sx={{
-            backgroundColor: "rgba(28, 37, 38, 0.95)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -169,7 +169,7 @@ function Login({ onSubmit, error, loading }) {
             boxSizing: "border-box",
             position: "relative",
             overflow: "hidden",
-            boxShadow: "0px 0px 30px rgba(0, 0, 0, 0.3)",
+            boxShadow: "0px 0px 30px rgba(0, 0, 0, 0.1)",
             zIndex: 1,
             "&::before": {
               content: '""',
@@ -178,7 +178,7 @@ function Login({ onSubmit, error, loading }) {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundImage: "radial-gradient(circle at 30% 20%, rgba(124, 77, 255, 0.1) 0%, rgba(28, 37, 38, 0) 70%)",
+              backgroundImage: "radial-gradient(circle at 30% 20%, rgba(0, 120, 215, 0.1) 0%, rgba(255, 255, 255, 0) 70%)",
               zIndex: -1,
             },
           }}
@@ -205,8 +205,8 @@ function Login({ onSubmit, error, loading }) {
                   <HealthIcon
                     sx={{
                       fontSize: 50,
-                      color: "#7C4DFF",
-                      filter: "drop-shadow(0px 0px 10px rgba(124, 77, 255, 0.5))",
+                      color: "#0078D7",
+                      filter: "drop-shadow(0px 0px 10px rgba(0, 120, 215, 0.5))",
                     }}
                   />
                 </Box>
@@ -215,14 +215,14 @@ function Login({ onSubmit, error, loading }) {
               <motion.div variants={itemVariants}>
                 <Typography
                   variant="h3"
-                  color="#FFFFFF"
+                  color="#0078D7"
                   gutterBottom
                   sx={{
                     textAlign: "center",
                     fontSize: { xs: "1.8rem", md: "2.5rem" },
                     fontWeight: "bold",
                     mb: 1,
-                    textShadow: "0px 2px 4px rgba(0, 0, 0, 0.3)",
+                    textShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
                   }}
                 >
                   Connexion
@@ -232,7 +232,7 @@ function Login({ onSubmit, error, loading }) {
               <motion.div variants={itemVariants}>
                 <Typography
                   variant="body1"
-                  color="#B0BEC5"
+                  color="#5A5A5A"
                   gutterBottom
                   sx={{
                     textAlign: "center",
@@ -292,37 +292,37 @@ function Login({ onSubmit, error, loading }) {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EmailIcon sx={{ color: "#7C4DFF" }} />
+                          <EmailIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                     }}
                     InputLabelProps={{
-                      style: { color: "#B0BEC5" },
+                      style: { color: "#5A5A5A" },
                       shrink: true,
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                           borderWidth: "2px",
                           borderRadius: "12px",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
-                          boxShadow: "0px 0px 8px rgba(124, 77, 255, 0.3)",
+                          borderColor: "#0078D7",
+                          boxShadow: "0px 0px 8px rgba(0, 120, 215, 0.3)",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                         backdropFilter: "blur(10px)",
                       },
                       "& .MuiInputBase-input": {
-                        color: "#FFFFFF",
+                        color: "#333333",
                         padding: "16px 14px",
                         "&::placeholder": {
-                          color: "rgba(176, 190, 197, 0.5)",
+                          color: "rgba(90, 90, 90, 0.5)",
                           opacity: 1,
                         },
                       },
@@ -344,7 +344,7 @@ function Login({ onSubmit, error, loading }) {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#7C4DFF" }} />
+                          <LockIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -353,7 +353,7 @@ function Login({ onSubmit, error, loading }) {
                             aria-label="toggle password visibility"
                             onClick={handleClickShowPassword}
                             edge="end"
-                            sx={{ color: "#B0BEC5" }}
+                            sx={{ color: "#5A5A5A" }}
                           >
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
@@ -361,32 +361,32 @@ function Login({ onSubmit, error, loading }) {
                       ),
                     }}
                     InputLabelProps={{
-                      style: { color: "#B0BEC5" },
+                      style: { color: "#5A5A5A" },
                       shrink: true,
                     }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                           borderWidth: "2px",
                           borderRadius: "12px",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
-                          boxShadow: "0px 0px 8px rgba(124, 77, 255, 0.3)",
+                          borderColor: "#0078D7",
+                          boxShadow: "0px 0px 8px rgba(0, 120, 215, 0.3)",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                         backdropFilter: "blur(10px)",
                       },
                       "& .MuiInputBase-input": {
-                        color: "#FFFFFF",
+                        color: "#333333",
                         padding: "16px 14px",
                         "&::placeholder": {
-                          color: "rgba(176, 190, 197, 0.5)",
+                          color: "rgba(90, 90, 90, 0.5)",
                           opacity: 1,
                         },
                       },
@@ -405,7 +405,7 @@ function Login({ onSubmit, error, loading }) {
                     variant="body2"
                     sx={{
                       textAlign: "right",
-                      color: "#7C4DFF",
+                      color: "#0078D7",
                       cursor: "pointer",
                       "&:hover": {
                         textDecoration: "underline",
@@ -431,17 +431,17 @@ function Login({ onSubmit, error, loading }) {
                     sx={{
                       mt: 2,
                       py: 1.8,
-                      backgroundColor: "#7C4DFF",
+                      backgroundColor: "#0078D7",
                       borderRadius: "12px",
                       fontSize: "1rem",
                       fontWeight: "bold",
                       textTransform: "none",
-                      boxShadow: "0px 4px 10px rgba(124, 77, 255, 0.3)",
+                      boxShadow: "0px 4px 10px rgba(0, 120, 215, 0.3)",
                       "&:hover": {
-                        backgroundColor: "#6a3de8",
+                        backgroundColor: "#0066B4",
                       },
                       "&.Mui-disabled": {
-                        backgroundColor: "rgba(124, 77, 255, 0.5)",
+                        backgroundColor: "rgba(0, 120, 215, 0.5)",
                         color: "rgba(255, 255, 255, 0.7)",
                       },
                     }}
@@ -457,16 +457,16 @@ function Login({ onSubmit, error, loading }) {
                 <motion.div variants={itemVariants}>
                   <Typography
                     variant="body2"
-                    color="#B0BEC5"
+                    color="#5A5A5A"
                     sx={{ mt: 3, textAlign: "center" }}
                   >
                     Vous n'avez pas de compte ?{" "}
                     <Link
                       component={motion.a}
-                      whileHover={{ color: "#a17aff" }}
+                      whileHover={{ color: "#005A9E" }}
                       href="/register"
                       underline="hover"
-                      color="#7C4DFF"
+                      color="#0078D7"
                       sx={{
                         fontWeight: "bold",
                         transition: "color 0.3s ease",
@@ -494,7 +494,7 @@ function Login({ onSubmit, error, loading }) {
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           sx={{
-            background: "linear-gradient(135deg, #7C4DFF 0%, #5e35b1 100%)",
+            background: "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
             display: { xs: "none", md: "flex" },
             flexDirection: "column",
             justifyContent: "center",
@@ -512,7 +512,7 @@ function Login({ onSubmit, error, loading }) {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundImage: "radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.15) 0%, rgba(124, 77, 255, 0) 70%)",
+              backgroundImage: "radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 120, 215, 0) 70%)",
               zIndex: 0,
             },
             "&::after": {
