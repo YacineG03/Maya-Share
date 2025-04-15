@@ -26,13 +26,16 @@ exports.createRendezVous = (req, res) => {
 
     // Vérifier que idMedecin correspond à un médecin
     User.findById(idMedecin, (err, userResults) => {
-       if (err) {
+        if (err) {
             console.error('Erreur lors de la vérification du médecin:', err);
             return res.status(500).json({ message: 'Erreur serveur.' });
         }
         if (userResults.length === 0 || userResults[0].role !== 'Médecin') {
             return res.status(400).json({ message: 'L\'identifiant fourni ne correspond pas à un médecin.' });
         }
+
+        // Stocker les infos du médecin pour l'e-mail
+        const medecin = userResults[0];
 
         // Vérifier qu'il n'existe pas de rendez-vous le même jour avec le même médecin
         RendezVous.checkExistingAppointment(req.user.id, idMedecin, dateRendezVous, (err, results) => {
@@ -66,38 +69,48 @@ exports.createRendezVous = (req, res) => {
 
                         // Récupérer les informations du médecin et de l’hôpital
                         RendezVous.getMedecinEtHopital(idMedecin, (err, medecinResults) => {
-                            if (err || medecinResults.length === 0) {
+                            let nomHopital = 'Hôpital non renseigné';
+                            let adresseHopital = 'Adresse non renseignée';
+                            let nomMedecin = medecin.nom;
+                            let prenomMedecin = medecin.prenom;
+
+                            if (!err && medecinResults.length > 0) {
+                                const medecinInfo = medecinResults[0];
+                                nomHopital = medecinInfo.nomHopital || nomHopital;
+                                adresseHopital = medecinInfo.adresseHopital || adresseHopital;
+                                nomMedecin = medecinInfo.nomMedecin;
+                                prenomMedecin = medecinInfo.prenomMedecin;
+                            } else {
                                 console.error('Erreur lors de la récupération des infos médecin/hôpital:', err);
-                                // Envoyer l’e-mail avec des valeurs par défaut si nécessaire
-                                const subject = 'Confirmation de rendez-vous';
-                                const text = `Bonjour ${patient.nom} ${patient.prenom},\n\n` +
-                                             `Votre rendez-vous le ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été soumis.\n` +
-                                             `Motif : ${motif}\n` +
-                                             `Médecin : Non spécifié\n` +
-                                             `Hôpital : Non spécifié\n` +
-                                             `Adresse : Non spécifiée\n\n` +
-                                             `Vous recevrez une confirmation une fois le rendez-vous accepté.\n\n` +
-                                             `Cordialement,\nMaya Share`;
-                                sendEmail(patient.email, subject, text)
-                                    .then(() => console.log(`E-mail de confirmation envoyé à ${patient.email}`))
-                                    .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
-                                return;
                             }
 
-                            const medecin = medecinResults[0];
+                            // E-mail au patient
+                            const subjectPatient = 'Confirmation de rendez-vous';
+                            const textPatient = `Bonjour ${patient.nom} ${patient.prenom},\n\n` +
+                                                `Votre rendez-vous avec le Dr. ${prenomMedecin} ${nomMedecin}` +
+                                                ` le ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été soumis.\n\n` +
+                                                `📍 Lieu : ${nomHopital} - ${adresseHopital}\n` +
+                                                `📝 Motif : ${motif}\n\n` +
+                                                `Vous recevrez une confirmation une fois le rendez-vous accepté.\n\n` +
+                                                `Cordialement,\nMediShareSénégal`;
 
-                            const subject = 'Confirmation de rendez-vous';
-                            const text = `Bonjour ${patient.nom} ${patient.prenom},\n\n` +
-                                         `Votre rendez-vous avec le Dr. ${medecin.prenomMedecin} ${medecin.nomMedecin}` +
-                                         ` le ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été soumis.\n\n` +
-                                         `📍 Lieu : ${medecin.nomHopital || 'Hôpital non renseigné'} - ${medecin.adresseHopital || 'Adresse non renseignée'}\n` +
-                                         `📝 Motif : ${motif}\n\n` +
-                                         `Vous recevrez une confirmation une fois le rendez-vous accepté.\n\n` +
-                                         `Cordialement,\nMaya Share`;
-
-                            sendEmail(patient.email, subject, text)
+                            sendEmail(patient.email, subjectPatient, textPatient)
                                 .then(() => console.log(`E-mail de confirmation envoyé à ${patient.email}`))
-                                .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
+                                .catch(err => console.error('Erreur lors de l’envoi de l’e-mail au patient:', err));
+
+                            // E-mail au médecin
+                            const subjectMedecin = 'Nouveau rendez-vous soumis';
+                            const textMedecin = `Bonjour Dr. ${medecin.prenom} ${medecin.nom},\n\n` +
+                                                `Un nouveau rendez-vous a été soumis par ${patient.nom} ${patient.prenom}.\n\n` +
+                                                `📅 Date : ${moment(dateRendezVous).format('DD/MM/YYYY à HH:mm')}\n` +
+                                                `📍 Lieu : ${nomHopital} - ${adresseHopital}\n` +
+                                                `📝 Motif : ${motif}\n\n` +
+                                                `Veuillez accepter ou décliner ce rendez-vous via l'application.\n\n` +
+                                                `Cordialement,\nMayaShare `;
+
+                            sendEmail(medecin.email, subjectMedecin, textMedecin)
+                                .then(() => console.log(`E-mail de notification envoyé au médecin ${medecin.email}`))
+                                .catch(err => console.error('Erreur lors de l’envoi de l’e-mail au médecin:', err));
                         });
                     }
                 });
@@ -107,7 +120,6 @@ exports.createRendezVous = (req, res) => {
         });
     });
 };
-
 
 exports.getRendezVousByPatient = (req, res) => {
     if (req.user.role !== 'Patient') return res.status(403).json({ message: 'Accès interdit.' });
@@ -150,11 +162,29 @@ exports.getRendezVous = (req, res) => {
         res.json(rendezVous);
     });
 };
+// exports.getRendezVousByMedecin = (req, res) => {
+//     if (req.user.role !== 'Médecin' || req.user.role !== 'Infirmier') return res.status(403).json({ message: 'Accès interdit.' });
+
+//     RendezVous.findByMedecin(req.user.id, (err, results) => {
+//         if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.' });
+//         res.json(results);
+//     });
+// };
 exports.getRendezVousByMedecin = (req, res) => {
-    if (req.user.role !== 'Médecin' || req.user.role !== 'Infirmier') return res.status(403).json({ message: 'Accès interdit.' });
+    if (req.user.role !== 'Médecin' && req.user.role !== 'Infirmier') {
+        return res.status(403).json({ message: 'Accès interdit.' });
+    }
+
+    console.log(`Récupération des rendez-vous pour idMedecin: ${req.user.id}`);
 
     RendezVous.findByMedecin(req.user.id, (err, results) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.' });
+        if (err) {
+            console.error('Erreur lors de la récupération des rendez-vous:', err);
+            return res.status(500).json({ message: 'Erreur lors de la récupération des rendez-vous.', error: err.message });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun rendez-vous trouvé.', rendezVous: [] });
+        }
         res.json(results);
     });
 };
@@ -195,7 +225,7 @@ exports.acceptRendezVous = (req, res) => {
 
                     const patient = patientResults[0];
                     const subject = 'Rendez-vous accepté';
-                    const text = `Bonjour ${patient.nom} ${patient.prenom},\n\nVotre rendez-vous du ${moment(results[0].dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été accepté.\nCommentaire : ${rendezVousData.commentaire || 'Aucun commentaire.'}\n\nCordialement,\nMediShareSénégal`;
+                    const text = `Bonjour ${patient.nom} ${patient.prenom},\n\nVotre rendez-vous du ${moment(results[0].dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été accepté.\nCommentaire : ${rendezVousData.commentaire || 'Aucun commentaire.'}\n\nCordialement,\nMayaShare `;
                     sendEmail(patient.email, subject, text)
                         .then(() => console.log('E-mail envoyé au patient.'))
                         .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));

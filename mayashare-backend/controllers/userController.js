@@ -117,11 +117,43 @@ exports.getUserById = (req, res) => {
 };
 
 
+// exports.updateUser = (req, res) => {
+//     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
+
+//     const id = req.params.id;
+//     const { nom, prenom, role, motDePasse, email, idHôpital } = req.body;
+
+//     // Validations
+//     if (nom && nom.trim() === '') return res.status(400).json({ message: 'Le nom ne peut pas être vide.' });
+//     if (prenom && prenom.trim() === '') return res.status(400).json({ message: 'Le prénom ne peut pas être vide.' });
+//     if (role && !['Médecin', 'Infirmier', 'Admin', 'Patient'].includes(role)) return res.status(400).json({ message: 'Le rôle doit être "Médecin", "Infirmier", "Admin" ou "Patient".' });
+//     if (motDePasse && motDePasse.length < 6) return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères.' });
+//     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: 'Adresse e-mail invalide.' });
+
+//     // Validation de l’idHôpital pour Médecin et Infirmier
+//     if (['Médecin', 'Infirmier'].includes(role)) {
+//         if (!idHôpital || isNaN(idHôpital)) {
+//             return res.status(400).json({ message: 'L’ID de l’hôpital est requis pour les médecins et infirmiers.' });
+//         }
+//     }
+
+//     const userData = { nom, prenom, role, motDePasse, email, idHôpital };
+//     User.update(id, userData, (err) => {
+//         if (err) return res.status(500).json({ message: 'Erreur lors de la mise à jour de l’utilisateur.' });
+
+//         Trace.create({ action: 'modification utilisateur', idUtilisateur: req.user.id }, (err) => {
+//             if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+//         });
+
+//         res.json({ message: 'Utilisateur mis à jour avec succès.' });
+//     });
+// };
+
 exports.updateUser = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
-    const { nom, prenom, role, motDePasse, email, idHôpital } = req.body;
+    const { nom, prenom, role, motDePasse, email, idHôpital, telephone } = req.body;
 
     // Validations
     if (nom && nom.trim() === '') return res.status(400).json({ message: 'Le nom ne peut pas être vide.' });
@@ -129,32 +161,122 @@ exports.updateUser = (req, res) => {
     if (role && !['Médecin', 'Infirmier', 'Admin', 'Patient'].includes(role)) return res.status(400).json({ message: 'Le rôle doit être "Médecin", "Infirmier", "Admin" ou "Patient".' });
     if (motDePasse && motDePasse.length < 6) return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères.' });
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: 'Adresse e-mail invalide.' });
+    if (telephone && telephone.trim() === '') return res.status(400).json({ message: 'Le numéro de téléphone ne peut pas être vide.' });
 
-    // Validation de l’idHôpital pour Médecin et Infirmier
-    if (['Médecin', 'Infirmier'].includes(role)) {
-        if (!idHôpital || isNaN(idHôpital)) {
-            return res.status(400).json({ message: 'L’ID de l’hôpital est requis pour les médecins et infirmiers.' });
+    // Récupérer l'utilisateur existant pour vérifier son rôle actuel
+    User.findById(id, (err, results) => {
+        if (err) {
+            console.error('Erreur lors de la récupération de l’utilisateur:', err);
+            return res.status(500).json({ message: 'Erreur serveur lors de la récupération de l’utilisateur.' });
         }
-    }
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        }
 
-    const userData = { nom, prenom, role, motDePasse, email, idHôpital };
-    User.update(id, userData, (err) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la mise à jour de l’utilisateur.' });
+        const existingUser = results[0];
+        const userRole = role || existingUser.role; // Utiliser le rôle existant si non fourni
 
-        Trace.create({ action: 'modification utilisateur', idUtilisateur: req.user.id }, (err) => {
-            if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
-        });
+        // Validation de l’idHôpital pour Médecin et Infirmier
+        let finalIdHopital = idHôpital !== undefined ? idHôpital : existingUser.idHôpital;
 
-        res.json({ message: 'Utilisateur mis à jour avec succès.' });
+        // Convertir une chaîne vide ou non numérique en NULL pour idHôpital
+        if (finalIdHopital === '' || (finalIdHopital && isNaN(finalIdHopital))) {
+            finalIdHopital = null;
+        }
+
+        if (['Médecin', 'Infirmier'].includes(userRole)) {
+            if (finalIdHopital === null) {
+                return res.status(400).json({ message: 'L’ID de l’hôpital est requis pour les médecins et infirmiers.' });
+            }
+            // Vérifier si idHôpital existe dans la table Hopital
+            User.findHopitalById(finalIdHopital, (err, hospitalResults) => {
+                if (err) {
+                    console.error('Erreur lors de la vérification de l’hôpital:', err);
+                    return res.status(500).json({ message: 'Erreur serveur lors de la vérification de l’hôpital.' });
+                }
+                if (hospitalResults.length === 0) {
+                    return res.status(400).json({ message: 'L’ID de l’hôpital fourni n’existe pas.' });
+                }
+
+                proceedWithUpdate();
+            });
+        } else {
+            // Pour Patient et Admin, idHôpital peut être NULL
+            proceedWithUpdate();
+        }
+
+        function proceedWithUpdate() {
+            // Vérifier si l’e-mail est déjà utilisé par un autre utilisateur
+            if (email && email !== existingUser.email) {
+                User.findByEmail(email, (err, emailResults) => {
+                    if (err) {
+                        console.error('Erreur lors de la vérification de l’e-mail:', err);
+                        return res.status(500).json({ message: 'Erreur serveur lors de la vérification de l’e-mail.' });
+                    }
+                    if (emailResults.length > 0) {
+                        return res.status(400).json({ message: 'Cet e-mail est déjà utilisé par un autre utilisateur.' });
+                    }
+
+                    updateUserData();
+                });
+            } else {
+                updateUserData();
+            }
+
+            function updateUserData() {
+                // Construire les données de mise à jour
+                const userData = {
+                    nom: nom || existingUser.nom,
+                    prenom: prenom || existingUser.prenom,
+                    role: role || existingUser.role,
+                    motDePasse: motDePasse || null,
+                    email: email || existingUser.email,
+                    idHôpital: finalIdHopital,
+                    telephone: telephone || existingUser.telephone
+                };
+
+                // Mettre à jour l’utilisateur
+                User.update(id, userData, (err) => {
+                    if (err) {
+                        console.error('Erreur lors de la mise à jour de l’utilisateur:', err);
+                        return res.status(500).json({ message: 'Erreur lors de la mise à jour de l’utilisateur.', error: err.message });
+                    }
+
+                    Trace.create({ action: 'modification utilisateur', idUtilisateur: req.user.id }, (err) => {
+                        if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+                    });
+
+                    res.json({ message: 'Utilisateur mis à jour avec succès.' });
+                });
+            }
+        }
     });
 };
+
+// exports.deleteUser = (req, res) => {
+//     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
+
+//     const id = req.params.id;
+//     User.delete(id, (err) => {
+//         if (err) return res.status(500).json({ message: 'Erreur lors de la suppression de l’utilisateur.' });
+
+//         Trace.create({ action: 'suppression utilisateur', idUtilisateur: req.user.id }, (err) => {
+//             if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+//         });
+
+//         res.json({ message: 'Utilisateur supprimé avec succès.' });
+//     });
+// };
 
 exports.deleteUser = (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
     const id = req.params.id;
     User.delete(id, (err) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la suppression de l’utilisateur.' });
+        if (err) {
+            console.error('Erreur lors de la suppression de l’utilisateur:', err);
+            return res.status(500).json({ message: 'Erreur lors de la suppression de l’utilisateur.', error: err.message });
+        }
 
         Trace.create({ action: 'suppression utilisateur', idUtilisateur: req.user.id }, (err) => {
             if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);

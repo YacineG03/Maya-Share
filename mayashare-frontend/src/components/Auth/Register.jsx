@@ -126,7 +126,7 @@ function Register() {
         top: 0,
         left: 0,
         overflow: "hidden",
-        background: "linear-gradient(135deg, #1C2526 0%, #2C3E50 100%)",
+        background: "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
       }}
     >
       <Grid container sx={{ height: "100%", width: "100%", margin: 0, padding: 0 }}>
@@ -136,7 +136,7 @@ function Register() {
           xs={12}
           md={6}
           sx={{
-            backgroundColor: "rgba(28, 37, 38, 0.95)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -148,12 +148,12 @@ function Register() {
         >
           <Container maxWidth="sm">
             <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
-              <LocalHospitalIcon sx={{ fontSize: 50, color: "#7C4DFF" }} />
+              <LocalHospitalIcon sx={{ fontSize: 50, color: "#0078D7" }} />
             </Box>
 
             <Typography
               variant="h3"
-              color="#FFFFFF"
+              color="#0078D7"
               gutterBottom
               sx={{
                 textAlign: "center",
@@ -166,7 +166,7 @@ function Register() {
 
             <Typography
               variant="body1"
-              color="#B0BEC5"
+              color="#5A5A5A"
               gutterBottom
               sx={{
                 textAlign: "center",
@@ -200,12 +200,12 @@ function Register() {
                   />
                   <Typography
                     variant="h5"
-                    color="#FFFFFF"
+                    color="#0078D7"
                     sx={{ mb: 2 }}
                   >
                     Inscription réussie !
                   </Typography>
-                  <Typography variant="body1" color="#B0BEC5">
+                  <Typography variant="body1" color="#5A5A5A">
                     Redirection vers la connexion...
                   </Typography>
                 </Box>
@@ -221,26 +221,26 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonIcon sx={{ color: "#7C4DFF" }} />
+                          <PersonIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -254,26 +254,26 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonIcon sx={{ color: "#7C4DFF" }} />
+                          <PersonIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -287,26 +287,26 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PhoneIcon sx={{ color: "#7C4DFF" }} />
+                          <PhoneIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -320,26 +320,26 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EmailIcon sx={{ color: "#7C4DFF" }} />
+                          <EmailIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -354,7 +354,7 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#7C4DFF" }} />
+                          <LockIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -362,7 +362,7 @@ function Register() {
                           <IconButton
                             onClick={handleClickShowPassword}
                             edge="end"
-                            sx={{ color: "#B0BEC5" }}
+                            sx={{ color: "#5A5A5A" }}
                           >
                             {showPassword ? (
                               <VisibilityOff />
@@ -373,22 +373,22 @@ function Register() {
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -403,7 +403,7 @@ function Register() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#7C4DFF" }} />
+                          <LockIcon sx={{ color: "#0078D7" }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -411,7 +411,7 @@ function Register() {
                           <IconButton
                             onClick={handleClickShowConfirmPassword}
                             edge="end"
-                            sx={{ color: "#B0BEC5" }}
+                            sx={{ color: "#5A5A5A" }}
                           >
                             {showConfirmPassword ? (
                               <VisibilityOff />
@@ -422,22 +422,22 @@ function Register() {
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#B0BEC5" } }}
+                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         "& fieldset": {
-                          borderColor: "rgba(176, 190, 197, 0.3)",
+                          borderColor: "rgba(90, 90, 90, 0.3)",
                         },
                         "&:hover fieldset": {
-                          borderColor: "rgba(124, 77, 255, 0.5)",
+                          borderColor: "rgba(0, 120, 215, 0.5)",
                         },
                         "&.Mui-focused fieldset": {
-                          borderColor: "#7C4DFF",
+                          borderColor: "#0078D7",
                         },
-                        backgroundColor: "rgba(44, 47, 51, 0.7)",
+                        backgroundColor: "rgba(240, 240, 240, 0.7)",
                         borderRadius: "12px",
                       },
-                      "& .MuiInputBase-input": { color: "#FFFFFF" },
+                      "& .MuiInputBase-input": { color: "#333333" },
                     }}
                     required
                   />
@@ -453,12 +453,12 @@ function Register() {
                   disabled={loading}
                   startIcon={loading ? null : <HowToRegIcon />}
                   sx={{
-                    backgroundColor: "#7C4DFF",
+                    backgroundColor: "#0078D7",
                     borderRadius: "12px",
                     px: 3,
                     py: 1.2,
                     color: "#fff",
-                    "&:hover": { backgroundColor: "#6a3de8" },
+                    "&:hover": { backgroundColor: "#0066B4" },
                   }}
                   onClick={handleSubmit}
                 >
@@ -473,14 +473,14 @@ function Register() {
 
             <Typography
               variant="body2"
-              color="#B0BEC5"
+              color="#5A5A5A"
               sx={{ mt: 4, textAlign: "center" }}
             >
               Vous avez déjà un compte ?{" "}
               <Link
                 href="/login"
                 underline="hover"
-                color="#7C4DFF"
+                color="#0078D7"
                 onClick={(e) => {
                   e.preventDefault();
                   navigate("/login");
@@ -499,7 +499,7 @@ function Register() {
           md={6}
           sx={{
             background:
-              "linear-gradient(135deg, #7C4DFF 0%, #5e35b1 100%)",
+              "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
             display: { xs: "none", md: "flex" },
             flexDirection: "column",
             justifyContent: "center",
@@ -533,7 +533,7 @@ function Register() {
             </Typography>
             <Box
               component="img"
-              src="https://via.placeholder.com/400x300"
+              src="Prevention_sante_1.jpg"
               alt="Illustration Santé"
               sx={{ maxWidth: "100%", mt: 2 }}
             />

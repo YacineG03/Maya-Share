@@ -101,10 +101,58 @@ const User = {
         db.query(query, params, callback);
     },
 
+    // update: (id, userData, callback) => {
+    //     const hashedPassword = userData.motDePasse ? bcrypt.hashSync(userData.motDePasse, 10) : null;
+    //     const query = 'UPDATE Utilisateur SET nom = ?, prenom = ?, role = ?, motDePasse = COALESCE(?, motDePasse), email = ?, idHôpital = ?, telephone = ? WHERE idUtilisateur = ?';
+    //     db.query(query, [userData.nom, userData.prenom, userData.role, hashedPassword, userData.email, userData.idHôpital, userData.telephone,id], callback);
+    // },
+    findHopitalById: (idHopital, callback) => {
+        const query = 'SELECT idHôpital FROM Hopital WHERE idHôpital = ?';
+        db.query(query, [idHopital], callback);
+    },
+
     update: (id, userData, callback) => {
-        const hashedPassword = userData.motDePasse ? bcrypt.hashSync(userData.motDePasse, 10) : null;
-        const query = 'UPDATE Utilisateur SET nom = ?, prenom = ?, role = ?, motDePasse = COALESCE(?, motDePasse), email = ?, idHôpital = ?, telephone = ? WHERE idUtilisateur = ?';
-        db.query(query, [userData.nom, userData.prenom, userData.role, hashedPassword, userData.email, userData.idHôpital, userData.telephone,id], callback);
+        const fields = [];
+        const params = [];
+    
+        if (userData.nom) {
+            fields.push('nom = ?');
+            params.push(userData.nom);
+        }
+        if (userData.prenom) {
+            fields.push('prenom = ?');
+            params.push(userData.prenom);
+        }
+        if (userData.role) {
+            fields.push('role = ?');
+            params.push(userData.role);
+        }
+        if (userData.motDePasse) {
+            const hashedPassword = bcrypt.hashSync(userData.motDePasse, 10);
+            fields.push('motDePasse = ?');
+            params.push(hashedPassword);
+        }
+        if (userData.email) {
+            fields.push('email = ?');
+            params.push(userData.email);
+        }
+        if (userData.idHôpital !== undefined) { // Permet de mettre à jour même avec null
+            fields.push('idHôpital = ?');
+            params.push(userData.idHôpital);
+        }
+        if (userData.telephone) {
+            fields.push('telephone = ?');
+            params.push(userData.telephone);
+        }
+    
+        if (fields.length === 0) {
+            return callback(new Error('Aucun champ à mettre à jour.'));
+        }
+    
+        const query = `UPDATE Utilisateur SET ${fields.join(', ')} WHERE idUtilisateur = ?`;
+        params.push(id);
+    
+        db.query(query, params, callback);
     },
 
     updateHôpital: (id, idHôpital, callback) => {
@@ -112,10 +160,28 @@ const User = {
         db.query(query, [idHôpital, id], callback);
     },
 
-    delete: (id, callback) => {
-        const query = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
-        db.query(query, [id], callback);
-    }
+        // delete: (id, callback) => {
+        //     const query = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
+        //     db.query(query, [id], callback);
+        // }
+
+        delete: (id, callback) => {
+            // Supprimer les rendez-vous associés
+            const deleteRendezVousQuery = 'DELETE FROM RendezVous WHERE idPatient = ? OR idMedecin = ?';
+            db.query(deleteRendezVousQuery, [id, id], (err) => {
+                if (err) return callback(err);
+        
+                // Supprimer les traces associées
+                const deleteTraceQuery = 'DELETE FROM Tracabilite WHERE idUtilisateur = ?';
+                db.query(deleteTraceQuery, [id], (err) => {
+                    if (err) return callback(err);
+        
+                    // Supprimer l'utilisateur
+                    const deleteUserQuery = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
+                    db.query(deleteUserQuery, [id], callback);
+                });
+            });
+        },
 };
 
 module.exports = User;
