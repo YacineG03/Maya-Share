@@ -34,12 +34,20 @@ exports.getHopital = (req, res) => {
 };
 
 exports.getAllHopitaux = (req, res) => {
-    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
+    // if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Accès interdit.' });
 
-    Hopital.findAll((err, results) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des hôpitaux.' });
+    // Hopital.findAll((err, results) => {
+    //     if (err) return res.status(500).json({ message: 'Erreur lors de la récupération des hôpitaux.' });
+    //     res.json(results);
+    // });
+
+    Hopital.findAllWithMedecins((err, results) => {
+        if (err) {
+          console.error('Erreur SQL:', err);
+          return res.status(500).json({ message: 'Erreur lors de la récupération des hôpitaux.' });
+        }
         res.json(results);
-    });
+      });
 };
 
 exports.updateHopital = (req, res) => {

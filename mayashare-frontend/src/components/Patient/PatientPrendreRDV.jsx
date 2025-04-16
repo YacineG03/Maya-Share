@@ -1,3 +1,4 @@
+// src/components/Patient/PatientPrendreRDV.js
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
@@ -28,24 +29,26 @@ const PatientPrendreRDV = () => {
   useEffect(() => {
     const fetchHopitauxEtMedecins = async () => {
       try {
-        // Récupérer les hôpitaux et leurs médecins
         const response = await getHopitaux();
+        console.log('Réponse de getHopitaux:', response.data);
         setHopitaux(response.data);
-        
+
         // Extraire tous les médecins de tous les hôpitaux
         const allMedecins = response.data.flatMap(hopital => 
-          hopital.medecins.map(medecin => ({
+          (hopital.medecins || []).map(medecin => ({
             ...medecin,
             hopitalNom: hopital.nom,
-            hopitalAdresse: hopital.adresse
+            hopitalAdresse: hopital.adresse,
           }))
         );
-        
+
+        console.log('Médecins extraits:', allMedecins);
         setMedecins(allMedecins);
         setLoadingMedecins(false);
       } catch (error) {
-        console.error('Erreur lors de la récupération des données:', error);
-        toast.error('Erreur lors du chargement des données');
+        console.error('Erreur lors de la récupération des hôpitaux:', error);
+        const errorMessage = error.response?.data?.message || 'Erreur lors du chargement des hôpitaux';
+        toast.error(errorMessage);
         setLoadingMedecins(false);
       }
     };
@@ -69,7 +72,7 @@ const PatientPrendreRDV = () => {
       await createRendezVous({
         idMedecin: selectedMedecin,
         dateRendezVous: dateTime,
-        motif
+        motif,
       });
       
       toast.success('Rendez-vous créé avec succès !');
@@ -80,14 +83,15 @@ const PatientPrendreRDV = () => {
       setEtape(1);
     } catch (error) {
       console.error('Erreur lors de la création du rendez-vous:', error);
-      toast.error(error.response?.data?.message || 'Erreur lors de la création du rendez-vous');
+      const errorMessage = error.response?.data?.message || 'Erreur lors de la création du rendez-vous';
+      toast.error(errorMessage);
     } finally {
       setLoadingSubmit(false);
     }
   };
 
   const getMedecinById = (id) => {
-    return medecins.find(medecin => medecin.id === id);
+    return medecins.find(medecin => medecin.id === id) || {};
   };
 
   return (
@@ -137,6 +141,10 @@ const PatientPrendreRDV = () => {
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress />
               </Box>
+            ) : medecins.length === 0 ? (
+              <Typography color="text.secondary">
+                Aucun médecin disponible pour le moment.
+              </Typography>
             ) : (
               <Grid container spacing={3}>
                 {medecins.map((medecin) => (
@@ -152,8 +160,8 @@ const PatientPrendreRDV = () => {
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'translateY(-2px)',
-                          boxShadow: 3
-                        }
+                          boxShadow: 3,
+                        },
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -167,7 +175,7 @@ const PatientPrendreRDV = () => {
                             Dr. {medecin.prenom} {medecin.nom}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {medecin.specialite}
+                            {medecin.specialite || 'Non spécifié'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             {medecin.hopitalNom || 'Non spécifié'}
@@ -234,7 +242,7 @@ const PatientPrendreRDV = () => {
                       Dr. {getMedecinById(selectedMedecin)?.prenom} {getMedecinById(selectedMedecin)?.nom}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {getMedecinById(selectedMedecin)?.specialite}
+                      {getMedecinById(selectedMedecin)?.specialite || 'Non spécifié'}
                     </Typography>
                   </Box>
                 </Box>
@@ -281,7 +289,7 @@ const PatientPrendreRDV = () => {
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
               <Button
                 variant="contained"
-                disabled={!date || !heure || !motif}
+                disabled={!date || !heure || !motif || loadingSubmit}
                 onClick={handleSubmit}
                 sx={{ px: 4, py: 1.5 }}
                 startIcon={loadingSubmit ? <CircularProgress size={20} color="inherit" /> : null}

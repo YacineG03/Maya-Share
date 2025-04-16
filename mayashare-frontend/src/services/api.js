@@ -21,6 +21,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Intercepteur pour gérer les erreurs
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("Erreur de réponse:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url,
+    });
+    return Promise.reject(error);
+  }
+);
+
 // Fonctions pour l'authentification
 export const login = (email, motDePasse) =>
   api.post("/auth/login", { email, motDePasse });
@@ -89,7 +102,7 @@ export const deleteDossier = (id) => api.delete(`/dossiers/${id}`);
 
 // Fonctions pour la gestion des rendez-vous
 export const createRendezVous = (data) => api.post("/rendezvous", data);
-
+ 
 export const getRendezVous = () => api.get("/rendezvous");
 
 export const getRendezVousById = (id) => api.get(`/rendezvous/${id}`);
