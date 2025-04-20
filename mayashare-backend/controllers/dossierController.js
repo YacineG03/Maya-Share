@@ -2,18 +2,20 @@ const Dossier = require('../models/dossierModel');
 const Trace = require('../models/traceModel');
 
 exports.createDossier = (req, res) => {
-    if (req.user.role !== 'Médecin' || req.user.role !== 'Infirmier') return res.status(403).json({ message: 'Accès interdit.' });
-
-    const { idPatient, diagnostic, traitement } = req.body;
-
-    // Validation de l'ID patient
-    if (!idPatient || isNaN(idPatient)) {
-        return res.status(400).json({ message: 'ID patient requis et doit être un nombre.' });
+    if (req.user.role !== 'Patient' && req.user.role !== 'Médecin') {
+        return res.status(403).json({ message: 'Accès interdit.' });
     }
 
-    const dossierData = { idPatient, idMedecin: req.user.id, diagnostic, traitement };
+    const dossierData = {
+        idPatient: req.user.role === 'Patient' ? req.user.id : req.body.idPatient,
+        description: req.body.description,
+    };
+
     Dossier.create(dossierData, (err, result) => {
-        if (err) return res.status(500).json({ message: 'Erreur lors de la création du dossier.' });
+        if (err) {
+            console.error('Erreur lors de la création du dossier:', err);
+            return res.status(500).json({ message: 'Erreur lors de la création du dossier.' });
+        }
 
         Trace.create({ action: 'création dossier', idUtilisateur: req.user.id }, (err) => {
             if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
@@ -23,6 +25,24 @@ exports.createDossier = (req, res) => {
     });
 };
 
+exports.getDossiersByPatient = (req, res) => {
+    const idPatient = req.user.role === 'Patient' ? req.user.id : req.params.idPatient;
+
+    if (req.user.role !== 'Patient' && req.user.role !== 'Médecin') {
+        return res.status(403).json({ message: 'Accès interdit.' });
+    }
+
+    Dossier.findByPatient(idPatient, (err, results) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des dossiers:', err);
+            return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
+        }
+        if (results.length === 0) {
+            return res.status(200).json({ message: 'Aucun dossier trouvé.', dossiers: [] });
+        }
+        res.json(results);
+    });
+};
 exports.updateDossier = (req, res) => {
     if (req.user.role !== 'Médecin' || req.user.role !== 'Infirmier') return res.status(403).json({ message: 'Accès interdit.' });
 
@@ -54,26 +74,6 @@ exports.updateDossier = (req, res) => {
 
             res.json({ message: 'Dossier mis à jour avec succès.' });
         });
-    });
-};
-exports.getDossier = (req, res) => {
-    const id = req.params.id;
-    Dossier.findById(id, (err, results) => {
-        if (err || results.length === 0) return res.status(404).json({ message: 'Dossier non trouvé.' });
-
-        const dossier = results[0];
-        if (req.user.role === 'Patient' && dossier.idPatient !== req.user.id) {
-            return res.status(403).json({ message: 'Accès interdit.' });
-        }
-        if (req.user.role === 'Médecin' && dossier.idMedecin !== req.user.id) {
-            return res.status(403).json({ message: 'Accès interdit.' });
-        }
-
-        Trace.create({ action: 'consultation dossier', idUtilisateur: req.user.id }, (err) => {
-            if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
-        });
-
-        res.json(dossier);
     });
 };
 

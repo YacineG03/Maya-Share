@@ -1,7 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const imageRoutes = require('./routes/imageRoutes');
@@ -37,39 +35,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configuration de Multer pour le stockage des fichiers
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    } else {
-      cb('Erreur : Seuls les fichiers JPEG, PNG et GIF sont autorisés !');
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 },
-}).single('image');
-
 // Middleware pour servir les fichiers statiques
 app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/images', upload, imageRoutes);
+app.use('/api/images', imageRoutes);
 app.use('/api/shares', shareRoutes);
 app.use('/api/traces', traceRoutes);
 app.use('/api/dossiers', dossierRoutes);
@@ -79,7 +51,7 @@ app.use('/api/hopitaux', hopitalRoutes);
 // Gestion des erreurs globales
 app.use((err, req, res, next) => {
   console.error("Erreur serveur:", err);
-  res.status(500).json({ message: "Erreur serveur interne." });
+  res.status(500).json({ message: "Erreur serveur interne.", error: err.message });
 });
 
 // Démarrer le serveur

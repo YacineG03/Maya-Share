@@ -11,11 +11,22 @@ const Dossier = {
         db.query(query, [id], callback);
     },
 
+    // findByPatient: (idPatient, callback) => {
+    //     const query = 'SELECT * FROM Dossier WHERE idPatient = ?';
+    //     db.query(query, [idPatient], callback);
+    // },
+
     findByPatient: (idPatient, callback) => {
-        const query = 'SELECT * FROM Dossier WHERE idPatient = ?';
+        const query = `
+            SELECT d.*, GROUP_CONCAT(i.idImage) AS fichiers
+            FROM Dossier d
+            LEFT JOIN Image i ON d.idDossier = i.idDossier
+            WHERE d.idPatient = ?
+            GROUP BY d.idDossier
+        `;
         db.query(query, [idPatient], callback);
     },
-
+    
     findByMedecin: (idMedecin, callback) => {
         const query = 'SELECT * FROM Dossier WHERE idMedecin = ?';
         db.query(query, [idMedecin], callback);
