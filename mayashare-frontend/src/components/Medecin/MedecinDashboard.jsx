@@ -1,4 +1,3 @@
-// src/components/Dashboard/MedecinDashboard.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -12,14 +11,15 @@ import {
   Divider,
   CircularProgress,
   Slide,
+  Button,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import EventIcon from "@mui/icons-material/Event";
 import FolderIcon from "@mui/icons-material/Folder";
 import LogoutIcon from "@mui/icons-material/Logout";
-import InfirmierGererRV from "../Infirmier/InfirmierGererRV";
-import InfirmierGererDossier from "../Infirmier/InfirmierGererDossier";
+import MedecinGererRV from "./MedecinGererRV";
+import MedecinGererDossier from "./MedecinGererDossier";
 
 // Animation variants pour framer-motion
 const sidebarItemVariants = {
@@ -85,9 +85,10 @@ const SIDEBAR_WIDTH = 280;
 function MedecinDashboard() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("Gérer les rendez-vous");
-  const [userName, setUserName] = useState("Infirmier");
+  const [userName, setUserName] = useState("Médecin");
   const [loading, setLoading] = useState(true);
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [dossiersLoaded, setDossiersLoaded] = useState(false); // État pour savoir si les dossiers sont chargés
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -100,10 +101,7 @@ function MedecinDashboard() {
     // Simuler la récupération des informations de l'utilisateur
     const fetchUserInfo = async () => {
       try {
-        // Si tu as une API pour récupérer les infos de l'utilisateur, utilise-la ici
-        // const { data } = await getUserInfo();
-        // setUserName(`${data.first_name || data.email.split("@")[0]} ${data.last_name || ""}`);
-        setUserName("Infirmier"); // Pour l'instant, on utilise une valeur statique
+        setUserName("Médecin");
       } catch (err) {
         console.error("Erreur lors de la récupération des informations de l'utilisateur :", err);
       } finally {
@@ -138,6 +136,11 @@ function MedecinDashboard() {
       setActiveSection(section);
       setContentLoaded(true);
     }, 300);
+  };
+
+  const handleLoadDossiers = () => {
+    setDossiersLoaded(true);
+    handleNavigation("Gérer les dossiers patients");
   };
 
   if (loading) {
@@ -211,7 +214,13 @@ function MedecinDashboard() {
                   whileHover="hover"
                 >
                   <ListItem
-                    onClick={() => handleNavigation(item.section)}
+                    onClick={() => {
+                      if (item.section === "Gérer les dossiers patients") {
+                        handleLoadDossiers();
+                      } else {
+                        handleNavigation(item.section);
+                      }
+                    }}
                     sx={{
                       borderRadius: 1,
                       mb: 2,
@@ -292,7 +301,7 @@ function MedecinDashboard() {
       <Box
         sx={{
           flexGrow: 1,
-          backgroundColor: "#f5f5f5", // Fond par défaut
+          backgroundColor: "#f5f5f5",
           height: "100%",
           overflow: "auto",
         }}
@@ -304,8 +313,8 @@ function MedecinDashboard() {
           animate={contentLoaded ? "animate" : "exit"}
           style={{ height: "100%" }}
         >
-          {activeSection === "Gérer les rendez-vous" && <InfirmierGererRV />}
-          {activeSection === "Gérer les dossiers patients" && <InfirmierGererDossier />}
+          {activeSection === "Gérer les rendez-vous" && <MedecinGererRV />}
+          {activeSection === "Gérer les dossiers patients" && <MedecinGererDossier dossiersLoaded={dossiersLoaded} />}
         </motion.div>
       </Box>
     </Box>

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const imageRoutes = require('./routes/imageRoutes');
@@ -24,6 +25,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
+
+
+
 // Middleware pour parser les requêtes JSON (avant les routes)
 app.use(express.json());
 
@@ -35,6 +39,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(express.urlencoded({ extended: true }));
 // Middleware pour servir les fichiers statiques
 app.use('/uploads', express.static('uploads'));
 
@@ -52,6 +57,53 @@ app.use('/api/hopitaux', hopitalRoutes);
 app.use((err, req, res, next) => {
   console.error("Erreur serveur:", err);
   res.status(500).json({ message: "Erreur serveur interne.", error: err.message });
+});
+
+// Proxy pour les requêtes Orthanc
+app.get('/proxy/orthanc/wado', async (req, res) => {
+  const orthancUrl = `http://localhost:8042/wado?${new URLSearchParams(req.query).toString()}`;
+  try {
+    const response = await axios.get(orthancUrl, { responseType: 'arraybuffer' });
+    res.set('Content-Type', 'application/dicom');
+    res.send(response.data);
+  } catch (err) {
+    console.error('Erreur proxy Orthanc:', err.message);
+    res.status(500).json({ message: 'Erreur lors de la récupération des données DICOM', error: err.message });
+  }
+});
+
+// Route WADO pour agir comme proxy vers Orthanc
+app.get('/wado', async (req, res) => {
+  try {
+    const { requestType, instanceID } = req.query;
+    if (requestType !== 'WADO' || !instanceID) {
+      return res.status(400).json({ message: 'Paramètres WADO invalides' });
+    }
+
+    console.log('Requête WADO reçue:', { requestType, instanceID });
+
+    // Faire une requête à Orthanc pour récupérer le fichier DICOM
+    const orthancResponse = await axios.get(`http://localhost:8042/instances/${instanceID}/file`, {
+      responseType: 'arraybuffer', // Récupérer les données binaires
+    });
+
+    console.log('Réponse Orthanc WADO:', orthancResponse.status, orthancResponse.data.length, 'octets');
+
+    // Définir les en-têtes pour indiquer que c'est un fichier DICOM
+    res.set({
+      'Content-Type': 'application/dicom',
+      'Content-Length': orthancResponse.data.length,
+    });
+
+    // Envoyer les données binaires au client
+    res.send(orthancResponse.data);
+  } catch (error) {
+    console.error('Erreur proxy WADO:', error.message);
+    if (error.response) {
+      console.error('Réponse Orthanc erreur:', error.response.status, error.response.data);
+    }
+    res.status(500).json({ message: 'Erreur lors de la récupération du fichier DICOM', error: error.message });
+  }
 });
 
 // Démarrer le serveur

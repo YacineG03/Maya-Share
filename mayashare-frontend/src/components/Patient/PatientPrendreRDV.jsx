@@ -1,11 +1,11 @@
 // src/components/Patient/PatientPrendreRDV.js
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  TextField, 
-  Paper, 
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Paper,
   CircularProgress,
   Avatar,
   Grid
@@ -34,7 +34,7 @@ const PatientPrendreRDV = () => {
         setHopitaux(response.data);
 
         // Extraire tous les médecins de tous les hôpitaux
-        const allMedecins = response.data.flatMap(hopital => 
+        const allMedecins = response.data.flatMap(hopital =>
           (hopital.medecins || []).map(medecin => ({
             ...medecin,
             hopitalNom: hopital.nom,
@@ -58,7 +58,7 @@ const PatientPrendreRDV = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedMedecin || !date || !heure || !motif) {
       toast.warning('Veuillez remplir tous les champs');
       return;
@@ -74,7 +74,7 @@ const PatientPrendreRDV = () => {
         dateRendezVous: dateTime,
         motif,
       });
-      
+
       toast.success('Rendez-vous créé avec succès !');
       setSelectedMedecin('');
       setDate('');
@@ -96,16 +96,16 @@ const PatientPrendreRDV = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
         mb: 4,
         gap: 2
       }}>
-        <Avatar sx={{ 
-          bgcolor: 'primary.main', 
-          width: 56, 
-          height: 56 
+        <Avatar sx={{
+          bgcolor: 'primary.main',
+          width: 56,
+          height: 56
         }}>
           <EventAvailableIcon fontSize="large" />
         </Avatar>
@@ -114,10 +114,10 @@ const PatientPrendreRDV = () => {
         </Typography>
       </Box>
 
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          p: 4, 
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
           borderRadius: 3,
           maxWidth: 800,
           mx: 'auto'
@@ -136,7 +136,7 @@ const PatientPrendreRDV = () => {
             <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
               Sélectionnez un médecin
             </Typography>
-            
+
             {loadingMedecins ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress />
@@ -165,7 +165,7 @@ const PatientPrendreRDV = () => {
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar 
+                        <Avatar
                           sx={{ width: 56, height: 56, bgcolor: 'secondary.main' }}
                         >
                           {medecin.prenom?.charAt(0)}{medecin.nom?.charAt(0)}
@@ -208,7 +208,7 @@ const PatientPrendreRDV = () => {
             transition={{ duration: 0.3 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-              <Button 
+              <Button
                 onClick={() => setEtape(1)}
                 sx={{ mr: 2 }}
               >
@@ -224,15 +224,15 @@ const PatientPrendreRDV = () => {
                 Médecin sélectionné :
               </Typography>
               {selectedMedecin && (
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 2,
                   p: 2,
                   backgroundColor: '#f5f5f5',
                   borderRadius: 2
                 }}>
-                  <Avatar 
+                  <Avatar
                     sx={{ width: 48, height: 48, bgcolor: 'secondary.main' }}
                   >
                     {getMedecinById(selectedMedecin)?.prenom?.charAt(0)}{getMedecinById(selectedMedecin)?.nom?.charAt(0)}

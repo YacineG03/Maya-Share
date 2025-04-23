@@ -35,6 +35,7 @@ CREATE TABLE Dossier (
     traitement TEXT,
     etat ENUM('en cours', 'traité') DEFAULT 'en cours',
     FOREIGN KEY (idPatient) REFERENCES Utilisateur(idUtilisateur),
+    FOREIGN KEY (idInfirmier) REFERENCES Utilisateur(idUtilisateur),
     FOREIGN KEY (idMedecin) REFERENCES Utilisateur(idUtilisateur)
 );
 
@@ -84,4 +85,13 @@ CREATE TABLE RendezVous (
     commentaire TEXT,
     FOREIGN KEY (idPatient) REFERENCES Utilisateur(idUtilisateur),
     FOREIGN KEY (idMedecin) REFERENCES Utilisateur(idUtilisateur)
+);
+
+CREATE TABLE PartageDossier (
+    idPartage INT AUTO_INCREMENT PRIMARY KEY,
+    idDossier INT NOT NULL,
+    idUtilisateur INT NOT NULL,
+    datePartage DATETIME NOT NULL,
+    FOREIGN KEY (idDossier) REFERENCES Dossier(idDossier),
+    FOREIGN KEY (idUtilisateur) REFERENCES Utilisateur(idUtilisateur)
 );

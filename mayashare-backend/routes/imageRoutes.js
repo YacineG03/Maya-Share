@@ -6,14 +6,14 @@ const multer = require('multer');
 const path = require('path');
 
 // Configuration de Multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    },
-});
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         cb(null, 'uploads/');
+//     },
+//     filename: (req, file, cb) => {
+//         cb(null, Date.now() + path.extname(file.originalname));
+//     },
+// });
 
 const fileFilter = (req, file, cb) => {
     console.log('Type MIME détecté:', file.mimetype);
@@ -29,7 +29,6 @@ const fileFilter = (req, file, cb) => {
     const allowedExtensions = ['.dcm', '.pdf', '.jpg', '.jpeg', '.png', '.docx', '.txt'];
     const fileExtension = path.extname(file.originalname).toLowerCase();
 
-    // Accepter si le type MIME est autorisé OU si l'extension est .dcm (pour les DICOM mal détectés)
     if (allowedTypes.includes(file.mimetype) || (file.mimetype === 'application/octet-stream' && fileExtension === '.dcm')) {
         cb(null, true);
     } else {
@@ -37,13 +36,30 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
+// const upload = multer({
+//     storage: storage,
+//     limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+//     fileFilter: fileFilter,
+// });
+
+// Configuration de Multer pour gérer les fichiers binaires
+const storage = multer.memoryStorage(); // Stocker en mémoire pour éviter la corruption
 const upload = multer({
-    storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
-    fileFilter: fileFilter,
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // Limite de 10 MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['application/dicom', 'application/pdf', 'image/jpeg', 'image/png', 'text/plain'];
+    if (file.mimetype.startsWith('application/octet-stream') && file.originalname.toLowerCase().endsWith('.dcm')) {
+      file.mimetype = 'application/dicom'; // Forcer le type MIME pour les fichiers DICOM
+    }
+    if (allowedTypes.includes(file.mimetype) || file.originalname.toLowerCase().endsWith('.dcm')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Type de fichier non supporté'));
+    }
+  },
 });
 
-// Middleware pour ajouter des logs après que Multer ait traité la requête
 router.post('/', authMiddleware, upload.single('file'), (req, res, next) => {
     console.log('Après Multer - req.file:', req.file);
     console.log('Après Multer - req.body:', req.body);
@@ -51,6 +67,8 @@ router.post('/', authMiddleware, upload.single('file'), (req, res, next) => {
 }, imageController.uploadImage);
 
 router.get('/:id', authMiddleware, imageController.getImage);
-router.get('/', authMiddleware, imageController.getImagesByUser);
+router.get('/user', authMiddleware, imageController.getImagesByUser);
+router.get('/dossier/:idDossier', authMiddleware, imageController.getImagesByDossier);
+router.delete('/:id', authMiddleware, imageController.deleteImage);
 
 module.exports = router;

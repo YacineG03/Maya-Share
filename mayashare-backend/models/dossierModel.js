@@ -11,11 +11,6 @@ const Dossier = {
         db.query(query, [id], callback);
     },
 
-    // findByPatient: (idPatient, callback) => {
-    //     const query = 'SELECT * FROM Dossier WHERE idPatient = ?';
-    //     db.query(query, [idPatient], callback);
-    // },
-
     findByPatient: (idPatient, callback) => {
         const query = `
             SELECT d.*, GROUP_CONCAT(i.idImage) AS fichiers
@@ -26,7 +21,7 @@ const Dossier = {
         `;
         db.query(query, [idPatient], callback);
     },
-    
+
     findByMedecin: (idMedecin, callback) => {
         const query = 'SELECT * FROM Dossier WHERE idMedecin = ?';
         db.query(query, [idMedecin], callback);
@@ -35,7 +30,7 @@ const Dossier = {
     update: (id, dossierData, callback) => {
         const query = 'UPDATE Dossier SET diagnostic = ?, traitement = ?, etat = ? WHERE idDossier = ?';
         db.query(query, [dossierData.diagnostic, dossierData.traitement, dossierData.etat, id], callback);
-    }
+    },
 };
 
 module.exports = Dossier;
