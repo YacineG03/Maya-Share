@@ -108,7 +108,7 @@ const InfirmierGererRV = () => {
         return <Chip label="En attente" color="warning" />;
       case 'accepté':
         return <Chip label="Accepté" color="success" />;
-      case 'refusé':
+      case 'décliné':
         return <Chip label="Refusé" color="error" />;
       default:
         return <Chip label="Inconnu" color="default" />;

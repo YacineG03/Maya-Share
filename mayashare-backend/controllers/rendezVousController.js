@@ -271,7 +271,7 @@ exports.declineRendezVous = (req, res) => {
   }
 
   const id = req.params.id;
-  const rendezVousData = { etat: 'refusé', commentaire: req.body.commentaire };
+  const rendezVousData = { etat: 'décliné', commentaire: req.body.commentaire };
   if (!rendezVousData.commentaire || rendezVousData.commentaire.trim() === '') {
     return res.status(400).json({ message: 'Un commentaire est requis pour refuser un rendez-vous.' });
   }

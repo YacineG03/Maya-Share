@@ -115,9 +115,9 @@ export const getRendezVousForInfirmier = () => api.get("/rendezvous/infirmier");
 
 export const updateRendezVous = (id, data) => api.put(`/rendezvous/${id}`, data);
 
-export const acceptRendezVous = (id, data) => api.put(`/rendezvous/${id}/accepter`, data);
+export const acceptRendezVous = (id, data) => api.put(`/rendezvous/${id}/accept`, data);
 
-export const declineRendezVous = (id, data) => api.put(`/rendezvous/${id}/refuser`, data);
+export const declineRendezVous = (id, data) => api.put(`/rendezvous/${id}/decline`, data);
 
 export const deleteRendezVous = (id) => api.delete(`/rendezvous/${id}`);
 
