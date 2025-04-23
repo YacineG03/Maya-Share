@@ -5,6 +5,15 @@ const Trace = {
         const query = 'INSERT INTO Tracabilite (action, idUtilisateur, idImage, dateHeure) VALUES (?, ?, ?, NOW())';
         db.query(query, [traceData.action, traceData.idUtilisateur, traceData.idImage], callback);
     },
+     
+  //  méthode pour supprimer les traces liées à une image
+  deleteByImageId: (idImage, callback) => {
+    const query = 'DELETE FROM tracabilite WHERE idImage = ?';
+    db.query(query, [idImage], (err, result) => {
+        if (err) return callback(err, null);
+        callback(null, result);
+    });
+},  
 
     findAll: (filters, callback) => {
         let query = 'SELECT * FROM Tracabilite WHERE 1=1';

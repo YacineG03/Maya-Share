@@ -10,7 +10,10 @@ import {
   CircularProgress, 
   IconButton, 
   Chip, 
-  Paper 
+  Paper, 
+  Divider, 
+  Avatar, 
+  Tooltip 
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -21,6 +24,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import DescriptionIcon from '@mui/icons-material/Description';
+import PhotoIcon from '@mui/icons-material/Photo';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getDossiers, createDossier, updateDossier, uploadImage, getUsers, shareDossier, deleteImage, getImagesByDossier } from '../../services/api';
@@ -30,31 +36,39 @@ import DicomViewer from './DicomViewer';
 const API_URL = 'http://localhost:5000';
 const ORTHANC_URL = 'http://localhost:8042';
 
-// Palette de couleurs
+// Palette de couleurs enrichie
 const colors = {
   primary: '#0077B6',
+  primaryDark: '#005F8C',
   secondary: '#00B4D8',
-  background: '#F8F9FA',
-  text: '#333',
+  secondaryLight: '#48CAE4',
+  background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+  cardBackground: 'linear-gradient(145deg, #FFFFFF 0%, #F9FAFB 100%)',
+  modalBackground: 'rgba(255, 255, 255, 0.95)',
+  text: '#1A202C',
+  textSecondary: '#4A5568',
   accent: '#48CAE4',
-  success: '#4CAF50',
-  error: '#F44336',
-  warning: '#FF9800',
-  divider: 'rgba(0, 0, 0, 0.12)',
+  success: '#34C759',
+  error: '#FF3B30',
+  warning: '#FF9500',
+  divider: 'rgba(0, 0, 0, 0.08)',
+  shadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
 };
 
-// Styles des modales
+// Styles des modales avec effet de verre dépoli
 const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 450,
-  bgcolor: 'white',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+  width: 480,
+  bgcolor: colors.modalBackground,
+  backdropFilter: 'blur(10px)',
+  boxShadow: colors.shadow,
   p: 4,
-  borderRadius: 3,
+  borderRadius: 4,
   outline: 'none',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
 };
 
 const fileModalStyle = {
@@ -63,46 +77,50 @@ const fileModalStyle = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: '80%',
-  maxWidth: 900,
-  maxHeight: '80%',
-  bgcolor: 'white',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-  p: 3,
-  borderRadius: 3,
+  maxWidth: 960,
+  maxHeight: '85%',
+  bgcolor: colors.modalBackground,
+  backdropFilter: 'blur(10px)',
+  boxShadow: colors.shadow,
+  p: 4,
+  borderRadius: 4,
   overflow: 'auto',
   outline: 'none',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
 };
 
 // Animation variants pour framer-motion
 const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 30 },
   visible: (i) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: i * 0.1,
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1],
+      delay: i * 0.15,
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
     },
   }),
   hover: {
-    scale: 1.02,
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
-    transition: { duration: 0.2 },
+    scale: 1.03,
+    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+    transition: { duration: 0.3 },
   },
 };
 
 const modalVariants = {
-  hidden: { opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.9, y: 20 },
   visible: { 
     opacity: 1, 
     scale: 1, 
-    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
   },
   exit: { 
     opacity: 0, 
-    scale: 0.95, 
-    transition: { duration: 0.2 },
+    scale: 0.9, 
+    y: 20,
+    transition: { duration: 0.3 },
   },
 };
 
@@ -111,12 +129,24 @@ const expandVariants = {
   visible: { 
     height: 'auto', 
     opacity: 1, 
-    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
   },
   exit: { 
     height: 0, 
     opacity: 0, 
+    transition: { duration: 0.3 },
+  },
+};
+
+const buttonVariants = {
+  hover: {
+    scale: 1.05,
+    backgroundColor: colors.secondary,
     transition: { duration: 0.2 },
+  },
+  tap: {
+    scale: 0.98,
+    transition: { duration: 0.1 },
   },
 };
 
@@ -164,7 +194,7 @@ const FileViewerModal = ({ open, onClose, selectedFile }) => {
   }
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} onClose={onClose} sx={{ backdropFilter: 'blur(5px)' }}>
       <motion.div
         variants={modalVariants}
         initial="hidden"
@@ -175,9 +205,10 @@ const FileViewerModal = ({ open, onClose, selectedFile }) => {
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
             Visualisation du fichier : {selectedFile.nomFichier}
           </Typography>
+          <Divider sx={{ my: 2, bgcolor: colors.divider }} />
           {isDicom ? (
             imageError ? (
-              <Typography variant="body2" color="error">
+              <Typography variant="body2" color={colors.error}>
                 Impossible de charger l'image DICOM.
               </Typography>
             ) : (
@@ -185,39 +216,55 @@ const FileViewerModal = ({ open, onClose, selectedFile }) => {
             )
           ) : selectedFile.format.toLowerCase().includes('image') ? (
             imageError ? (
-              <Typography variant="body2" color="error">
+              <Typography variant="body2" color={colors.error}>
                 Impossible de charger l'image.
               </Typography>
             ) : (
-              <img
-                src={`${API_URL}${selectedFile.url}`}
-                alt={selectedFile.nomFichier}
-                style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: 8 }}
-                onError={() => setImageError(true)}
-              />
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                <img
+                  src={`${API_URL}${selectedFile.url}`}
+                  alt={selectedFile.nomFichier}
+                  style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: 12, boxShadow: colors.shadow }}
+                  onError={() => setImageError(true)}
+                />
+              </Box>
             )
           ) : selectedFile.nomFichier.toLowerCase().endsWith('.pdf') ? (
             <iframe
               src={`${API_URL}${selectedFile.url}`}
               title={selectedFile.nomFichier}
-              style={{ width: '100%', height: '500px', border: 'none', borderRadius: 8 }}
+              style={{ width: '100%', height: '500px', border: 'none', borderRadius: 12, boxShadow: colors.shadow }}
             />
           ) : (
-            <Typography variant="body2" color={colors.text}>
-              Téléchargez le fichier :{' '}
-              <a href={`${API_URL}${selectedFile.url}`} download style={{ color: colors.primary }}>
-                {selectedFile.nomFichier}
-              </a>
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DescriptionIcon sx={{ color: colors.primary }} />
+              <Typography variant="body2" color={colors.textSecondary}>
+                Téléchargez le fichier :{' '}
+                <a href={`${API_URL}${selectedFile.url}`} download style={{ color: colors.primary, textDecoration: 'none' }}>
+                  {selectedFile.nomFichier}
+                </a>
+              </Typography>
+            </Box>
           )}
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={onClose} 
-            sx={{ mt: 2, bgcolor: colors.primary, '&:hover': { bgcolor: colors.secondary } }}
-          >
-            Fermer
-          </Button>
+          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={onClose} 
+              sx={{ 
+                mt: 3, 
+                bgcolor: colors.primary, 
+                '&:hover': { bgcolor: colors.secondary }, 
+                borderRadius: 3, 
+                textTransform: 'none', 
+                py: 1.2,
+                fontWeight: 500,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              Fermer
+            </Button>
+          </motion.div>
         </Box>
       </motion.div>
     </Modal>
@@ -422,14 +469,18 @@ const MedecinGererDossier = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', bgcolor: colors.background }}>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
         >
-          <CircularProgress size={50} sx={{ color: colors.primary }} />
-          <Typography sx={{ mt: 2, color: colors.text, fontWeight: 500 }}>
+          <CircularProgress 
+            size={60} 
+            sx={{ color: colors.primary }} 
+            thickness={5}
+          />
+          <Typography sx={{ mt: 2, color: colors.text, fontWeight: 500, letterSpacing: 0.5 }}>
             Chargement des dossiers...
           </Typography>
         </motion.div>
@@ -439,49 +490,78 @@ const MedecinGererDossier = () => {
 
   return (
     <Box sx={{ p: 4, bgcolor: colors.background, minHeight: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, letterSpacing: -0.5 }}>
           Gérer les dossiers patients
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreateModal}
-            sx={{
-              bgcolor: colors.primary,
-              '&:hover': { bgcolor: colors.secondary },
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 500,
-            }}
-          >
-            Créer un dossier
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            sx={{
-              borderColor: colors.primary,
-              color: colors.primary,
-              '&:hover': { borderColor: colors.secondary, color: colors.secondary },
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 500,
-            }}
-          >
-            Rafraîchir
-          </Button>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateModal}
+              sx={{
+                bgcolor: colors.primary,
+                '&:hover': { bgcolor: colors.secondary },
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 500,
+                py: 1.2,
+                px: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              Créer un dossier
+            </Button>
+          </motion.div>
+          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              sx={{
+                borderColor: colors.primary,
+                color: colors.primary,
+                '&:hover': { borderColor: colors.secondary, color: colors.secondary },
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 500,
+                py: 1.2,
+                px: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              Rafraîchir
+            </Button>
+          </motion.div>
         </Box>
       </Box>
 
       {dossiers.length === 0 ? (
-        <Typography variant="body1" color={colors.text} sx={{ textAlign: 'center', mt: 4 }}>
-          Aucun dossier trouvé. Cliquez sur "Rafraîchir" pour charger les dossiers.
-        </Typography>
+        <Box sx={{ textAlign: 'center', mt: 6 }}>
+          <Typography variant="h6" color={colors.textSecondary} sx={{ mb: 2 }}>
+            Aucun dossier trouvé.
+          </Typography>
+          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              sx={{
+                bgcolor: colors.primary,
+                '&:hover': { bgcolor: colors.secondary },
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
+            >
+              Rafraîchir les dossiers
+            </Button>
+          </motion.div>
+        </Box>
       ) : (
         <Box sx={{ mt: 2 }}>
           {dossiers.map((dossier, index) => {
@@ -499,18 +579,27 @@ const MedecinGererDossier = () => {
                 <Paper
                   sx={{
                     p: 3,
-                    mb: 2,
-                    borderRadius: 3,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-                    bgcolor: 'white',
+                    mb: 3,
+                    borderRadius: 4,
+                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
+                    bgcolor: colors.cardBackground,
                     transition: 'all 0.3s ease',
+                    border: '1px solid rgba(0, 0, 0, 0.05)',
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
-                        {patient.nom} {patient.prenom}
-                      </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Avatar sx={{ bgcolor: colors.primary, width: 48, height: 48, fontSize: '1.2rem' }}>
+                        {patient.nom?.charAt(0) || 'P'}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                          {patient.nom} {patient.prenom}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                          ID Patient: {dossier.idPatient}
+                        </Typography>
+                      </Box>
                       <Chip
                         label={dossier.etat}
                         size="small"
@@ -518,43 +607,53 @@ const MedecinGererDossier = () => {
                           bgcolor: dossier.etat === 'en cours' ? colors.warning : colors.success,
                           color: 'white',
                           fontWeight: 500,
+                          borderRadius: 1,
                         }}
                       />
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       {isExpanded && (
                         <>
-                          <IconButton 
-                            onClick={(e) => { e.stopPropagation(); handleOpenEditModal(dossier); }} 
-                            sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton 
-                            onClick={(e) => { e.stopPropagation(); handleOpenImageModal(dossier); }} 
-                            sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
-                          >
-                            <ImageIcon />
-                          </IconButton>
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            onClick={(e) => { e.stopPropagation(); handleOpenShareModal(dossier); }}
-                            startIcon={<ShareIcon />}
-                            sx={{
-                              borderColor: colors.primary,
-                              color: colors.primary,
-                              '&:hover': { borderColor: colors.secondary, color: colors.secondary },
-                              borderRadius: 2,
-                              textTransform: 'none',
-                            }}
-                          >
-                            Partager
-                          </Button>
+                          <Tooltip title="Modifier le dossier">
+                            <IconButton 
+                              onClick={(e) => { e.stopPropagation(); handleOpenEditModal(dossier); }} 
+                              sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Ajouter une image">
+                            <IconButton 
+                              onClick={(e) => { e.stopPropagation(); handleOpenImageModal(dossier); }} 
+                              sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
+                            >
+                              <ImageIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              onClick={(e) => { e.stopPropagation(); handleOpenShareModal(dossier); }}
+                              startIcon={<ShareIcon />}
+                              sx={{
+                                borderColor: colors.primary,
+                                color: colors.primary,
+                                '&:hover': { borderColor: colors.secondary, color: colors.secondary },
+                                borderRadius: 3,
+                                textTransform: 'none',
+                                fontWeight: 500,
+                                px: 2,
+                                py: 0.8,
+                              }}
+                            >
+                              Partager
+                            </Button>
+                          </motion.div>
                         </>
                       )}
                       <IconButton onClick={() => handleToggleExpand(dossier)}>
-                        {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        {isExpanded ? <ExpandLessIcon sx={{ color: colors.primary }} /> : <ExpandMoreIcon sx={{ color: colors.primary }} />}
                       </IconButton>
                     </Box>
                   </Box>
@@ -566,64 +665,98 @@ const MedecinGererDossier = () => {
                         animate="visible"
                         exit="exit"
                       >
+                        <Divider sx={{ my: 2, bgcolor: colors.divider }} />
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Dossier ID :</strong> {dossier.idDossier}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Patient :</strong> {patient.nom} {patient.prenom} (ID: {dossier.idPatient})
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Email :</strong> {patient.email || 'N/A'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Téléphone :</strong> {patient.telephone || 'N/A'}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Diagnostic :</strong> {dossier.diagnostic}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Traitement :</strong> {dossier.traitement}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: colors.text, mb: 1 }}>
-                            <strong>Fichiers :</strong>
+                          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
+                                <strong>Dossier ID :</strong> {dossier.idDossier}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
+                                <strong>Email :</strong> {patient.email || 'N/A'}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
+                                <strong>Téléphone :</strong> {patient.telephone || 'N/A'}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
+                                <strong>Diagnostic :</strong> {dossier.diagnostic}
+                              </Typography>
+                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
+                                <strong>Traitement :</strong> {dossier.traitement}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+                          <Typography variant="subtitle1" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
+                            Fichiers associés
                           </Typography>
                           {dossier.fichiers?.length > 0 ? (
-                            <Box sx={{ mt: 1 }}>
-                              {dossier.fichiers.map((fichier, index) => (
-                                <Box key={index} sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Button
-                                    variant="text"
-                                    color="primary"
-                                    startIcon={<VisibilityIcon />}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleOpenFileModal(fichier);
-                                    }}
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 2 }}>
+                              {dossier.fichiers.map((fichier, index) => {
+                                const isDicom = fichier.format.toLowerCase().includes('dicom') || fichier.nomFichier.toLowerCase().endsWith('.dcm');
+                                const isImage = fichier.format.toLowerCase().includes('image');
+                                const isPDF = fichier.nomFichier.toLowerCase().endsWith('.pdf');
+                                return (
+                                  <Paper
+                                    key={index}
                                     sx={{
-                                      textTransform: 'none',
-                                      color: colors.primary,
-                                      '&:hover': { color: colors.secondary },
+                                      p: 2,
+                                      borderRadius: 3,
+                                      bgcolor: 'white',
+                                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 1,
                                     }}
                                   >
-                                    {fichier.nomFichier} (ID: {fichier.idImage})
-                                  </Button>
-                                  <IconButton
-                                    color="error"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteImage(fichier.idImage);
-                                    }}
-                                    sx={{ '&:hover': { color: colors.error } }}
-                                  >
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </Box>
-                              ))}
+                                    {isDicom ? (
+                                      <MedicalServicesIcon sx={{ color: colors.primary }} />
+                                    ) : isImage ? (
+                                      <PhotoIcon sx={{ color: colors.primary }} />
+                                    ) : isPDF ? (
+                                      <DescriptionIcon sx={{ color: colors.primary }} />
+                                    ) : (
+                                      <DescriptionIcon sx={{ color: colors.primary }} />
+                                    )}
+                                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                                      <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {fichier.nomFichier}
+                                      </Typography>
+                                      <Typography variant="caption" sx={{ color: colors.textSecondary }}>
+                                        ID: {fichier.idImage}
+                                      </Typography>
+                                    </Box>
+                                    <Tooltip title="Visualiser">
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleOpenFileModal(fichier);
+                                        }}
+                                        sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
+                                      >
+                                        <VisibilityIcon fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title="Supprimer">
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteImage(fichier.idImage);
+                                        }}
+                                        sx={{ color: colors.error, '&:hover': { color: colors.error } }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Paper>
+                                );
+                              })}
                             </Box>
                           ) : (
-                            <Typography variant="body2" color={colors.text} sx={{ ml: 2 }}>
-                              Aucun fichier
+                            <Typography variant="body2" color={colors.textSecondary} sx={{ ml: 1 }}>
+                              Aucun fichier associé à ce dossier.
                             </Typography>
                           )}
                         </Box>
@@ -638,7 +771,7 @@ const MedecinGererDossier = () => {
       )}
 
       {/* Modale pour créer un dossier */}
-      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)}>
+      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
         <motion.div
           variants={modalVariants}
           initial="hidden"
@@ -647,11 +780,12 @@ const MedecinGererDossier = () => {
         >
           <Box sx={modalStyle}>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-              Créer un dossier
+              Créer un dossier médical
             </Typography>
+            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
             <form onSubmit={handleCreateDossier}>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Patient
                 </Typography>
                 <Select
@@ -660,7 +794,13 @@ const MedecinGererDossier = () => {
                   fullWidth
                   displayEmpty
                   required
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 >
                   <MenuItem value="" disabled>
                     Choisir un patient
@@ -673,7 +813,7 @@ const MedecinGererDossier = () => {
                 </Select>
               </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Diagnostic
                 </Typography>
                 <TextField
@@ -682,11 +822,17 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 />
               </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Traitement
                 </Typography>
                 <TextField
@@ -695,46 +841,61 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 />
               </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   État
                 </Typography>
                 <Select
                   value={newDossier.etat}
                   onChange={(e) => setNewDossier({ ...newDossier, etat: e.target.value })}
                   fullWidth
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 >
                   <MenuItem value="en cours">En cours</MenuItem>
                   <MenuItem value="traité">Traité</MenuItem>
                 </Select>
               </Box>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary" 
-                fullWidth
-                sx={{
-                  bgcolor: colors.primary,
-                  '&:hover': { bgcolor: colors.secondary },
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  py: 1.5,
-                  fontWeight: 500,
-                }}
-              >
-                Créer
-              </Button>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  color="primary" 
+                  fullWidth
+                  sx={{
+                    bgcolor: colors.primary,
+                    '&:hover': { bgcolor: colors.secondary },
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    py: 1.5,
+                    fontWeight: 500,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  Créer
+                </Button>
+              </motion.div>
             </form>
           </Box>
         </motion.div>
       </Modal>
 
       {/* Modale pour modifier un dossier */}
-      <Modal open={openEditModal} onClose={() => setOpenEditModal(false)}>
+      <Modal open={openEditModal} onClose={() => setOpenEditModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
         <motion.div
           variants={modalVariants}
           initial="hidden"
@@ -745,9 +906,10 @@ const MedecinGererDossier = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
               Modifier le dossier (ID: {selectedDossier?.idDossier})
             </Typography>
+            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
             <form onSubmit={handleUpdateDossier}>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Diagnostic
                 </Typography>
                 <TextField
@@ -756,11 +918,17 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 />
               </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Traitement
                 </Typography>
                 <TextField
@@ -769,46 +937,61 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 />
               </Box>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   État
                 </Typography>
                 <Select
                   value={editDossier.etat}
                   onChange={(e) => setEditDossier({ ...editDossier, etat: e.target.value })}
                   fullWidth
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 >
                   <MenuItem value="en cours">En cours</MenuItem>
                   <MenuItem value="traité">Traité</MenuItem>
                 </Select>
               </Box>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary" 
-                fullWidth
-                sx={{
-                  bgcolor: colors.primary,
-                  '&:hover': { bgcolor: colors.secondary },
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  py: 1.5,
-                  fontWeight: 500,
-                }}
-              >
-                Mettre à jour
-              </Button>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  color="primary" 
+                  fullWidth
+                  sx={{
+                    bgcolor: colors.primary,
+                    '&:hover': { bgcolor: colors.secondary },
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    py: 1.5,
+                    fontWeight: 500,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  Mettre à jour
+                </Button>
+              </motion.div>
             </form>
           </Box>
         </motion.div>
       </Modal>
 
       {/* Modale pour ajouter une image */}
-      <Modal open={openImageModal} onClose={() => setOpenImageModal(false)}>
+      <Modal open={openImageModal} onClose={() => setOpenImageModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
         <motion.div
           variants={modalVariants}
           initial="hidden"
@@ -819,9 +1002,10 @@ const MedecinGererDossier = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
               Ajouter une image au dossier (ID: {selectedDossier?.idDossier})
             </Typography>
+            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
             <form onSubmit={handleUploadImage}>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Sélectionner un fichier
                 </Typography>
                 <TextField
@@ -830,32 +1014,41 @@ const MedecinGererDossier = () => {
                   fullWidth
                   inputProps={{ accept: '.dcm,.pdf,.jpg,.jpeg,.png,.docx,.txt' }}
                   variant="outlined"
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 />
               </Box>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary" 
-                fullWidth
-                sx={{
-                  bgcolor: colors.primary,
-                  '&:hover': { bgcolor: colors.secondary },
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  py: 1.5,
-                  fontWeight: 500,
-                }}
-              >
-                Ajouter
-              </Button>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button 
+                  type="submit" 
+                  variant="contained" 
+                  color="primary" 
+                  fullWidth
+                  sx={{
+                    bgcolor: colors.primary,
+                    '&:hover': { bgcolor: colors.secondary },
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    py: 1.5,
+                    fontWeight: 500,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  Ajouter
+                </Button>
+              </motion.div>
             </form>
           </Box>
         </motion.div>
       </Modal>
 
       {/* Modale pour partager un dossier */}
-      <Modal open={openShareModal} onClose={() => setOpenShareModal(false)}>
+      <Modal open={openShareModal} onClose={() => setOpenShareModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
         <motion.div
           variants={modalVariants}
           initial="hidden"
@@ -866,16 +1059,23 @@ const MedecinGererDossier = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
               Partager le dossier (ID: {selectedDossier?.idDossier})
             </Typography>
+            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
             <form onSubmit={handleShare}>
               <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Type de partage
                 </Typography>
                 <Select
                   value={shareType}
                   onChange={(e) => setShareType(e.target.value)}
                   fullWidth
-                  sx={{ borderRadius: 2 }}
+                  sx={{ 
+                    borderRadius: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: colors.secondary },
+                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                    },
+                  }}
                 >
                   <MenuItem value="direct">Avec un infirmier</MenuItem>
                   <MenuItem value="link">Générer un lien (pour un autre médecin)</MenuItem>
@@ -884,7 +1084,7 @@ const MedecinGererDossier = () => {
 
               {shareType === 'direct' ? (
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                  <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                     Sélectionner un infirmier
                   </Typography>
                   <Select
@@ -892,7 +1092,13 @@ const MedecinGererDossier = () => {
                     onChange={(e) => setSelectedUser(e.target.value)}
                     fullWidth
                     displayEmpty
-                    sx={{ borderRadius: 2 }}
+                    sx={{ 
+                      borderRadius: 3,
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': { borderColor: colors.secondary },
+                        '&.Mui-focused fieldset': { borderColor: colors.primary },
+                      },
+                    }}
                   >
                     <MenuItem value="" disabled>
                       Choisir un infirmier
@@ -907,7 +1113,7 @@ const MedecinGererDossier = () => {
               ) : (
                 <>
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                    <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                       Mot de passe
                     </Typography>
                     <TextField
@@ -917,11 +1123,17 @@ const MedecinGererDossier = () => {
                       fullWidth
                       placeholder="Entrez un mot de passe"
                       variant="outlined"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': { 
+                          borderRadius: 3,
+                          '&:hover fieldset': { borderColor: colors.secondary },
+                          '&.Mui-focused fieldset': { borderColor: colors.primary },
+                        },
+                      }}
                     />
                   </Box>
                   <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+                    <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                       Durée (en minutes)
                     </Typography>
                     <TextField
@@ -931,39 +1143,48 @@ const MedecinGererDossier = () => {
                       fullWidth
                       placeholder="Entrez la durée en minutes"
                       variant="outlined"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                      sx={{ 
+                        '& .MuiOutlinedInput-root': { 
+                          borderRadius: 3,
+                          '&:hover fieldset': { borderColor: colors.secondary },
+                          '&.Mui-focused fieldset': { borderColor: colors.primary },
+                        },
+                      }}
                     />
                   </Box>
                 </>
               )}
 
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                fullWidth
-                disabled={shareLoading}
-                startIcon={shareLoading ? <CircularProgress size={20} /> : null}
-                sx={{
-                  bgcolor: colors.primary,
-                  '&:hover': { bgcolor: colors.secondary },
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  py: 1.5,
-                  fontWeight: 500,
-                }}
-              >
-                {shareLoading ? 'Partage en cours...' : 'Partager'}
-              </Button>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  disabled={shareLoading}
+                  startIcon={shareLoading ? <CircularProgress size={20} /> : null}
+                  sx={{
+                    bgcolor: colors.primary,
+                    '&:hover': { bgcolor: colors.secondary },
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    py: 1.5,
+                    fontWeight: 500,
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  {shareLoading ? 'Partage en cours...' : 'Partager'}
+                </Button>
+              </motion.div>
             </form>
 
             {lienPartage && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.text }}>
+              <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(0, 0, 0, 0.02)', borderRadius: 2 }}>
+                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Lien de partage :
                 </Typography>
                 <Typography variant="body2" sx={{ wordBreak: 'break-all', color: colors.primary }}>
-                  <a href={lienPartage} target="_blank" rel="noopener noreferrer">
+                  <a href={lienPartage} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                     {lienPartage}
                   </a>
                 </Typography>
