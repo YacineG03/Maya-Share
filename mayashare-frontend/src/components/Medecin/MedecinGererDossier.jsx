@@ -34,7 +34,7 @@ import DicomViewer from './DicomViewer';
 
 // Constantes
 const API_URL = 'http://localhost:5000';
-const ORTHANC_URL = 'http://localhost:8042';
+const ORTHANC_URL = 'http://172.20.10.5:8042';
 
 // Palette de couleurs enrichie
 const colors = {
@@ -188,7 +188,7 @@ const FileViewerModal = ({ open, onClose, selectedFile }) => {
     }
 
     dicomWebUrl = selectedFile.dicomWebUrl
-      ? selectedFile.dicomWebUrl.replace('wadouri:http://localhost:8042/wado', 'wadouri:http://localhost:5000/wado')
+      ? selectedFile.dicomWebUrl.replace('wadouri:http://172.20.10.5:8042/wado', 'wadouri:http://localhost:5000/wado')
       : `wadouri:http://localhost:5000/wado?requestType=WADO&instanceID=${metadonnees.orthancId}`;
     console.log('URL DICOM générée:', dicomWebUrl);
   }

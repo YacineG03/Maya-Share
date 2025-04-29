@@ -1,8 +1,7 @@
-// src/services/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api", // Ajusté à ton port backend
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000/api",
   withCredentials: true,
 });
 
@@ -74,6 +73,12 @@ export const getImagesByUser = () => api.get("/images/user");
 export const getImagesByDossier = (idDossier) => api.get(`/images/dossier/${idDossier}`);
 
 export const deleteImage = (id) => api.delete(`/images/${id}`);
+
+// WADO
+export const getWadoUrl = (instanceId) =>
+  api.get("/images/wado", {
+    params: { requestType: 'WADO', instanceID: instanceId },
+  });
 
 // Partages
 export const shareDossier = (data) => api.post("/shares/dossier", data);

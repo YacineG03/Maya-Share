@@ -101,7 +101,7 @@ function MedecinDashboard() {
     const token = localStorage.getItem("token");
     if (!token) {
       console.log("Token absent dans MedecinDashboard, redirection vers /login");
-      navigate("/login");
+      navigate("/home");
       return;
     }
 
@@ -134,7 +134,7 @@ function MedecinDashboard() {
     setTimeout(() => {
       localStorage.removeItem("token");
       localStorage.removeItem("role");
-      navigate("/login");
+      navigate("/home");
     }, 2000);
   };
 

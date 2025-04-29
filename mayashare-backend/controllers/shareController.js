@@ -114,7 +114,7 @@ exports.accessSharedDossier = (req, res) => {
 
             const images = imageResults.map((image) => ({
                 ...image,
-                url: image.format.includes('dicom') ? `http://localhost:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview` : `/uploads/${image.nomFichier}`,
+                url: image.format.includes('dicom') ? `http://172.20.10.5:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview` : `/uploads/${image.nomFichier}`,
             }));
 
             res.json({

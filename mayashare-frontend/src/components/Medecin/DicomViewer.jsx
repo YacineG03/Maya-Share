@@ -34,7 +34,6 @@ const DicomViewer = ({ dicomWebUrl }) => {
         viewport.voi.windowCenter = image.windowCenter || 128;
         console.log('Niveaux de fenêtre appliqués:', viewport.voi);
         cornerstone.setViewport(element, viewport);
-        cornerstone.updateImage(element);
       },
       (error) => {
         console.error('Erreur lors du chargement de l\'image DICOM:', error);

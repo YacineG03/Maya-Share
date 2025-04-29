@@ -139,7 +139,7 @@ exports.getDossiersByMedecin = (req, res) => {
                         nomFichier: image.nomFichier,
                         format: image.format,
                         url: image.format.includes('dicom') && image.metadonnees
-                            ? `http://localhost:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview`
+                            ? `http://172.20.10.5:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview`
                             : `/uploads/${image.nomFichier}`,
                     }));
                     resolve({
@@ -276,14 +276,14 @@ const fetchImages = (idDossier, res) => {
         const images = results.map(image => {
             return new Promise((resolve) => {
                 const imageUrl = image.format.includes('dicom') && image.metadonnees
-                    ? `http://localhost:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview`
+                    ? `http://172.20.10.5:8042/instances/${JSON.parse(image.metadonnees).orthancId}/preview`
                     : `/uploads/${image.nomFichier}`;
                 let viewerUrl = null;
 
                 if (image.format.includes('dicom') && image.metadonnees) {
                     const metadonnees = JSON.parse(image.metadonnees);
                     if (metadonnees.orthancId) {
-                        axios.get(`http://localhost:8042/instances/${metadonnees.orthancId}`)
+                        axios.get(`http://172.20.10.5:8042/instances/${metadonnees.orthancId}`)
                             .then(instanceResponse => {
                                 const studyId = instanceResponse.data.ParentStudy;
                                 viewerUrl = studyId ? `http://localhost:3001/viewer/${studyId}` : null;

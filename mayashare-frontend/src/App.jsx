@@ -7,6 +7,7 @@ import PatientDashboard from "./components/Patient/PatientDashboard";
 import InfirmierDashboard from "./components/Infirmier/InfirmierDashboard";
 import MedecinDashboard from "./components/Medecin/MedecinDashboard";
 import AdminDashboard from "./components/Admin/AdminDashboard";
+import HomePage from "./components/HomePage/HomePage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -120,6 +121,7 @@ function App() {
           }
         />
         <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<HomePage />} />
         <Route
           path="/dashboard"
           element={
@@ -178,7 +180,7 @@ function App() {
             )
           }
         />
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/home" />} />
       </Routes>
     </Router>
   );

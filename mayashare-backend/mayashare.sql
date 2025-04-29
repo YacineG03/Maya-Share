@@ -43,7 +43,7 @@ CREATE TABLE Dossier (
 CREATE TABLE Image (
     idImage INT AUTO_INCREMENT PRIMARY KEY,
     nomFichier VARCHAR(255) NOT NULL,
-    format VARCHAR(10) NOT NULL,
+    format VARCHAR(255) NOT NULL,
     dateUpload DATETIME NOT NULL,
     metadonnees TEXT,
     idUtilisateur INT,
