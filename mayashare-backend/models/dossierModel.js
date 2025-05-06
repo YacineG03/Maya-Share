@@ -13,18 +13,40 @@ const Dossier = {
 
     findByPatient: (idPatient, callback) => {
         const query = `
-            SELECT d.*, GROUP_CONCAT(i.idImage) AS fichiers
+            SELECT d.idDossier, d.idPatient, d.idMedecin, d.dateCreation, d.diagnostic, d.traitement, d.etat,
+                   u.nom AS patientNom, u.prenom AS patientPrenom, u.email, u.telephone,
+                   m.nom AS medecinNom, m.prenom AS medecinPrenom,
+                   GROUP_CONCAT(i.idImage) AS fichiers
             FROM Dossier d
+            LEFT JOIN Utilisateur u ON d.idPatient = u.idUtilisateur
+            LEFT JOIN Utilisateur m ON d.idMedecin = m.idUtilisateur
             LEFT JOIN Image i ON d.idDossier = i.idDossier
             WHERE d.idPatient = ?
-            GROUP BY d.idDossier
+            GROUP BY d.idDossier, d.idPatient, d.idMedecin, d.dateCreation, d.diagnostic, d.traitement, d.etat,
+                     u.nom, u.prenom, u.email, u.telephone,
+                     m.nom, m.prenom
         `;
-        db.query(query, [idPatient], callback);
+        db.query(query, [idPatient], (err, results) => {
+            if (err) {
+                console.error('Erreur dans findByPatient query:', err.message, err.stack);
+            }
+            callback(err, results);
+        });
     },
 
     findByMedecin: (idMedecin, callback) => {
         const query = 'SELECT * FROM Dossier WHERE idMedecin = ?';
         db.query(query, [idMedecin], callback);
+    },
+    
+    getDossiersForInfirmier: (idInfirmier, callback) => {
+        const query = `
+          SELECT d.*, u.nom, u.prenom, u.email, u.telephone
+          FROM Dossier d
+          JOIN Utilisateur u ON d.idPatient = u.idUtilisateur
+          WHERE d.idInfirmier = ?
+        `;
+        db.query(query, [idInfirmier], callback);
     },
 
     update: (id, dossierData, callback) => {

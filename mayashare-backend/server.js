@@ -25,13 +25,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-
-
-
-// Middleware pour parser les requêtes JSON (avant les routes)
 app.use(express.json());
 
-// Middleware pour logger les requêtes entrantes
 app.use((req, res, next) => {
   console.log(`Requête reçue: ${req.method} ${req.url}`);
   console.log("En-têtes:", req.headers);
@@ -40,8 +35,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.urlencoded({ extended: true }));
-// Middleware pour servir les fichiers statiques
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('Uploads'));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -63,7 +57,13 @@ app.use((err, req, res, next) => {
 app.get('/proxy/orthanc/wado', async (req, res) => {
   const orthancUrl = `http://localhost:8042/wado?${new URLSearchParams(req.query).toString()}`;
   try {
-    const response = await axios.get(orthancUrl, { responseType: 'arraybuffer' });
+    const response = await axios.get(orthancUrl, {
+      auth: {
+        username: 'mayashare',
+        password: 'passer',
+      },
+      responseType: 'arraybuffer',
+    });
     res.set('Content-Type', 'application/dicom');
     res.send(response.data);
   } catch (err) {
@@ -84,18 +84,20 @@ app.get('/wado', async (req, res) => {
 
     // Faire une requête à Orthanc pour récupérer le fichier DICOM
     const orthancResponse = await axios.get(`http://localhost:8042/instances/${instanceID}/file`, {
-      responseType: 'arraybuffer', // Récupérer les données binaires
+      auth: {
+        username: 'mayashare',
+        password: 'passer',
+      },
+      responseType: 'arraybuffer',
     });
 
     console.log('Réponse Orthanc WADO:', orthancResponse.status, orthancResponse.data.length, 'octets');
 
-    // Définir les en-têtes pour indiquer que c'est un fichier DICOM
     res.set({
       'Content-Type': 'application/dicom',
       'Content-Length': orthancResponse.data.length,
     });
 
-    // Envoyer les données binaires au client
     res.send(orthancResponse.data);
   } catch (error) {
     console.error('Erreur proxy WADO:', error.message);

@@ -1,10 +1,16 @@
-// models/rendezVousModel.js
 const db = require('../config/db');
 
 const RendezVous = {
   create: (rendezVousData, callback) => {
-    const query = 'INSERT INTO RendezVous (idPatient, idMedecin, dateDemande, dateRendezVous, motif, etat) VALUES (?, ?, NOW(), ?, ?, ?)';
-    db.query(query, [rendezVousData.idPatient, rendezVousData.idMedecin, rendezVousData.dateRendezVous, rendezVousData.motif, 'en attente'], callback);
+    const query = 'INSERT INTO RendezVous (idPatient, idMedecin, idInfirmier, dateDemande, dateRendezVous, motif, etat) VALUES (?, ?, ?, NOW(), ?, ?, ?)';
+    db.query(query, [
+      rendezVousData.idPatient,
+      rendezVousData.idMedecin,
+      rendezVousData.idInfirmier || null,
+      rendezVousData.dateRendezVous,
+      rendezVousData.motif,
+      'en attente'
+    ], callback);
   },
 
   getMedecinEtHopital: (idMedecin, callback) => {
@@ -27,10 +33,12 @@ const RendezVous = {
         rv.*, 
         CONCAT(p.nom, ' ', p.prenom) AS nomPatient, 
         p.prenom AS prenomPatient,
-        CONCAT(m.nom, ' ', m.prenom) AS nomMedecin
+        CONCAT(m.nom, ' ', m.prenom) AS nomMedecin,
+        CONCAT(i.nom, ' ', i.prenom) AS nomInfirmier
       FROM RendezVous rv
       JOIN Utilisateur p ON rv.idPatient = p.idUtilisateur
       JOIN Utilisateur m ON rv.idMedecin = m.idUtilisateur
+      LEFT JOIN Utilisateur i ON rv.idInfirmier = i.idUtilisateur
       WHERE rv.idRendezVous = ?
     `;
     db.query(query, [id], callback);
@@ -42,15 +50,18 @@ const RendezVous = {
         rv.idRendezVous, 
         rv.idPatient, 
         rv.idMedecin, 
+        rv.idInfirmier,
         rv.dateRendezVous, 
         rv.motif, 
         rv.etat, 
         rv.commentaire, 
         CONCAT(m.nom, ' ', m.prenom) AS nomMedecin, 
+        CONCAT(i.nom, ' ', i.prenom) AS nomInfirmier,
         h.nom AS nomHopital, 
         h.adresse AS adresseHopital
       FROM RendezVous rv
       JOIN Utilisateur m ON rv.idMedecin = m.idUtilisateur
+      LEFT JOIN Utilisateur i ON rv.idInfirmier = i.idUtilisateur
       LEFT JOIN Hopital h ON m.idHôpital = h.idHôpital
       WHERE rv.idPatient = ?
       ORDER BY rv.dateRendezVous DESC
@@ -58,41 +69,23 @@ const RendezVous = {
     db.query(query, [idPatient], callback);
   },
 
-//   findByMedecin: (idMedecin, callback) => {
-//     const query = `
-//       SELECT 
-//         rv.idRendezVous, 
-//         rv.idPatient, 
-//         rv.idMedecin, 
-//         rv.dateRendezVous, 
-//         rv.motif, 
-//         rv.etat, 
-//         rv.commentaire, 
-//         CONCAT(p.nom, ' ', p.prenom) AS nomPatient,
-//         p.prenom AS prenomPatient
-//       FROM RendezVous rv
-//       JOIN Utilisateur p ON rv.idPatient = p.idUtilisateur
-//       WHERE rv.idMedecin = ?
-//       ORDER BY rv.dateRendezVous DESC
-//     `;
-//     db.query(query, [idMedecin], callback);
-//   },
-
-// models/rendezVousModel.js
-findByMedecin: (idMedecin, callback) => {
+  findByMedecin: (idMedecin, callback) => {
     const query = `
       SELECT 
         rv.idRendezVous, 
         rv.idPatient, 
         rv.idMedecin, 
+        rv.idInfirmier,
         rv.dateRendezVous, 
         rv.motif, 
         rv.etat, 
         rv.commentaire, 
         CONCAT(p.nom, ' ', p.prenom) AS nomPatient,
-        p.prenom AS prenomPatient
+        p.prenom AS prenomPatient,
+        CONCAT(i.nom, ' ', i.prenom) AS nomInfirmier
       FROM RendezVous rv
       JOIN Utilisateur p ON rv.idPatient = p.idUtilisateur
+      LEFT JOIN Utilisateur i ON rv.idInfirmier = i.idUtilisateur
       WHERE rv.idMedecin = ?
       ORDER BY rv.dateRendezVous DESC
     `;
@@ -107,33 +100,40 @@ findByMedecin: (idMedecin, callback) => {
       callback(null, results);
     });
   },
-  
+
   findByInfirmier: (idInfirmier, callback) => {
     const query = `
       SELECT 
         rv.idRendezVous, 
         rv.idPatient, 
         rv.idMedecin, 
+        rv.idInfirmier,
         rv.dateRendezVous, 
         rv.motif, 
         rv.etat, 
         rv.commentaire, 
         CONCAT(p.nom, ' ', p.prenom) AS nomPatient,
         p.prenom AS prenomPatient,
-        CONCAT(m.nom, ' ', m.prenom) AS nomMedecin
+        CONCAT(m.nom, ' ', m.prenom) AS nomMedecin,
+        CONCAT(i.nom, ' ', i.prenom) AS nomInfirmier
       FROM RendezVous rv
       JOIN Utilisateur p ON rv.idPatient = p.idUtilisateur
       JOIN Utilisateur m ON rv.idMedecin = m.idUtilisateur
-      JOIN Utilisateur i ON m.idHôpital = i.idHôpital
-      WHERE i.idUtilisateur = ? AND i.role = 'Infirmier'
+      LEFT JOIN Utilisateur i ON rv.idInfirmier = i.idUtilisateur
+      WHERE rv.idInfirmier = ?
       ORDER BY rv.dateRendezVous DESC
     `;
     db.query(query, [idInfirmier], callback);
   },
 
   update: (id, rendezVousData, callback) => {
-    const query = 'UPDATE RendezVous SET etat = ?, commentaire = ? WHERE idRendezVous = ?';
-    db.query(query, [rendezVousData.etat, rendezVousData.commentaire || '', id], callback);
+    const query = 'UPDATE RendezVous SET etat = ?, commentaire = ?, idInfirmier = ? WHERE idRendezVous = ?';
+    db.query(query, [
+      rendezVousData.etat || 'en attente',
+      rendezVousData.commentaire || '',
+      rendezVousData.idInfirmier || null,
+      id
+    ], callback);
   },
 
   delete: (id, callback) => {

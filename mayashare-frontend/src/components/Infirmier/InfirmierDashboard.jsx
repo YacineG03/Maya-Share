@@ -133,7 +133,7 @@ function InfirmierDashboard() {
     setTimeout(() => {
       localStorage.removeItem("token");
       localStorage.removeItem("role");
-      navigate("/login");
+      navigate("/home");
     }, 2000);
   };
 

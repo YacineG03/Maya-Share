@@ -42,6 +42,8 @@ exports.createDossier = (req, res) => {
 exports.getDossiersByPatient = (req, res) => {
     const idPatient = req.user.role === 'Patient' ? req.user.id : req.params.idPatient;
 
+    console.log('Requête getDossiersByPatient pour idPatient:', idPatient, 'rôle:', req.user.role);
+
     if (req.user.role !== 'Patient' && req.user.role !== 'Médecin' && req.user.role !== 'Infirmier') {
         return res.status(403).json({ message: 'Accès interdit.' });
     }
@@ -52,9 +54,11 @@ exports.getDossiersByPatient = (req, res) => {
 
     Dossier.findByPatient(idPatient, (err, results) => {
         if (err) {
-            console.error('Erreur lors de la récupération des dossiers:', err);
-            return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
+            console.error('Erreur dans findByPatient:', err.message, err.stack);
+            return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.', error: err.message });
         }
+
+        console.log('Résultats bruts de findByPatient:', results);
 
         let filteredDossiers = results;
 
@@ -65,8 +69,8 @@ exports.getDossiersByPatient = (req, res) => {
         if (req.user.role === 'Infirmier') {
             Share.findSharedWithUser(req.user.id, (err, sharedDossiers) => {
                 if (err) {
-                    console.error('Erreur lors de la récupération des dossiers partagés:', err);
-                    return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
+                    console.error('Erreur dans findSharedWithUser:', err.message, err.stack);
+                    return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.', error: err.message });
                 }
 
                 const sharedDossierIds = sharedDossiers.map(d => d.idDossier);
@@ -80,7 +84,12 @@ exports.getDossiersByPatient = (req, res) => {
                     return {
                         idDossier: dossier.idDossier,
                         idPatient: dossier.idPatient,
+                        patientNom: dossier.patientNom,
+                        patientPrenom: dossier.patientPrenom,
+                        email: dossier.email,
+                        telephone: dossier.telephone,
                         idMedecin: dossier.idMedecin,
+                        medecinNom: `${dossier.medecinPrenom || ''} ${dossier.medecinNom || ''}`.trim() || 'Non spécifié',
                         dateCreation: dossier.dateCreation,
                         diagnostic: dossier.diagnostic,
                         traitement: dossier.traitement,
@@ -103,7 +112,12 @@ exports.getDossiersByPatient = (req, res) => {
             return {
                 idDossier: dossier.idDossier,
                 idPatient: dossier.idPatient,
+                patientNom: dossier.patientNom,
+                patientPrenom: dossier.patientPrenom,
+                email: dossier.email,
+                telephone: dossier.telephone,
                 idMedecin: dossier.idMedecin,
+                medecinNom: `${dossier.medecinPrenom || ''} ${dossier.medecinNom || ''}`.trim() || 'Non spécifié',
                 dateCreation: dossier.dateCreation,
                 diagnostic: dossier.diagnostic,
                 traitement: dossier.traitement,
@@ -329,7 +343,7 @@ const fetchImages = (idDossier, res) => {
                         nomFichier: image.nomFichier,
                         format: image.format,
                         metadonnees: image.metadonnees,
-                        idUtilisateur:  image.idUtilisateur,
+                        idUtilisateur: image.idUtilisateur,
                         idDossier: image.idDossier,
                         url: imageUrl,
                         viewerUrl: null,
@@ -341,5 +355,19 @@ const fetchImages = (idDossier, res) => {
         Promise.all(images).then(imageResults => {
             res.status(200).json({ images: imageResults });
         });
+    });
+};
+
+exports.getDossiersForInfirmier = (req, res) => {
+    if (req.user.role !== 'Infirmier') {
+      return res.status(403).json({ message: 'Accès interdit : réservé aux infirmiers.' });
+    }
+  
+    Dossier.getDossiersForInfirmier(req.user.id, (err, results) => {
+      if (err) {
+        console.error('Erreur lors de la récupération des dossiers:', err);
+        return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
+      }
+      res.json({ dossiers: results });
     });
 };

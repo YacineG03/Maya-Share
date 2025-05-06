@@ -21,10 +21,25 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Select,
 } from '@mui/material';
+import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import { getRendezVousByMedecin, acceptRendezVous, declineRendezVous, deleteRendezVous } from '../../services/api';
+import ShareIcon from '@mui/icons-material/Share';
+import { getRendezVousByMedecin, acceptRendezVous, declineRendezVous, deleteRendezVous, assignRendezVousToInfirmier, getUsers } from '../../services/api';
+
+// Animation variants
+const rowVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hover: { backgroundColor: '#f5f5f5', transition: { duration: 0.2 } },
+};
+
+const buttonVariants = {
+  hover: { scale: 1.05, transition: { duration: 0.2 } },
+  tap: { scale: 0.95, transition: { duration: 0.1 } },
+};
 
 const MedecinGererRV = () => {
   const [rendezVous, setRendezVous] = useState([]);
@@ -35,19 +50,22 @@ const MedecinGererRV = () => {
   const [actionType, setActionType] = useState('');
   const [commentaire, setCommentaire] = useState('');
   const [filter, setFilter] = useState('tous');
+  const [openAssignModal, setOpenAssignModal] = useState(false);
+  const [infirmiers, setInfirmiers] = useState([]);
+  const [selectedInfirmier, setSelectedInfirmier] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const response = await getRendezVousByMedecin();
-        console.log('Réponse API complète:', response);
         const data = Array.isArray(response.data) ? response.data : response.data.rendezVous || [];
-        console.log('Rendez-vous extraits:', data);
         setRendezVous(data);
         setError(null);
+
+        const usersResponse = await getUsers({ role: 'Infirmier' });
+        setInfirmiers(usersResponse.data.users || []);
       } catch (err) {
-        console.error('Erreur lors de la récupération des rendez-vous:', err);
         const errorMessage = err.response?.data?.message || 'Erreur de chargement des rendez-vous';
         setError(errorMessage);
         toast.error(errorMessage);
@@ -81,6 +99,14 @@ const MedecinGererRV = () => {
           await deleteRendezVous(selectedRdv.idRendezVous);
           toast.success('Rendez-vous supprimé avec succès');
           break;
+        case 'assign':
+          if (!selectedInfirmier) {
+            toast.error('Veuillez sélectionner un infirmier');
+            return;
+          }
+          await assignRendezVousToInfirmier(selectedRdv.idRendezVous, { idInfirmier: selectedInfirmier });
+          toast.success('Rendez-vous assigné avec succès');
+          break;
         default:
           break;
       }
@@ -89,11 +115,12 @@ const MedecinGererRV = () => {
       const data = Array.isArray(response.data) ? response.data : response.data.rendezVous || [];
       setRendezVous(data);
       setOpenDialog(false);
+      setOpenAssignModal(false);
       setSelectedRdv(null);
       setActionType('');
       setCommentaire('');
+      setSelectedInfirmier('');
     } catch (err) {
-      console.error('Erreur lors de l’action:', err);
       const errorMessage = err.response?.data?.message || 'Une erreur est survenue';
       toast.error(errorMessage);
     }
@@ -129,122 +156,156 @@ const MedecinGererRV = () => {
   );
 
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: 4, bgcolor: '#f8f9fa' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
-        <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
-          <EventAvailableIcon fontSize="large" />
-        </Avatar>
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.5 }}>
+          <Avatar sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}>
+            <EventAvailableIcon fontSize="large" />
+          </Avatar>
+        </motion.div>
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Gestion des rendez-vous
         </Typography>
       </Box>
 
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Liste des rendez-vous
-          </Typography>
-          <TextField
-            select
-            label="Filtrer par statut"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="tous">Tous</MenuItem>
-            <MenuItem value="en attente">En attente</MenuItem>
-            <MenuItem value="accepté">Acceptés</MenuItem>
-            <MenuItem value="refusé">Refusés</MenuItem>
-          </TextField>
-        </Box>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+        <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Liste des rendez-vous
+            </Typography>
+            <TextField
+              select
+              label="Filtrer par statut"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              size="small"
+              sx={{ minWidth: 150 }}
+            >
+              <MenuItem value="tous">Tous</MenuItem>
+              <MenuItem value="en attente">En attente</MenuItem>
+              <MenuItem value="accepté">Acceptés</MenuItem>
+              <MenuItem value="décliné">Refusés</MenuItem>
+            </TextField>
           </Box>
-        ) : filteredRendezVous.length === 0 ? (
-          <Typography color="text.secondary">
-            Aucun rendez-vous trouvé.
-          </Typography>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Patient</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Heure</TableCell>
-                  <TableCell>Motif</TableCell>
-                  <TableCell>Statut</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredRendezVous.map((rdv) => (
-                  <TableRow key={rdv.idRendezVous}>
-                    <TableCell>{rdv.nomPatient} {rdv.prenomPatient}</TableCell>
-                    <TableCell>{formatDate(rdv.dateRendezVous)}</TableCell>
-                    <TableCell>{formatTime(rdv.dateRendezVous)}</TableCell>
-                    <TableCell>{rdv.motif || 'Non spécifié'}</TableCell>
-                    <TableCell>{getStatusLabel(rdv.etat)}</TableCell>
-                    <TableCell>
-                      {rdv.etat === 'en attente' && (
-                        <>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : filteredRendezVous.length === 0 ? (
+            <Typography color="text.secondary">
+              Aucun rendez-vous trouvé.
+            </Typography>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Patient</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Heure</TableCell>
+                    <TableCell>Motif</TableCell>
+                    <TableCell>Statut</TableCell>
+                    <TableCell>Infirmier</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredRendezVous.map((rdv) => (
+                    <motion.tr
+                      key={rdv.idRendezVous}
+                      variants={rowVariants}
+                      initial="hidden"
+                      animate="visible"
+                      whileHover="hover"
+                    >
+                      <TableCell>{rdv.nomPatient} {rdv.prenomPatient}</TableCell>
+                      <TableCell>{formatDate(rdv.dateRendezVous)}</TableCell>
+                      <TableCell>{formatTime(rdv.dateRendezVous)}</TableCell>
+                      <TableCell>{rdv.motif || 'Non spécifié'}</TableCell>
+                      <TableCell>{getStatusLabel(rdv.etat)}</TableCell>
+                      <TableCell>{rdv.nomInfirmier || 'Non assigné'}</TableCell>
+                      <TableCell>
+                        {rdv.etat === 'en attente' && (
+                          <>
+                            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                              <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                sx={{ mr: 1 }}
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('accept');
+                                  setOpenDialog(true);
+                                }}
+                              >
+                                Accepter
+                              </Button>
+                            </motion.div>
+                            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                sx={{ mr: 1 }}
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('decline');
+                                  setOpenDialog(true);
+                                }}
+                              >
+                                Refuser
+                              </Button>
+                            </motion.div>
+                          </>
+                        )}
+                        <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                           <Button
-                            variant="contained"
-                            color="success"
+                            variant="outlined"
+                            color="primary"
                             size="small"
+                            startIcon={<ShareIcon />}
                             sx={{ mr: 1 }}
                             onClick={() => {
                               setSelectedRdv(rdv);
-                              setActionType('accept');
-                              setOpenDialog(true);
+                              setActionType('assign');
+                              setOpenAssignModal(true);
                             }}
                           >
-                            Accepter
+                            Assigner
                           </Button>
+                        </motion.div>
+                        <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
                           <Button
                             variant="outlined"
                             color="error"
                             size="small"
-                            sx={{ mr: 1 }}
                             onClick={() => {
                               setSelectedRdv(rdv);
-                              setActionType('decline');
+                              setActionType('delete');
                               setOpenDialog(true);
                             }}
                           >
-                            Refuser
+                            Supprimer
                           </Button>
-                        </>
-                      )}
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => {
-                          setSelectedRdv(rdv);
-                          setActionType('delete');
-                          setOpenDialog(true);
-                        }}
-                      >
-                        Supprimer
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
+                        </motion.div>
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Paper>
+      </motion.div>
 
       <Dialog
         open={openDialog}
@@ -290,6 +351,44 @@ const MedecinGererRV = () => {
             autoFocus
           >
             Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openAssignModal}
+        onClose={() => setOpenAssignModal(false)}
+        aria-labelledby="assign-dialog-title"
+      >
+        <DialogTitle id="assign-dialog-title">
+          Assigner le rendez-vous à un infirmier
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Sélectionnez un infirmier pour assigner le rendez-vous de {selectedRdv?.nomPatient} prévu le {formatDate(selectedRdv?.dateRendezVous)}.
+          </DialogContentText>
+          <Select
+            value={selectedInfirmier}
+            onChange={(e) => setSelectedInfirmier(e.target.value)}
+            fullWidth
+            displayEmpty
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="" disabled>
+              Choisir un infirmier
+            </MenuItem>
+            {infirmiers.map((infirmier) => (
+              <MenuItem key={infirmier.idUtilisateur} value={infirmier.idUtilisateur}>
+                {infirmier.nom} {infirmier.prenom}
+              </MenuItem>
+            ))}
+          </Select>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAssignModal(false)}>Annuler</Button>
+          <Button onClick={handleAction} color="primary" autoFocus>
+            Assigner
           </Button>
         </DialogActions>
       </Dialog>
