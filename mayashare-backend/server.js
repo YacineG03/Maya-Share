@@ -9,6 +9,7 @@ const traceRoutes = require('./routes/traceRoutes');
 const dossierRoutes = require('./routes/dossierRoutes');
 const rendezVousRoutes = require('./routes/rendezVousRoutes');
 const hopitalRoutes = require('./routes/hopitalRoutes');
+const consultationRoutes = require('./routes/consultationRoutes');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/traces', traceRoutes);
 app.use('/api/dossiers', dossierRoutes);
 app.use('/api/rendezvous', rendezVousRoutes);
 app.use('/api/hopitaux', hopitalRoutes);
+app.use('/api/consultations', consultationRoutes);
 
 // Gestion des erreurs globales
 app.use((err, req, res, next) => {

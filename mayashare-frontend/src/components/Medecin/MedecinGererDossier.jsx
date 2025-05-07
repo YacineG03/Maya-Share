@@ -1,817 +1,1587 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Modal, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  CircularProgress, 
-  IconButton, 
-  Chip, 
-  Paper, 
-  Divider, 
-  Avatar, 
-  Tooltip 
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import ImageIcon from '@mui/icons-material/Image';
-import ShareIcon from '@mui/icons-material/Share';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import DescriptionIcon from '@mui/icons-material/Description';
-import PhotoIcon from '@mui/icons-material/Photo';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import { toast } from 'react-toastify';
-import { motion, AnimatePresence } from 'framer-motion';
-import { getDossiers, createDossier, updateDossier, uploadImage, getUsers, shareDossier, deleteImage, getImagesByDossier } from '../../services/api';
-import DicomViewer from './DicomViewer';
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import {
+  Box,
+  Typography,
+  Button,
+  Modal,
+  TextField,
+  Select,
+  MenuItem,
+  CircularProgress,
+  IconButton,
+  Chip,
+  Paper,
+  Divider,
+  Avatar,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Grid,
+  Badge,
+  Skeleton,
+  Alert,
+  Fade,
+} from "@mui/material"
+import AddIcon from "@mui/icons-material/Add"
+import EditIcon from "@mui/icons-material/Edit"
+import ShareIcon from "@mui/icons-material/Share"
+import RefreshIcon from "@mui/icons-material/Refresh"
+import DeleteIcon from "@mui/icons-material/Delete"
+import VisibilityIcon from "@mui/icons-material/Visibility"
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
+import ExpandLessIcon from "@mui/icons-material/ExpandLess"
+import DescriptionIcon from "@mui/icons-material/Description"
+import PhotoIcon from "@mui/icons-material/Photo"
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices"
+import NoteIcon from "@mui/icons-material/Note"
+import PersonIcon from "@mui/icons-material/Person"
+import FolderIcon from "@mui/icons-material/Folder"
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety"
+import MedicationIcon from "@mui/icons-material/Medication"
+import SearchIcon from "@mui/icons-material/Search"
+import FilterListIcon from "@mui/icons-material/FilterList"
+import CloseIcon from "@mui/icons-material/Close"
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"
+import { toast } from "react-toastify"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  getDossiers,
+  createDossier,
+  updateDossier,
+  uploadImage,
+  getUsers,
+  shareDossier,
+  deleteImage,
+  getImagesByDossier,
+  createConsultation,
+  getConsultationsByDossier,
+  updateConsultation,
+} from "../../services/api"
+import DicomViewer from "./DicomViewer"
+
+// Palette de couleurs modernisée
+const colors = {
+  primary: "#0077B6",
+  primaryLight: "#0096C7",
+  secondary: "#00B4D8",
+  secondaryLight: "#48CAE4",
+  background: "#F8F9FA",
+  cardBackground: "white",
+  cardBackgroundHover: "#F9FAFB",
+  text: "#1A202C",
+  textSecondary: "#4A5568",
+  success: "#10B981",
+  error: "#EF4444",
+  warning: "#F59E0B",
+  info: "#3B82F6",
+  divider: "rgba(0, 0, 0, 0.08)",
+  shadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+  shadowHover: "0 8px 30px rgba(0, 0, 0, 0.12)",
+  hover: "rgba(0, 119, 182, 0.05)",
+}
 
 // Constantes
-const API_URL = 'http://localhost:5000';
-const ORTHANC_URL = 'http://localhost:8042';
+const API_URL = "http://localhost:5000"
+const ORTHANC_URL = "http://localhost:8042"
+const DEFAULT_SHARE_DURATION = 1440
 
-// Palette de couleurs enrichie
-const colors = {
-  primary: '#0077B6',
-  primaryDark: '#005F8C',
-  secondary: '#00B4D8',
-  secondaryLight: '#48CAE4',
-  background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
-  cardBackground: 'linear-gradient(145deg, #FFFFFF 0%, #F9FAFB 100%)',
-  modalBackground: 'rgba(255, 255, 255, 0.95)',
-  text: '#1A202C',
-  textSecondary: '#4A5568',
-  accent: '#48CAE4',
-  success: '#34C759',
-  error: '#FF3B30',
-  warning: '#FF9500',
-  divider: 'rgba(0, 0, 0, 0.08)',
-  shadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-};
-
-// Styles des modales avec effet de verre dépoli
+// Styles des modales
 const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 480,
-  bgcolor: colors.modalBackground,
-  backdropFilter: 'blur(10px)',
-  boxShadow: colors.shadow,
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: { xs: "90%", sm: 480 },
+  bgcolor: "white",
+  boxShadow: colors.shadowHover,
   p: 4,
-  borderRadius: 4,
-  outline: 'none',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
-};
+  borderRadius: 3,
+  outline: "none",
+  maxHeight: "90vh",
+  overflow: "auto",
+}
 
 const fileModalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '80%',
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: { xs: "90%", sm: "80%" },
   maxWidth: 960,
-  maxHeight: '85%',
-  bgcolor: colors.modalBackground,
-  backdropFilter: 'blur(10px)',
-  boxShadow: colors.shadow,
+  maxHeight: "85%",
+  bgcolor: "white",
+  boxShadow: colors.shadowHover,
   p: 4,
-  borderRadius: 4,
-  overflow: 'auto',
-  outline: 'none',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
-};
+  borderRadius: 3,
+  overflow: "auto",
+  outline: "none",
+}
 
-// Animation variants pour framer-motion
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+      when: "beforeChildren",
+      staggerChildren: 0.1,
+    },
+  },
+}
+
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: (i) => ({
     opacity: 1,
     y: 0,
     transition: {
-      delay: i * 0.15,
-      duration: 0.6,
-      ease: [0.22, 1, 0.36, 1],
+      delay: i * 0.1,
+      duration: 0.5,
+      ease: [0.25, 0.1, 0.25, 1.0],
     },
   }),
   hover: {
-    scale: 1.03,
-    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
+    scale: 1.02,
+    boxShadow: colors.shadowHover,
     transition: { duration: 0.3 },
   },
-};
+}
 
 const modalVariants = {
   hidden: { opacity: 0, scale: 0.9, y: 20 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
+  visible: {
+    opacity: 1,
+    scale: 1,
     y: 0,
     transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
   },
-  exit: { 
-    opacity: 0, 
-    scale: 0.9, 
+  exit: {
+    opacity: 0,
+    scale: 0.9,
     y: 20,
     transition: { duration: 0.3 },
   },
-};
+}
 
 const expandVariants = {
   hidden: { height: 0, opacity: 0 },
-  visible: { 
-    height: 'auto', 
-    opacity: 1, 
+  visible: {
+    height: "auto",
+    opacity: 1,
     transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
   },
-  exit: { 
-    height: 0, 
-    opacity: 0, 
+  exit: {
+    height: 0,
+    opacity: 0,
     transition: { duration: 0.3 },
   },
-};
+}
 
 const buttonVariants = {
   hover: {
     scale: 1.05,
-    backgroundColor: colors.secondary,
     transition: { duration: 0.2 },
   },
   tap: {
     scale: 0.98,
     transition: { duration: 0.1 },
   },
-};
+}
 
-// Composant FileViewerModal amélioré
+// Composant FileViewerModal
 const FileViewerModal = ({ open, onClose, selectedFile }) => {
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(false)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
 
   useEffect(() => {
     if (open && selectedFile) {
-      console.log('Selected File:', selectedFile);
-      setImageError(false);
+      console.log("Selected File:", selectedFile)
+      setImageError(false)
     }
-  }, [open, selectedFile]);
+  }, [open, selectedFile])
 
   if (!selectedFile) {
-    return null;
+    return null
   }
 
   const isDicom =
-    selectedFile.format.toLowerCase().includes('dicom') ||
-    selectedFile.nomFichier.toLowerCase().endsWith('.dcm');
+    selectedFile.format?.toLowerCase().includes("dicom") || selectedFile.nomFichier?.toLowerCase().endsWith(".dcm")
 
-  let dicomWebUrl = null;
+  let dicomWebUrl = null
   if (isDicom) {
-    let metadonnees;
+    let metadonnees
     try {
-      metadonnees = JSON.parse(selectedFile.metadonnees || '{}');
+      metadonnees = JSON.parse(selectedFile.metadonnees || "{}")
     } catch (e) {
-      console.error('Erreur parsing métadonnées:', e);
-      toast.error('Métadonnées invalides.');
-      setImageError(true);
-      return;
+      console.error("Erreur parsing métadonnées:", e)
+      toast.error("Métadonnées invalides.")
+      setImageError(true)
+      return null
     }
 
     if (!metadonnees.orthancId) {
-      toast.error('ID Orthanc manquant.');
-      setImageError(true);
-      return;
+      toast.error("ID Orthanc manquant.")
+      setImageError(true)
+      return null
     }
 
     dicomWebUrl = selectedFile.dicomWebUrl
-      ? selectedFile.dicomWebUrl.replace('wadouri:http://localhost:8042/wado', 'wadouri:http://localhost:5000/wado')
-      : `wadouri:http://localhost:5000/wado?requestType=WADO&instanceID=${metadonnees.orthancId}`;
-    console.log('URL DICOM générée:', dicomWebUrl);
+      ? selectedFile.dicomWebUrl.replace("wadouri:http://localhost:8042/wado", "wadouri:http://localhost:5000/wado")
+      : `wadouri:http://localhost:5000/wado?requestType=WADO&instanceID=${metadonnees.orthancId}`
+    console.log("URL DICOM générée:", dicomWebUrl)
   }
 
   return (
-    <Modal open={open} onClose={onClose} sx={{ backdropFilter: 'blur(5px)' }}>
-      <motion.div
-        variants={modalVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-      >
+    <Modal open={open} onClose={onClose} closeAfterTransition sx={{ backdropFilter: "blur(5px)" }}>
+      <Fade in={open}>
         <Box sx={fileModalStyle}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-            Visualisation du fichier : {selectedFile.nomFichier}
-          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+              {isDicom ? "Visualisation DICOM" : "Visualisation du fichier"} : {selectedFile.nomFichier}
+            </Typography>
+            <IconButton onClick={onClose} size="small" sx={{ color: colors.text }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
           <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
           {isDicom ? (
             imageError ? (
-              <Typography variant="body2" color={colors.error}>
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
                 Impossible de charger l'image DICOM.
-              </Typography>
+              </Alert>
             ) : (
-              <DicomViewer dicomWebUrl={dicomWebUrl} />
+              <Box sx={{ height: isMobile ? "50vh" : "65vh", width: "100%", borderRadius: 2, overflow: "hidden" }}>
+                <DicomViewer dicomWebUrl={dicomWebUrl} />
+              </Box>
             )
-          ) : selectedFile.format.toLowerCase().includes('image') ? (
+          ) : selectedFile.format?.toLowerCase().includes("image") ? (
             imageError ? (
-              <Typography variant="body2" color={colors.error}>
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
                 Impossible de charger l'image.
-              </Typography>
+              </Alert>
             ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
                 <img
                   src={`${API_URL}${selectedFile.url}`}
                   alt={selectedFile.nomFichier}
-                  style={{ maxWidth: '100%', maxHeight: '500px', borderRadius: 12, boxShadow: colors.shadow }}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: isMobile ? "50vh" : "65vh",
+                    borderRadius: 12,
+                    boxShadow: colors.shadow,
+                  }}
                   onError={() => setImageError(true)}
                 />
               </Box>
             )
-          ) : selectedFile.nomFichier.toLowerCase().endsWith('.pdf') ? (
+          ) : selectedFile.nomFichier?.toLowerCase().endsWith(".pdf") ? (
             <iframe
               src={`${API_URL}${selectedFile.url}`}
               title={selectedFile.nomFichier}
-              style={{ width: '100%', height: '500px', border: 'none', borderRadius: 12, boxShadow: colors.shadow }}
+              style={{
+                width: "100%",
+                height: isMobile ? "50vh" : "65vh",
+                border: "none",
+                borderRadius: 12,
+                boxShadow: colors.shadow,
+              }}
             />
           ) : (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DescriptionIcon sx={{ color: colors.primary }} />
-              <Typography variant="body2" color={colors.textSecondary}>
-                Téléchargez le fichier :{' '}
-                <a href={`${API_URL}${selectedFile.url}`} download style={{ color: colors.primary, textDecoration: 'none' }}>
-                  {selectedFile.nomFichier}
-                </a>
-              </Typography>
-            </Box>
-          )}
-          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={onClose} 
-              sx={{ 
-                mt: 3, 
-                bgcolor: colors.primary, 
-                '&:hover': { bgcolor: colors.secondary }, 
-                borderRadius: 3, 
-                textTransform: 'none', 
-                py: 1.2,
-                fontWeight: 500,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                p: 3,
+                bgcolor: colors.background,
+                borderRadius: 2,
               }}
             >
-              Fermer
-            </Button>
-          </motion.div>
-        </Box>
-      </motion.div>
-    </Modal>
-  );
-};
+              <DescriptionIcon sx={{ color: colors.primary, fontSize: 40 }} />
+              <Box>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: colors.text }}>
+                  {selectedFile.nomFichier}
+                </Typography>
+                <Typography variant="body2" color={colors.textSecondary}>
+                  Téléchargez le fichier :{" "}
+                  <a
+                    href={`${API_URL}${selectedFile.url}`}
+                    download
+                    style={{
+                      color: colors.primary,
+                      textDecoration: "none",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Cliquer pour télécharger
+                  </a>
+                </Typography>
+              </Box>
+            </Box>
+          )}
 
-// Composant principal amélioré
-const MedecinGererDossier = () => {
-  const [dossiers, setDossiers] = useState([]);
-  const [patients, setPatients] = useState([]);
-  const [infirmiers, setInfirmiers] = useState([]);
-  const [medecins, setMedecins] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openImageModal, setOpenImageModal] = useState(false);
-  const [openShareModal, setOpenShareModal] = useState(false);
-  const [openFileModal, setOpenFileModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedDossier, setSelectedDossier] = useState(null);
-  const [expandedDossier, setExpandedDossier] = useState(null);
-  const [newDossier, setNewDossier] = useState({ idPatient: '', diagnostic: '', traitement: '', etat: 'en cours' });
-  const [editDossier, setEditDossier] = useState({ diagnostic: '', traitement: '', etat: '' });
-  const [imageFile, setImageFile] = useState(null);
-  const [shareType, setShareType] = useState('direct');
-  const [selectedUser, setSelectedUser] = useState('');
-  const [motDePasse, setMotDePasse] = useState('');
-  const [duree, setDuree] = useState('');
-  const [shareLoading, setShareLoading] = useState(false);
-  const [lienPartage, setLienPartage] = useState('');
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onClose}
+                sx={{
+                  bgcolor: colors.primary,
+                  "&:hover": { bgcolor: colors.primaryLight },
+                  borderRadius: 2,
+                  textTransform: "none",
+                  py: 1,
+                  px: 3,
+                  fontWeight: 500,
+                  boxShadow: "none",
+                }}
+              >
+                Fermer
+              </Button>
+            </motion.div>
+          </Box>
+        </Box>
+      </Fade>
+    </Modal>
+  )
+}
+
+// Sous-modale pour les détails de la consultation
+const ConsultationDetailsModal = ({
+  open,
+  onClose,
+  consultation,
+  dossier,
+  fetchDossiers,
+  isCreationMode = false,
+  scrollToConsultation,
+}) => {
+  const [notes, setNotes] = useState(consultation?.notes || "")
+  const [imageFiles, setImageFiles] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      if (isCreationMode) {
+        const response = await createConsultation({
+          idDossier: dossier.idDossier,
+          notes: notes || null,
+        })
+        const newConsultationId = response.data.id
+
+        if (imageFiles.length > 0) {
+          for (const file of imageFiles) {
+            const formData = new FormData()
+            formData.append("file", file)
+            formData.append("idDossier", dossier.idDossier)
+            formData.append("idConsultation", newConsultationId)
+            await uploadImage(formData)
+          }
+        }
+
+        toast.success("Consultation créée avec succès.")
+      } else {
+        // Mise à jour des notes si elles ont changé
+        if (notes !== consultation.notes) {
+          await updateConsultation(consultation.idConsultation, { notes })
+          toast.success("Notes mises à jour avec succès.")
+        }
+
+        // Ajout de nouveaux fichiers à la consultation existante
+        if (imageFiles.length > 0) {
+          for (const file of imageFiles) {
+            const formData = new FormData()
+            formData.append("file", file)
+            formData.append("idDossier", dossier.idDossier)
+            formData.append("idConsultation", consultation.idConsultation)
+            await uploadImage(formData)
+          }
+          toast.success("Fichiers ajoutés avec succès.")
+        }
+      }
+
+      await fetchDossiers()
+      onClose()
+      if (!isCreationMode && scrollToConsultation) {
+        scrollToConsultation(consultation.idConsultation)
+      }
+    } catch (error) {
+      console.error("Erreur lors de la création/mise à jour de la consultation:", error)
+      const errorMessage = error.response?.data?.message || error.message || "Erreur inconnue"
+      toast.error(`Erreur : ${errorMessage}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAddFiles = (e) => {
+    const files = Array.from(e.target.files)
+    setImageFiles((prev) => [...prev, ...files])
+  }
+
+  const handleRemoveFile = (index) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} closeAfterTransition sx={{ backdropFilter: "blur(5px)" }}>
+      <Fade in={open}>
+        <Box sx={modalStyle}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+              {isCreationMode ? "Créer une consultation complète" : `Détails de la consultation`}
+            </Typography>
+            <IconButton onClick={onClose} size="small" sx={{ color: colors.text }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
+          <form onSubmit={handleSubmit}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
+                Notes
+              </Typography>
+              <TextField
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                placeholder="Saisissez vos notes médicales ici..."
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "&:hover fieldset": { borderColor: colors.secondary },
+                    "&.Mui-focused fieldset": { borderColor: colors.primary },
+                  },
+                }}
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
+                Ajouter des fichiers
+              </Typography>
+              <Box
+                sx={{
+                  border: "2px dashed",
+                  borderColor: colors.divider,
+                  borderRadius: 2,
+                  p: 3,
+                  textAlign: "center",
+                  mb: 2,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    borderColor: colors.primary,
+                    bgcolor: "rgba(0, 119, 182, 0.03)",
+                  },
+                }}
+                component="label"
+              >
+                <input
+                  type="file"
+                  onChange={handleAddFiles}
+                  hidden
+                  accept=".dcm,.pdf,.jpg,.jpeg,.png,.docx,.txt"
+                  multiple
+                />
+                <PhotoIcon sx={{ fontSize: 40, color: colors.primary, mb: 1 }} />
+                <Typography variant="body1" sx={{ fontWeight: 500, color: colors.text }}>
+                  Cliquez pour sélectionner des fichiers
+                </Typography>
+                <Typography variant="body2" color={colors.textSecondary}>
+                  ou glissez-déposez vos fichiers ici
+                </Typography>
+              </Box>
+
+              {imageFiles.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
+                    Fichiers sélectionnés ({imageFiles.length})
+                  </Typography>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      borderColor: colors.divider,
+                      maxHeight: "150px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {imageFiles.map((file, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          p: 1,
+                          mb: 1,
+                          borderRadius: 1,
+                          bgcolor: colors.background,
+                          "&:last-child": { mb: 0 },
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, overflow: "hidden" }}>
+                          <DescriptionIcon fontSize="small" sx={{ color: colors.primary }} />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: colors.text,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {file.name}
+                          </Typography>
+                        </Box>
+                        <IconButton onClick={() => handleRemoveFile(index)} size="small" sx={{ color: colors.error }}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Paper>
+                </Box>
+              )}
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={onClose}
+                fullWidth
+                sx={{
+                  borderColor: colors.primary,
+                  color: colors.primary,
+                  "&:hover": { borderColor: colors.primaryLight, color: colors.primaryLight },
+                  borderRadius: 2,
+                  textTransform: "none",
+                  py: 1.2,
+                  fontWeight: 500,
+                }}
+              >
+                Annuler
+              </Button>
+
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ width: "100%" }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  disabled={isLoading}
+                  sx={{
+                    bgcolor: colors.primary,
+                    "&:hover": { bgcolor: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.2,
+                    fontWeight: 500,
+                    boxShadow: "none",
+                  }}
+                >
+                  {isLoading ? (
+                    <CircularProgress size={24} sx={{ color: "white" }} />
+                  ) : isCreationMode ? (
+                    "Créer la consultation"
+                  ) : (
+                    "Mettre à jour"
+                  )}
+                </Button>
+              </motion.div>
+            </Box>
+          </form>
+        </Box>
+      </Fade>
+    </Modal>
+  )
+}
+
+// Composant principal
+const MedecinGererDossier = ({ dossiersLoaded }) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+  const isSmall = useMediaQuery(theme.breakpoints.down("sm"))
+
+  const [dossiers, setDossiers] = useState([])
+  const [patients, setPatients] = useState([])
+  const [infirmiers, setInfirmiers] = useState([])
+  const [medecins, setMedecins] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [openCreateModal, setOpenCreateModal] = useState(false)
+  const [openEditModal, setOpenEditModal] = useState(false)
+  const [openConsultationModal, setOpenConsultationModal] = useState(false)
+  const [openShareModal, setOpenShareModal] = useState(false)
+  const [openFileViewer, setOpenFileViewer] = useState(false)
+  const [openConsultationDetailsModal, setOpenConsultationDetailsModal] = useState(false)
+  const [selectedDossier, setSelectedDossier] = useState(null)
+  const [selectedConsultation, setSelectedConsultation] = useState(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [expandedDossier, setExpandedDossier] = useState(null)
+  const [newDossier, setNewDossier] = useState({ idPatient: "", diagnostic: "", traitement: "", etat: "en cours" })
+  const [editDossier, setEditDossier] = useState({ diagnostic: "", traitement: "", etat: "" })
+  const [shareType, setShareType] = useState("direct")
+  const [selectedUser, setSelectedUser] = useState("")
+  const [motDePasse, setMotDePasse] = useState("")
+  const [duree, setDuree] = useState(DEFAULT_SHARE_DURATION.toString())
+  const [shareLoading, setShareLoading] = useState(false)
+  const [lienPartage, setLienPartage] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterEtat, setFilterEtat] = useState("tous")
+
+  // Références pour le conteneur de défilement et les consultations
+  const dossiersContainerRef = useRef(null)
+  const consultationRefs = useRef({})
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await getUsers({ role: 'Patient' });
-        setPatients(response.data.users || []);
-        const infirmiersResponse = await getUsers({ role: 'Infirmier' });
-        setInfirmiers(infirmiersResponse.data.users || []);
-        const medecinsResponse = await getUsers({ role: 'Médecin' });
-        setMedecins(medecinsResponse.data.users || []);
+        const response = await getUsers({ role: "Patient" })
+        setPatients(response.data.users || [])
+        const infirmiersResponse = await getUsers({ role: "Infirmier" })
+        setInfirmiers(infirmiersResponse.data.users || [])
+        const medecinsResponse = await getUsers({ role: "Médecin" })
+        setMedecins(medecinsResponse.data.users || [])
       } catch (error) {
-        toast.error('Erreur récupération utilisateurs : ' + (error.response?.data?.message || 'Erreur inconnue'));
+        toast.error("Erreur récupération utilisateurs : " + (error.response?.data?.message || "Erreur inconnue"))
       }
-    };
-    fetchUsers();
-    fetchDossiers();
-  }, []);
+    }
+    fetchUsers()
+    fetchDossiers()
+  }, [])
 
   const fetchDossiers = async () => {
-    setLoading(true);
+    setLoading(true)
+    setRefreshing(true)
     try {
-      const response = await getDossiers();
-      const dossiersWithImages = await Promise.all(
+      const response = await getDossiers()
+      const dossiersWithDetails = await Promise.all(
         response.data.dossiers.map(async (dossier) => {
-          const imagesResponse = await getImagesByDossier(dossier.idDossier);
-          return { ...dossier, fichiers: imagesResponse.data.images || [] };
-        })
-      );
-      setDossiers(dossiersWithImages);
+          const imagesResponse = await getImagesByDossier(dossier.idDossier)
+          const consultationsResponse = await getConsultationsByDossier(dossier.idDossier)
+          const images = imagesResponse.data.images || []
+          const consultations = consultationsResponse.data.consultations || []
+
+          const consultationsWithImages = await Promise.all(
+            consultations.map(async (consultation) => {
+              const consultationImages = images.filter((image) => image.idConsultation === consultation.idConsultation)
+              return {
+                ...consultation,
+                images: consultationImages,
+              }
+            }),
+          )
+
+          return {
+            ...dossier,
+            consultations: consultationsWithImages,
+          }
+        }),
+      )
+      setDossiers(dossiersWithDetails)
     } catch (error) {
-      toast.error('Erreur récupération dossiers : ' + (error.response?.data?.message || 'Erreur inconnue'));
+      toast.error("Erreur récupération dossiers : " + (error.response?.data?.message || "Erreur inconnue"))
     } finally {
-      setLoading(false);
+      setLoading(false)
+      setTimeout(() => setRefreshing(false), 500)
     }
-  };
+  }
+
+  // Faire défiler automatiquement vers le bas après la création d'un dossier
+  const handleCreateDossier = async (e) => {
+    e.preventDefault()
+    try {
+      await createDossier(newDossier)
+      toast.success("Dossier créé avec succès.")
+      setOpenCreateModal(false)
+      await fetchDossiers()
+      // Défilement automatique vers le bas
+      if (dossiersContainerRef.current) {
+        dossiersContainerRef.current.scrollTo({
+          top: dossiersContainerRef.current.scrollHeight,
+          behavior: "smooth",
+        })
+      }
+    } catch (error) {
+      toast.error("Erreur création dossier : " + (error.response?.data?.message || "Erreur inconnue"))
+    }
+  }
+
+  // Faire défiler vers une consultation spécifique
+  const scrollToConsultation = (consultationId) => {
+    const consultationElement = consultationRefs.current[consultationId]
+    if (consultationElement && dossiersContainerRef.current) {
+      consultationElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      })
+    }
+  }
 
   const handleRefresh = () => {
-    fetchDossiers();
-  };
+    fetchDossiers()
+  }
 
   const handleOpenCreateModal = () => {
-    setNewDossier({ idPatient: '', diagnostic: '', traitement: '', etat: 'en cours' });
-    setOpenCreateModal(true);
-  };
+    setNewDossier({ idPatient: "", diagnostic: "", traitement: "", etat: "en cours" })
+    setOpenCreateModal(true)
+  }
 
   const handleOpenEditModal = (dossier) => {
-    setSelectedDossier(dossier);
+    setSelectedDossier(dossier)
     setEditDossier({
       diagnostic: dossier.diagnostic,
       traitement: dossier.traitement,
       etat: dossier.etat,
-    });
-    setOpenEditModal(true);
-  };
+    })
+    setOpenEditModal(true)
+  }
 
-  const handleOpenImageModal = (dossier) => {
-    setSelectedDossier(dossier);
-    setImageFile(null);
-    setOpenImageModal(true);
-  };
+  const handleOpenConsultationModal = (dossier) => {
+    setSelectedDossier(dossier)
+    setOpenConsultationModal(true)
+  }
 
   const handleOpenShareModal = (dossier) => {
-    setSelectedDossier(dossier);
-    setShareType('direct');
-    setSelectedUser('');
-    setMotDePasse('');
-    setDuree('');
-    setLienPartage('');
-    setOpenShareModal(true);
-  };
+    setSelectedDossier(dossier)
+    setShareType("direct")
+    setSelectedUser("")
+    setMotDePasse("")
+    setDuree(DEFAULT_SHARE_DURATION.toString())
+    setLienPartage("")
+    setOpenShareModal(true)
+  }
 
-  const handleOpenFileModal = (fichier) => {
-    setSelectedFile(fichier);
-    setOpenFileModal(true);
-  };
+  const handleOpenFileViewer = (fichier) => {
+    setSelectedFile(fichier)
+    setOpenFileViewer(true)
+  }
+
+  const handleOpenConsultationDetailsModal = (consultation, dossier) => {
+    setSelectedConsultation(consultation)
+    setSelectedDossier(dossier)
+    setOpenConsultationDetailsModal(true)
+  }
+
+  const handleCreateEmptyConsultation = async () => {
+    try {
+      await createConsultation({ idDossier: selectedDossier.idDossier })
+      toast.success("Consultation vide créée avec succès.")
+      setOpenConsultationModal(false)
+      await fetchDossiers()
+      // Défilement vers le bas après création
+      if (dossiersContainerRef.current) {
+        dossiersContainerRef.current.scrollTo({
+          top: dossiersContainerRef.current.scrollHeight,
+          behavior: "smooth",
+        })
+      }
+    } catch (error) {
+      toast.error("Erreur création consultation : " + (error.response?.data?.message || "Erreur inconnue"))
+    }
+  }
 
   const handleToggleExpand = (dossier) => {
-    setExpandedDossier(expandedDossier?.idDossier === dossier.idDossier ? null : dossier);
-  };
-
-  const handleCreateDossier = async (e) => {
-    e.preventDefault();
-    try {
-      await createDossier(newDossier);
-      toast.success('Dossier créé avec succès.');
-      setOpenCreateModal(false);
-      fetchDossiers();
-    } catch (error) {
-      toast.error('Erreur création dossier : ' + (error.response?.data?.message || 'Erreur inconnue'));
-    }
-  };
+    setExpandedDossier(expandedDossier?.idDossier === dossier.idDossier ? null : dossier)
+  }
 
   const handleUpdateDossier = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
-      await updateDossier(selectedDossier.idDossier, editDossier);
-      toast.success('Dossier mis à jour avec succès.');
-      setOpenEditModal(false);
-      fetchDossiers();
+      await updateDossier(selectedDossier.idDossier, editDossier)
+      toast.success("Dossier mis à jour avec succès.")
+      setOpenEditModal(false)
+      fetchDossiers()
     } catch (error) {
-      toast.error('Erreur mise à jour dossier : ' + (error.response?.data?.message || 'Erreur inconnue'));
+      toast.error("Erreur mise à jour dossier : " + (error.response?.data?.message || "Erreur inconnue"))
     }
-  };
-
-  const handleUploadImage = async (e) => {
-    e.preventDefault();
-    if (!imageFile) {
-      toast.error('Veuillez sélectionner une image.');
-      return;
-    }
-    const formData = new FormData();
-    formData.append('file', imageFile);
-    formData.append('idDossier', selectedDossier.idDossier);
-    try {
-      await uploadImage(formData);
-      toast.success('Fichier ajouté avec succès.');
-      setOpenImageModal(false);
-      fetchDossiers();
-    } catch (error) {
-      toast.error('Erreur ajout fichier : ' + (error.response?.data?.message || 'Erreur inconnue'));
-    }
-  };
+  }
 
   const handleDeleteImage = async (imageId) => {
     try {
-      await deleteImage(imageId);
-      toast.success('Fichier supprimé avec succès.');
-      fetchDossiers();
+      await deleteImage(imageId)
+      toast.success("Fichier supprimé avec succès.")
+      fetchDossiers()
     } catch (error) {
-      toast.error('Erreur suppression fichier : ' + (error.response?.data?.message || 'Erreur inconnue'));
+      toast.error("Erreur suppression fichier : " + (error.response?.data?.message || "Erreur inconnue"))
     }
-  };
+  }
 
   const handleShare = async (e) => {
-    e.preventDefault();
-    setShareLoading(true);
-    setLienPartage('');
+    e.preventDefault()
+    setShareLoading(true)
+    setLienPartage("")
 
     try {
-      let shareData = { idDossier: selectedDossier.idDossier };
+      const shareData = { idDossier: selectedDossier.idDossier }
 
-      if (shareType === 'direct') {
+      if (shareType === "direct") {
         if (!selectedUser) {
-          toast.error('Veuillez sélectionner un utilisateur.');
-          setShareLoading(false);
-          return;
+          toast.error("Veuillez sélectionner un utilisateur.")
+          setShareLoading(false)
+          return
         }
-        shareData.idUtilisateur = parseInt(selectedUser);
+        shareData.idUtilisateur = Number.parseInt(selectedUser)
       } else {
         if (!motDePasse || !duree) {
-          toast.error('Veuillez entrer un mot de passe et une durée.');
-          setShareLoading(false);
-          return;
+          toast.error("Veuillez entrer un mot de passe et une durée.")
+          setShareLoading(false)
+          return
         }
-        shareData.motDePasse = motDePasse;
-        shareData.duree = parseInt(duree);
+        shareData.motDePasse = motDePasse
+        shareData.duree = Number.parseInt(duree)
       }
 
-      const response = await shareDossier(shareData);
-      if (shareType === 'direct') {
-        toast.success(response.data.message);
+      const response = await shareDossier(shareData)
+      if (shareType === "direct") {
+        toast.success(response.data.message)
       } else {
-        setLienPartage(response.data.lienPartage);
-        toast.success('Lien de partage généré avec succès.');
+        setLienPartage(response.data.lienPartage)
+        toast.success("Lien de partage généré avec succès.")
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Erreur lors du partage.');
+      toast.error(error.response?.data?.message || "Erreur lors du partage.")
     } finally {
-      setShareLoading(false);
+      setShareLoading(false)
     }
-  };
+  }
 
-  if (loading) {
+  const formatDate = (dateString) => {
+    if (!dateString) return "Non spécifié"
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+  }
+
+  // Filtrage des dossiers
+  const filteredDossiers = dossiers.filter((dossier) => {
+    const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {}
+    const patientName = `${patient.nom || ""} ${patient.prenom || ""}`.toLowerCase()
+    const searchMatch =
+      searchTerm === "" ||
+      patientName.includes(searchTerm.toLowerCase()) ||
+      dossier.diagnostic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dossier.idDossier?.toString().includes(searchTerm)
+
+    const stateMatch = filterEtat === "tous" || dossier.etat === filterEtat
+
+    return searchMatch && stateMatch
+  })
+
+  // Rendu des squelettes de chargement
+  const renderSkeletons = () => {
+    return Array.from(new Array(3)).map((_, index) => (
+      <Paper
+        key={`skeleton-${index}`}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          boxShadow: colors.shadow,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Skeleton variant="circular" width={48} height={48} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="60%" height={28} />
+            <Skeleton variant="text" width="40%" height={20} />
+          </Box>
+          <Skeleton variant="rectangular" width={100} height={32} sx={{ borderRadius: 1 }} />
+        </Box>
+      </Paper>
+    ))
+  }
+
+  if (loading && !refreshing) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', bgcolor: colors.background }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          <CircularProgress 
-            size={60} 
-            sx={{ color: colors.primary }} 
-            thickness={5}
-          />
-          <Typography sx={{ mt: 2, color: colors.text, fontWeight: 500, letterSpacing: 0.5 }}>
-            Chargement des dossiers...
-          </Typography>
-        </motion.div>
+      <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: colors.background, height: "100%" }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
+          <Skeleton variant="circular" width={56} height={56} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="40%" height={40} />
+            <Skeleton variant="text" width="20%" height={24} />
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+          <Skeleton variant="rectangular" width={200} height={40} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rectangular" width={150} height={40} sx={{ borderRadius: 2 }} />
+        </Box>
+
+        {renderSkeletons()}
       </Box>
-    );
+    )
   }
 
   return (
-    <Box sx={{ p: 4, bgcolor: colors.background, minHeight: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, letterSpacing: -0.5 }}>
-          Gérer les dossiers patients
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-            <Button
-              variant="contained"
+    <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: colors.background, height: "100%", overflow: "auto" }}>
+      <motion.div variants={containerVariants} initial="hidden" animate="visible">
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 20,
+              duration: 0.5,
+            }}
+          >
+            <Badge
+              overlap="circular"
+              badgeContent={filteredDossiers.length}
               color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateModal}
               sx={{
-                bgcolor: colors.primary,
-                '&:hover': { bgcolor: colors.secondary },
-                borderRadius: 3,
-                textTransform: 'none',
-                fontWeight: 500,
-                py: 1.2,
-                px: 3,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                "& .MuiBadge-badge": {
+                  fontWeight: "bold",
+                  fontSize: "0.8rem",
+                },
               }}
             >
-              Créer un dossier
-            </Button>
+              <Avatar sx={{ bgcolor: colors.primary, width: 56, height: 56 }}>
+                <FolderIcon fontSize="large" />
+              </Avatar>
+            </Badge>
           </motion.div>
-          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<RefreshIcon />}
-              onClick={handleRefresh}
+          <Box>
+            <Typography
+              variant="h4"
+              component="h1"
               sx={{
-                borderColor: colors.primary,
-                color: colors.primary,
-                '&:hover': { borderColor: colors.secondary, color: colors.secondary },
-                borderRadius: 3,
-                textTransform: 'none',
-                fontWeight: 500,
-                py: 1.2,
-                px: 3,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                fontWeight: 700,
+                color: colors.text,
+                fontSize: { xs: "1.5rem", sm: "2rem", md: "2.25rem" },
               }}
             >
-              Rafraîchir
-            </Button>
-          </motion.div>
+              Gestion des dossiers patients
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+              {filteredDossiers.length} dossiers {filterEtat !== "tous" ? `(${filterEtat})` : "au total"}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
 
-      {dossiers.length === 0 ? (
-        <Box sx={{ textAlign: 'center', mt: 6 }}>
-          <Typography variant="h6" color={colors.textSecondary} sx={{ mb: 2 }}>
-            Aucun dossier trouvé.
-          </Typography>
-          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<RefreshIcon />}
-              onClick={handleRefresh}
-              sx={{
-                bgcolor: colors.primary,
-                '&:hover': { bgcolor: colors.secondary },
-                borderRadius: 3,
-                textTransform: 'none',
-                fontWeight: 500,
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              fullWidth
+              placeholder="Rechercher un patient, un diagnostic..."
+              variant="outlined"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: <SearchIcon sx={{ color: colors.textSecondary, mr: 1 }} />,
+                sx: { borderRadius: 2 },
               }}
-            >
-              Rafraîchir les dossiers
-            </Button>
-          </motion.div>
-        </Box>
-      ) : (
-        <Box sx={{ mt: 2 }}>
-          {dossiers.map((dossier, index) => {
-            const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {};
-            const isExpanded = expandedDossier?.idDossier === dossier.idDossier;
-            return (
-              <motion.div
-                key={dossier.idDossier}
-                custom={index}
-                variants={cardVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "&:hover fieldset": { borderColor: colors.secondary },
+                  "&.Mui-focused fieldset": { borderColor: colors.primary },
+                },
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl fullWidth variant="outlined">
+              <InputLabel id="filter-etat-label">État du dossier</InputLabel>
+              <Select
+                labelId="filter-etat-label"
+                value={filterEtat}
+                onChange={(e) => setFilterEtat(e.target.value)}
+                label="État du dossier"
+                sx={{ borderRadius: 2 }}
+                startAdornment={<FilterListIcon sx={{ mr: 1, color: colors.textSecondary }} />}
               >
-                <Paper
-                  sx={{
-                    p: 3,
-                    mb: 3,
-                    borderRadius: 4,
-                    boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
-                    bgcolor: colors.cardBackground,
-                    transition: 'all 0.3s ease',
-                    border: '1px solid rgba(0, 0, 0, 0.05)',
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ bgcolor: colors.primary, width: 48, height: 48, fontSize: '1.2rem' }}>
-                        {patient.nom?.charAt(0) || 'P'}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
-                          {patient.nom} {patient.prenom}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: colors.textSecondary }}>
-                          ID Patient: {dossier.idPatient}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={dossier.etat}
-                        size="small"
+                <MenuItem value="tous">Tous les états</MenuItem>
+                <MenuItem value="en cours">En cours</MenuItem>
+                <MenuItem value="traité">Traité</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={6} md={2}>
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ height: "100%" }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<RefreshIcon />}
+                onClick={handleRefresh}
+                disabled={refreshing}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                {refreshing ? "Actualisation..." : "Actualiser"}
+              </Button>
+            </motion.div>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ height: "100%" }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreateModal}
+                sx={{
+                  bgcolor: colors.primary,
+                  "&:hover": { bgcolor: colors.primaryLight },
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  height: "100%",
+                  width: "100%",
+                  boxShadow: "none",
+                }}
+              >
+                Créer un dossier
+              </Button>
+            </motion.div>
+          </Grid>
+        </Grid>
+
+        {filteredDossiers.length === 0 ? (
+          <Paper
+            sx={{
+              textAlign: "center",
+              py: 6,
+              px: 3,
+              borderRadius: 3,
+              boxShadow: colors.shadow,
+              bgcolor: "white",
+            }}
+          >
+            <FolderIcon sx={{ fontSize: 60, color: colors.textSecondary, opacity: 0.5, mb: 2 }} />
+            <Typography variant="h6" color={colors.textSecondary} sx={{ mb: 2 }}>
+              {searchTerm || filterEtat !== "tous"
+                ? "Aucun dossier ne correspond à votre recherche."
+                : "Aucun dossier trouvé."}
+            </Typography>
+            <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={searchTerm || filterEtat !== "tous" ? <FilterListIcon /> : <AddIcon />}
+                onClick={
+                  searchTerm || filterEtat !== "tous"
+                    ? () => {
+                        setSearchTerm("")
+                        setFilterEtat("tous")
+                      }
+                    : handleOpenCreateModal
+                }
+                sx={{
+                  bgcolor: colors.primary,
+                  "&:hover": { bgcolor: colors.primaryLight },
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 500,
+                  boxShadow: "none",
+                }}
+              >
+                {searchTerm || filterEtat !== "tous" ? "Effacer les filtres" : "Créer votre premier dossier"}
+              </Button>
+            </motion.div>
+          </Paper>
+        ) : (
+          <Box
+            sx={{
+              maxHeight: "65vh",
+              overflowY: "auto",
+              scrollBehavior: "smooth",
+              pr: 1,
+              scrollbarWidth: "thin",
+              scrollbarColor: `${colors.primary} #f1f1f1`,
+              "&::-webkit-scrollbar": {
+                width: "8px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#f1f1f1",
+                borderRadius: "5px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: colors.primary,
+                borderRadius: "5px",
+                border: "2px solid #f1f1f1",
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                background: colors.primaryLight,
+              },
+            }}
+            ref={dossiersContainerRef}
+          >
+            <AnimatePresence>
+              {filteredDossiers.map((dossier, index) => {
+                const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {}
+                const isExpanded = expandedDossier?.idDossier === dossier.idDossier
+                return (
+                  <motion.div
+                    key={dossier.idDossier}
+                    custom={index}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover={isExpanded ? {} : "hover"}
+                    layout
+                  >
+                    <Paper
+                      sx={{
+                        p: 3,
+                        mb: 3,
+                        borderRadius: 3,
+                        boxShadow: isExpanded ? colors.shadowHover : colors.shadow,
+                        bgcolor: isExpanded ? colors.cardBackgroundHover : colors.cardBackground,
+                        transition: "all 0.3s ease",
+                        border: "1px solid",
+                        borderColor: isExpanded ? "rgba(0, 119, 182, 0.1)" : "transparent",
+                      }}
+                    >
+                      <Box
                         sx={{
-                          bgcolor: dossier.etat === 'en cours' ? colors.warning : colors.success,
-                          color: 'white',
-                          fontWeight: 500,
-                          borderRadius: 1,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          cursor: "pointer",
                         }}
-                      />
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      {isExpanded && (
-                        <>
-                          <Tooltip title="Modifier le dossier">
-                            <IconButton 
-                              onClick={(e) => { e.stopPropagation(); handleOpenEditModal(dossier); }} 
-                              sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Ajouter une image">
-                            <IconButton 
-                              onClick={(e) => { e.stopPropagation(); handleOpenImageModal(dossier); }} 
-                              sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
-                            >
-                              <ImageIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              onClick={(e) => { e.stopPropagation(); handleOpenShareModal(dossier); }}
-                              startIcon={<ShareIcon />}
-                              sx={{
-                                borderColor: colors.primary,
-                                color: colors.primary,
-                                '&:hover': { borderColor: colors.secondary, color: colors.secondary },
-                                borderRadius: 3,
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                px: 2,
-                                py: 0.8,
-                              }}
-                            >
-                              Partager
-                            </Button>
-                          </motion.div>
-                        </>
-                      )}
-                      <IconButton onClick={() => handleToggleExpand(dossier)}>
-                        {isExpanded ? <ExpandLessIcon sx={{ color: colors.primary }} /> : <ExpandMoreIcon sx={{ color: colors.primary }} />}
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        variants={expandVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
+                        onClick={() => handleToggleExpand(dossier)}
                       >
-                        <Divider sx={{ my: 2, bgcolor: colors.divider }} />
-                        <Box sx={{ mt: 2 }}>
-                          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
-                                <strong>Dossier ID :</strong> {dossier.idDossier}
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
-                                <strong>Email :</strong> {patient.email || 'N/A'}
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
-                                <strong>Téléphone :</strong> {patient.telephone || 'N/A'}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ flex: 1 }}>
-                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
-                                <strong>Diagnostic :</strong> {dossier.diagnostic}
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: colors.textSecondary, mb: 0.5 }}>
-                                <strong>Traitement :</strong> {dossier.traitement}
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Divider sx={{ my: 2, bgcolor: colors.divider }} />
-                          <Typography variant="subtitle1" sx={{ color: colors.text, fontWeight: 600, mb: 1 }}>
-                            Fichiers associés
-                          </Typography>
-                          {dossier.fichiers?.length > 0 ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 2 }}>
-                              {dossier.fichiers.map((fichier, index) => {
-                                const isDicom = fichier.format.toLowerCase().includes('dicom') || fichier.nomFichier.toLowerCase().endsWith('.dcm');
-                                const isImage = fichier.format.toLowerCase().includes('image');
-                                const isPDF = fichier.nomFichier.toLowerCase().endsWith('.pdf');
-                                return (
-                                  <Paper
-                                    key={index}
-                                    sx={{
-                                      p: 2,
-                                      borderRadius: 3,
-                                      bgcolor: 'white',
-                                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 1,
-                                    }}
-                                  >
-                                    {isDicom ? (
-                                      <MedicalServicesIcon sx={{ color: colors.primary }} />
-                                    ) : isImage ? (
-                                      <PhotoIcon sx={{ color: colors.primary }} />
-                                    ) : isPDF ? (
-                                      <DescriptionIcon sx={{ color: colors.primary }} />
-                                    ) : (
-                                      <DescriptionIcon sx={{ color: colors.primary }} />
-                                    )}
-                                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                                      <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {fichier.nomFichier}
-                                      </Typography>
-                                      <Typography variant="caption" sx={{ color: colors.textSecondary }}>
-                                        ID: {fichier.idImage}
-                                      </Typography>
-                                    </Box>
-                                    <Tooltip title="Visualiser">
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenFileModal(fichier);
-                                        }}
-                                        sx={{ color: colors.primary, '&:hover': { color: colors.secondary } }}
-                                      >
-                                        <VisibilityIcon fontSize="small" />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip title="Supprimer">
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteImage(fichier.idImage);
-                                        }}
-                                        sx={{ color: colors.error, '&:hover': { color: colors.error } }}
-                                      >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Paper>
-                                );
-                              })}
-                            </Box>
-                          ) : (
-                            <Typography variant="body2" color={colors.textSecondary} sx={{ ml: 1 }}>
-                              Aucun fichier associé à ce dossier.
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <Avatar
+                            sx={{
+                              bgcolor: colors.primary,
+                              width: 48,
+                              height: 48,
+                              fontSize: "1.2rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {patient.nom?.charAt(0) || "P"}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                              {patient.nom} {patient.prenom}
                             </Typography>
+                            <Typography variant="body2" sx={{ color: colors.textSecondary }}>
+                              ID Patient: {dossier.idPatient} | Dossier: {dossier.idDossier}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={dossier.etat}
+                            size="small"
+                            color={dossier.etat === "en cours" ? "warning" : "success"}
+                            sx={{
+                              fontWeight: 500,
+                              borderRadius: 1,
+                              ml: 1,
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {isExpanded ? (
+                            <ExpandLessIcon sx={{ color: colors.primary }} />
+                          ) : (
+                            <ExpandMoreIcon sx={{ color: colors.primary }} />
                           )}
                         </Box>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Paper>
-              </motion.div>
-            );
-          })}
-        </Box>
-      )}
+                      </Box>
+
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div variants={expandVariants} initial="hidden" animate="visible" exit="exit">
+                            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
+                            <Grid container spacing={3} sx={{ mb: 3 }}>
+                              <Grid item xs={12} md={6}>
+                                <Box sx={{ bgcolor: colors.background, p: 2, borderRadius: 2 }}>
+                                  <Typography variant="subtitle2" sx={{ color: colors.textSecondary, mb: 1 }}>
+                                    Informations patient
+                                  </Typography>
+                                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                    <PersonIcon sx={{ color: colors.primary, mr: 1, fontSize: 20 }} />
+                                    <Typography variant="body2" sx={{ color: colors.text }}>
+                                      <strong>Nom complet:</strong> {patient.nom} {patient.prenom}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                                    <Typography variant="body2" sx={{ color: colors.text }}>
+                                      <strong>Email:</strong> {patient.email || "Non spécifié"}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                                    <Typography variant="body2" sx={{ color: colors.text }}>
+                                      <strong>Téléphone:</strong> {patient.telephone || "Non spécifié"}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={12} md={6}>
+                                <Box sx={{ bgcolor: colors.background, p: 2, borderRadius: 2 }}>
+                                  <Typography variant="subtitle2" sx={{ color: colors.textSecondary, mb: 1 }}>
+                                    Informations médicales
+                                  </Typography>
+                                  <Box sx={{ display: "flex", alignItems: "flex-start", mb: 1 }}>
+                                    <HealthAndSafetyIcon sx={{ color: colors.primary, mr: 1, fontSize: 20, mt: 0.5 }} />
+                                    <Box>
+                                      <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500 }}>
+                                        Diagnostic:
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ color: colors.text }}>
+                                        {dossier.diagnostic || "Non spécifié"}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                  <Box sx={{ display: "flex", alignItems: "flex-start" }}>
+                                    <MedicationIcon sx={{ color: colors.primary, mr: 1, fontSize: 20, mt: 0.5 }} />
+                                    <Box>
+                                      <Typography variant="body2" sx={{ color: colors.text, fontWeight: 500 }}>
+                                        Traitement:
+                                      </Typography>
+                                      <Typography variant="body2" sx={{ color: colors.text }}>
+                                        {dossier.traitement || "Non spécifié"}
+                                      </Typography>
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </Grid>
+                            </Grid>
+
+                            <Box
+                              sx={{ display: "flex", justifyContent: "space-between", mb: 2, flexWrap: "wrap", gap: 2 }}
+                            >
+                              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<EditIcon />}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleOpenEditModal(dossier)
+                                  }}
+                                  sx={{
+                                    borderRadius: 2,
+                                    textTransform: "none",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Modifier le dossier
+                                </Button>
+                              </motion.div>
+                              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  startIcon={<ShareIcon />}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleOpenShareModal(dossier)
+                                  }}
+                                  sx={{
+                                    borderRadius: 2,
+                                    textTransform: "none",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Partager le dossier
+                                </Button>
+                              </motion.div>
+                            </Box>
+
+                            <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
+                            <Box sx={{ mb: 2 }}>
+                              <Box
+                                sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}
+                              >
+                                <Typography variant="h6" sx={{ color: colors.text, fontWeight: 600 }}>
+                                  Consultations
+                                </Typography>
+                                <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                                  <Button
+                                    variant="contained"
+                                    color="primary"
+                                    startIcon={<AddIcon />}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleOpenConsultationModal(dossier)
+                                    }}
+                                    sx={{
+                                      bgcolor: colors.primary,
+                                      "&:hover": { bgcolor: colors.primaryLight },
+                                      borderRadius: 2,
+                                      textTransform: "none",
+                                      fontWeight: 500,
+                                      boxShadow: "none",
+                                    }}
+                                  >
+                                    Ajouter une consultation
+                                  </Button>
+                                </motion.div>
+                              </Box>
+
+                              {dossier.consultations && dossier.consultations.length > 0 ? (
+                                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                  {dossier.consultations.map((consultation, index) => (
+                                    <Paper
+                                      key={consultation.idConsultation}
+                                      ref={(el) => (consultationRefs.current[consultation.idConsultation] = el)}
+                                      sx={{
+                                        p: 2,
+                                        borderRadius: 2,
+                                        bgcolor: "white",
+                                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+                                        transition: "background-color 0.3s",
+                                        "&:hover": { bgcolor: colors.cardBackgroundHover },
+                                        border: "1px solid",
+                                        borderColor: "rgba(0, 0, 0, 0.05)",
+                                      }}
+                                    >
+                                      <Box
+                                        sx={{
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          alignItems: "center",
+                                          mb: 1,
+                                        }}
+                                      >
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                          <NoteIcon sx={{ color: colors.primary }} />
+                                          <Typography variant="subtitle1" sx={{ color: colors.text, fontWeight: 500 }}>
+                                            Consultation {index + 1} - {formatDate(consultation.dateConsultation)}
+                                          </Typography>
+                                        </Box>
+                                        <Box sx={{ display: "flex", gap: 1 }}>
+                                          <Tooltip title="Modifier la consultation">
+                                            <IconButton
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleOpenConsultationDetailsModal(consultation, dossier)
+                                              }}
+                                              size="small"
+                                              sx={{ color: colors.primary }}
+                                            >
+                                              <EditIcon fontSize="small" />
+                                            </IconButton>
+                                          </Tooltip>
+                                        </Box>
+                                      </Box>
+
+                                      <Box sx={{ bgcolor: colors.background, p: 2, borderRadius: 2, mb: 2 }}>
+                                        <Typography variant="body2" sx={{ color: colors.text, whiteSpace: "pre-wrap" }}>
+                                          {consultation.notes || "Aucune note pour cette consultation."}
+                                        </Typography>
+                                      </Box>
+
+                                      <Typography variant="subtitle2" sx={{ color: colors.textSecondary, mb: 1 }}>
+                                        Fichiers associés ({consultation.images?.length || 0})
+                                      </Typography>
+
+                                      {consultation.images && consultation.images.length > 0 ? (
+                                        <Grid container spacing={1}>
+                                          {consultation.images.map((fichier) => {
+                                            const isDicom =
+                                              fichier.format?.toLowerCase().includes("dicom") ||
+                                              fichier.nomFichier?.toLowerCase().endsWith(".dcm")
+                                            const isImage = fichier.format?.toLowerCase().includes("image")
+                                            const isPDF = fichier.nomFichier?.toLowerCase().endsWith(".pdf")
+
+                                            return (
+                                              <Grid item xs={12} sm={6} md={4} key={fichier.idImage}>
+                                                <Paper
+                                                  sx={{
+                                                    p: 1,
+                                                    borderRadius: 2,
+                                                    bgcolor: "white",
+                                                    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 1,
+                                                    border: "1px solid",
+                                                    borderColor: "rgba(0, 0, 0, 0.05)",
+                                                  }}
+                                                >
+                                                  {isDicom ? (
+                                                    <MedicalServicesIcon sx={{ color: colors.primary }} />
+                                                  ) : isImage ? (
+                                                    <PhotoIcon sx={{ color: colors.primary }} />
+                                                  ) : isPDF ? (
+                                                    <DescriptionIcon sx={{ color: colors.primary }} />
+                                                  ) : (
+                                                    <DescriptionIcon sx={{ color: colors.primary }} />
+                                                  )}
+                                                  <Box sx={{ flex: 1, overflow: "hidden" }}>
+                                                    <Typography
+                                                      variant="body2"
+                                                      sx={{
+                                                        color: colors.text,
+                                                        fontWeight: 500,
+                                                        whiteSpace: "nowrap",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                      }}
+                                                    >
+                                                      {fichier.nomFichier}
+                                                    </Typography>
+                                                  </Box>
+                                                  <Box sx={{ display: "flex" }}>
+                                                    <Tooltip title="Visualiser">
+                                                      <IconButton
+                                                        onClick={(e) => {
+                                                          e.stopPropagation()
+                                                          handleOpenFileViewer(fichier)
+                                                        }}
+                                                        size="small"
+                                                        sx={{ color: colors.primary }}
+                                                      >
+                                                        <VisibilityIcon fontSize="small" />
+                                                      </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Supprimer">
+                                                      <IconButton
+                                                        onClick={(e) => {
+                                                          e.stopPropagation()
+                                                          handleDeleteImage(fichier.idImage)
+                                                        }}
+                                                        size="small"
+                                                        sx={{ color: colors.error }}
+                                                      >
+                                                        <DeleteIcon fontSize="small" />
+                                                      </IconButton>
+                                                    </Tooltip>
+                                                  </Box>
+                                                </Paper>
+                                              </Grid>
+                                            )
+                                          })}
+                                        </Grid>
+                                      ) : (
+                                        <Typography variant="body2" color={colors.textSecondary}>
+                                          Aucun fichier associé à cette consultation.
+                                        </Typography>
+                                      )}
+                                    </Paper>
+                                  ))}
+                                </Box>
+                              ) : (
+                                <Paper
+                                  sx={{
+                                    p: 3,
+                                    borderRadius: 2,
+                                    bgcolor: colors.background,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  <NoteIcon sx={{ fontSize: 40, color: colors.textSecondary, opacity: 0.5, mb: 1 }} />
+                                  <Typography variant="body1" color={colors.textSecondary} sx={{ mb: 2 }}>
+                                    Aucune consultation enregistrée pour ce patient.
+                                  </Typography>
+                                  <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                                    <Button
+                                      variant="outlined"
+                                      color="primary"
+                                      startIcon={<AddIcon />}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleOpenConsultationModal(dossier)
+                                      }}
+                                      sx={{
+                                        borderRadius: 2,
+                                        textTransform: "none",
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      Créer la première consultation
+                                    </Button>
+                                  </motion.div>
+                                </Paper>
+                              )}
+                            </Box>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Paper>
+                  </motion.div>
+                )
+              })}
+            </AnimatePresence>
+          </Box>
+        )}
+      </motion.div>
 
       {/* Modale pour créer un dossier */}
-      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
-        <motion.div
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+      <Modal
+        open={openCreateModal}
+        onClose={() => setOpenCreateModal(false)}
+        closeAfterTransition
+        sx={{ backdropFilter: "blur(5px)" }}
+      >
+        <Fade in={openCreateModal}>
           <Box sx={modalStyle}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-              Créer un dossier médical
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                Créer un dossier médical
+              </Typography>
+              <IconButton onClick={() => setOpenCreateModal(false)} size="small" sx={{ color: colors.text }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
             <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
             <form onSubmit={handleCreateDossier}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Patient
                 </Typography>
-                <Select
-                  value={newDossier.idPatient}
-                  onChange={(e) => setNewDossier({ ...newDossier, idPatient: e.target.value })}
-                  fullWidth
-                  displayEmpty
-                  required
-                  sx={{ 
-                    borderRadius: 3,
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>
-                    Choisir un patient
-                  </MenuItem>
-                  {patients.map((patient) => (
-                    <MenuItem key={patient.idUtilisateur} value={patient.idUtilisateur}>
-                      {patient.nom} {patient.prenom} (ID: {patient.idUtilisateur})
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="patient-select-label">Choisir un patient</InputLabel>
+                  <Select
+                    labelId="patient-select-label"
+                    value={newDossier.idPatient}
+                    onChange={(e) => setNewDossier({ ...newDossier, idPatient: e.target.value })}
+                    label="Choisir un patient"
+                    required
+                    sx={{
+                      borderRadius: 2,
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      Choisir un patient
                     </MenuItem>
-                  ))}
-                </Select>
+                    {patients.map((patient) => (
+                      <MenuItem key={patient.idUtilisateur} value={patient.idUtilisateur}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <PersonIcon sx={{ mr: 1, color: colors.primary, fontSize: 20 }} />
+                          {patient.nom} {patient.prenom} (ID: {patient.idUtilisateur})
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Diagnostic
@@ -822,15 +1592,19 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 3,
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  placeholder="Entrez le diagnostic du patient"
+                  multiline
+                  rows={2}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "&:hover fieldset": { borderColor: colors.secondary },
+                      "&.Mui-focused fieldset": { borderColor: colors.primary },
                     },
                   }}
                 />
               </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Traitement
@@ -841,72 +1615,103 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 3,
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  placeholder="Entrez le traitement prescrit"
+                  multiline
+                  rows={2}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "&:hover fieldset": { borderColor: colors.secondary },
+                      "&.Mui-focused fieldset": { borderColor: colors.primary },
                     },
                   }}
                 />
               </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   État
                 </Typography>
-                <Select
-                  value={newDossier.etat}
-                  onChange={(e) => setNewDossier({ ...newDossier, etat: e.target.value })}
-                  fullWidth
-                  sx={{ 
-                    borderRadius: 3,
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
-                    },
-                  }}
-                >
-                  <MenuItem value="en cours">En cours</MenuItem>
-                  <MenuItem value="traité">Traité</MenuItem>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="etat-select-label">État du dossier</InputLabel>
+                  <Select
+                    labelId="etat-select-label"
+                    value={newDossier.etat}
+                    onChange={(e) => setNewDossier({ ...newDossier, etat: e.target.value })}
+                    label="État du dossier"
+                    sx={{
+                      borderRadius: 2,
+                    }}
+                  >
+                    <MenuItem value="en cours">En cours</MenuItem>
+                    <MenuItem value="traité">Traité</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
-              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
+
+              <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setOpenCreateModal(false)}
                   fullWidth
                   sx={{
-                    bgcolor: colors.primary,
-                    '&:hover': { bgcolor: colors.secondary },
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    py: 1.5,
+                    borderColor: colors.primary,
+                    color: colors.primary,
+                    "&:hover": { borderColor: colors.primaryLight, color: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.2,
                     fontWeight: 500,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   }}
                 >
-                  Créer
+                  Annuler
                 </Button>
-              </motion.div>
+
+                <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ width: "100%" }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{
+                      bgcolor: colors.primary,
+                      "&:hover": { bgcolor: colors.primaryLight },
+                      borderRadius: 2,
+                      textTransform: "none",
+                      py: 1.2,
+                      fontWeight: 500,
+                      boxShadow: "none",
+                    }}
+                  >
+                    Créer le dossier
+                  </Button>
+                </motion.div>
+              </Box>
             </form>
           </Box>
-        </motion.div>
+        </Fade>
       </Modal>
 
       {/* Modale pour modifier un dossier */}
-      <Modal open={openEditModal} onClose={() => setOpenEditModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
-        <motion.div
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+      <Modal
+        open={openEditModal}
+        onClose={() => setOpenEditModal(false)}
+        closeAfterTransition
+        sx={{ backdropFilter: "blur(5px)" }}
+      >
+        <Fade in={openEditModal}>
           <Box sx={modalStyle}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-              Modifier le dossier (ID: {selectedDossier?.idDossier})
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                Modifier le dossier (ID: {selectedDossier?.idDossier})
+              </Typography>
+              <IconButton onClick={() => setOpenEditModal(false)} size="small" sx={{ color: colors.text }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
             <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
             <form onSubmit={handleUpdateDossier}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
@@ -918,15 +1723,18 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 3,
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  multiline
+                  rows={2}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "&:hover fieldset": { borderColor: colors.secondary },
+                      "&.Mui-focused fieldset": { borderColor: colors.primary },
                     },
                   }}
                 />
               </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Traitement
@@ -937,217 +1745,279 @@ const MedecinGererDossier = () => {
                   fullWidth
                   required
                   variant="outlined"
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 3,
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  multiline
+                  rows={2}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                      "&:hover fieldset": { borderColor: colors.secondary },
+                      "&.Mui-focused fieldset": { borderColor: colors.primary },
                     },
                   }}
                 />
               </Box>
+
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   État
                 </Typography>
-                <Select
-                  value={editDossier.etat}
-                  onChange={(e) => setEditDossier({ ...editDossier, etat: e.target.value })}
-                  fullWidth
-                  sx={{ 
-                    borderRadius: 3,
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
-                    },
-                  }}
-                >
-                  <MenuItem value="en cours">En cours</MenuItem>
-                  <MenuItem value="traité">Traité</MenuItem>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-etat-select-label">État du dossier</InputLabel>
+                  <Select
+                    labelId="edit-etat-select-label"
+                    value={editDossier.etat}
+                    onChange={(e) => setEditDossier({ ...editDossier, etat: e.target.value })}
+                    label="État du dossier"
+                    sx={{
+                      borderRadius: 2,
+                    }}
+                  >
+                    <MenuItem value="en cours">En cours</MenuItem>
+                    <MenuItem value="traité">Traité</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
-              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
+
+              <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setOpenEditModal(false)}
                   fullWidth
                   sx={{
-                    bgcolor: colors.primary,
-                    '&:hover': { bgcolor: colors.secondary },
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    py: 1.5,
+                    borderColor: colors.primary,
+                    color: colors.primary,
+                    "&:hover": { borderColor: colors.primaryLight, color: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.2,
                     fontWeight: 500,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   }}
                 >
-                  Mettre à jour
+                  Annuler
                 </Button>
-              </motion.div>
+
+                <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ width: "100%" }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{
+                      bgcolor: colors.primary,
+                      "&:hover": { bgcolor: colors.primaryLight },
+                      borderRadius: 2,
+                      textTransform: "none",
+                      py: 1.2,
+                      fontWeight: 500,
+                      boxShadow: "none",
+                    }}
+                  >
+                    Mettre à jour
+                  </Button>
+                </motion.div>
+              </Box>
             </form>
           </Box>
-        </motion.div>
+        </Fade>
       </Modal>
 
-      {/* Modale pour ajouter une image */}
-      <Modal open={openImageModal} onClose={() => setOpenImageModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
-        <motion.div
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+      {/* Modale pour choisir le type de création de consultation */}
+      <Modal
+        open={openConsultationModal}
+        onClose={() => setOpenConsultationModal(false)}
+        closeAfterTransition
+        sx={{ backdropFilter: "blur(5px)" }}
+      >
+        <Fade in={openConsultationModal}>
           <Box sx={modalStyle}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-              Ajouter une image au dossier (ID: {selectedDossier?.idDossier})
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                Ajouter une consultation au dossier (ID: {selectedDossier?.idDossier})
+              </Typography>
+              <IconButton onClick={() => setOpenConsultationModal(false)} size="small" sx={{ color: colors.text }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
             <Divider sx={{ my: 2, bgcolor: colors.divider }} />
-            <form onSubmit={handleUploadImage}>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
-                  Sélectionner un fichier
-                </Typography>
-                <TextField
-                  type="file"
-                  onChange={(e) => setImageFile(e.target.files[0])}
-                  fullWidth
-                  inputProps={{ accept: '.dcm,.pdf,.jpg,.jpeg,.png,.docx,.txt' }}
-                  variant="outlined"
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 3,
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
-                    },
-                  }}
-                />
-              </Box>
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
-                <Button 
-                  type="submit" 
-                  variant="contained" 
-                  color="primary" 
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCreateEmptyConsultation}
                   fullWidth
                   sx={{
                     bgcolor: colors.primary,
-                    '&:hover': { bgcolor: colors.secondary },
-                    borderRadius: 3,
-                    textTransform: 'none',
+                    "&:hover": { bgcolor: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
                     py: 1.5,
                     fontWeight: 500,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    boxShadow: "none",
                   }}
                 >
-                  Ajouter
+                  Créer une consultation vide
                 </Button>
               </motion.div>
-            </form>
+
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => {
+                    setOpenConsultationModal(false)
+                    setOpenConsultationDetailsModal(true)
+                  }}
+                  fullWidth
+                  sx={{
+                    bgcolor: colors.primary,
+                    "&:hover": { bgcolor: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.5,
+                    fontWeight: 500,
+                    boxShadow: "none",
+                  }}
+                >
+                  Créer une consultation avec notes et fichiers
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => setOpenConsultationModal(false)}
+                  fullWidth
+                  sx={{
+                    borderColor: colors.primary,
+                    color: colors.primary,
+                    "&:hover": { borderColor: colors.primaryLight, color: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.5,
+                    fontWeight: 500,
+                  }}
+                >
+                  Annuler
+                </Button>
+              </motion.div>
+            </Box>
           </Box>
-        </motion.div>
+        </Fade>
       </Modal>
 
       {/* Modale pour partager un dossier */}
-      <Modal open={openShareModal} onClose={() => setOpenShareModal(false)} sx={{ backdropFilter: 'blur(5px)' }}>
-        <motion.div
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+      <Modal
+        open={openShareModal}
+        onClose={() => setOpenShareModal(false)}
+        closeAfterTransition
+        sx={{ backdropFilter: "blur(5px)" }}
+      >
+        <Fade in={openShareModal}>
           <Box sx={modalStyle}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: colors.text }}>
-              Partager le dossier (ID: {selectedDossier?.idDossier})
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
+                Partager le dossier (ID: {selectedDossier?.idDossier})
+              </Typography>
+              <IconButton onClick={() => setOpenShareModal(false)} size="small" sx={{ color: colors.text }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
             <Divider sx={{ my: 2, bgcolor: colors.divider }} />
+
             <form onSubmit={handleShare}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                   Type de partage
                 </Typography>
-                <Select
-                  value={shareType}
-                  onChange={(e) => setShareType(e.target.value)}
-                  fullWidth
-                  sx={{ 
-                    borderRadius: 3,
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': { borderColor: colors.secondary },
-                      '&.Mui-focused fieldset': { borderColor: colors.primary },
-                    },
-                  }}
-                >
-                  <MenuItem value="direct">Avec un infirmier</MenuItem>
-                  <MenuItem value="link">Générer un lien (pour un autre médecin)</MenuItem>
-                </Select>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="share-type-label">Méthode de partage</InputLabel>
+                  <Select
+                    labelId="share-type-label"
+                    value={shareType}
+                    onChange={(e) => setShareType(e.target.value)}
+                    label="Méthode de partage"
+                    sx={{
+                      borderRadius: 2,
+                    }}
+                  >
+                    <MenuItem value="direct">Avec un infirmier</MenuItem>
+                    <MenuItem value="link">Générer un lien (pour un autre médecin)</MenuItem>
+                  </Select>
+                </FormControl>
               </Box>
 
-              {shareType === 'direct' ? (
+              {shareType === "direct" ? (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                     Sélectionner un infirmier
                   </Typography>
-                  <Select
-                    value={selectedUser}
-                    onChange={(e) => setSelectedUser(e.target.value)}
-                    fullWidth
-                    displayEmpty
-                    sx={{ 
-                      borderRadius: 3,
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': { borderColor: colors.secondary },
-                        '&.Mui-focused fieldset': { borderColor: colors.primary },
-                      },
-                    }}
-                  >
-                    <MenuItem value="" disabled>
-                      Choisir un infirmier
-                    </MenuItem>
-                    {infirmiers.map((infirmier) => (
-                      <MenuItem key={infirmier.idUtilisateur} value={infirmier.idUtilisateur}>
-                        {infirmier.nom} {infirmier.prenom} (ID: {infirmier.idUtilisateur})
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel id="infirmier-share-label">Choisir un infirmier</InputLabel>
+                    <Select
+                      labelId="infirmier-share-label"
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      label="Choisir un infirmier"
+                      sx={{
+                        borderRadius: 2,
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Choisir un infirmier
                       </MenuItem>
-                    ))}
-                  </Select>
+                      {infirmiers.map((infirmier) => (
+                        <MenuItem key={infirmier.idUtilisateur} value={infirmier.idUtilisateur}>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <PersonIcon sx={{ mr: 1, color: colors.primary, fontSize: 20 }} />
+                            {infirmier.nom} {infirmier.prenom} (ID: {infirmier.idUtilisateur})
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
               ) : (
                 <>
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
-                      Mot de passe
+                      Mot de passe pour le lien
                     </Typography>
                     <TextField
                       type="text"
                       value={motDePasse}
                       onChange={(e) => setMotDePasse(e.target.value)}
                       fullWidth
-                      placeholder="Entrez un mot de passe"
+                      placeholder="Entrez un mot de passe sécurisé"
                       variant="outlined"
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': { 
-                          borderRadius: 3,
-                          '&:hover fieldset': { borderColor: colors.secondary },
-                          '&.Mui-focused fieldset': { borderColor: colors.primary },
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                          "&:hover fieldset": { borderColor: colors.secondary },
+                          "&.Mui-focused fieldset": { borderColor: colors.primary },
                         },
                       }}
                     />
                   </Box>
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
-                      Durée (en minutes)
+                      Durée de validité (en minutes)
                     </Typography>
                     <TextField
                       type="number"
                       value={duree}
                       onChange={(e) => setDuree(e.target.value)}
                       fullWidth
-                      placeholder="Entrez la durée en minutes"
                       variant="outlined"
-                      sx={{ 
-                        '& .MuiOutlinedInput-root': { 
-                          borderRadius: 3,
-                          '&:hover fieldset': { borderColor: colors.secondary },
-                          '&.Mui-focused fieldset': { borderColor: colors.primary },
+                      helperText="1440 minutes = 1 jour, 10080 minutes = 1 semaine"
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                          "&:hover fieldset": { borderColor: colors.secondary },
+                          "&.Mui-focused fieldset": { borderColor: colors.primary },
                         },
                       }}
                     />
@@ -1155,52 +2025,108 @@ const MedecinGererDossier = () => {
                 </>
               )}
 
-              <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants}>
+              <Box sx={{ display: "flex", gap: 2, mt: 4 }}>
                 <Button
-                  type="submit"
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
+                  onClick={() => setOpenShareModal(false)}
                   fullWidth
-                  disabled={shareLoading}
-                  startIcon={shareLoading ? <CircularProgress size={20} /> : null}
                   sx={{
-                    bgcolor: colors.primary,
-                    '&:hover': { bgcolor: colors.secondary },
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    py: 1.5,
+                    borderColor: colors.primary,
+                    color: colors.primary,
+                    "&:hover": { borderColor: colors.primaryLight, color: colors.primaryLight },
+                    borderRadius: 2,
+                    textTransform: "none",
+                    py: 1.2,
                     fontWeight: 500,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                   }}
                 >
-                  {shareLoading ? 'Partage en cours...' : 'Partager'}
+                  Annuler
                 </Button>
-              </motion.div>
+
+                <motion.div whileHover="hover" whileTap="tap" variants={buttonVariants} style={{ width: "100%" }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    disabled={shareLoading}
+                    sx={{
+                      bgcolor: colors.primary,
+                      "&:hover": { bgcolor: colors.primaryLight },
+                      borderRadius: 2,
+                      textTransform: "none",
+                      py: 1.2,
+                      fontWeight: 500,
+                      boxShadow: "none",
+                    }}
+                  >
+                    {shareLoading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Partager le dossier"}
+                  </Button>
+                </motion.div>
+              </Box>
             </form>
 
             {lienPartage && (
-              <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(0, 0, 0, 0.02)', borderRadius: 2 }}>
+              <Box sx={{ mt: 3, p: 3, bgcolor: colors.background, borderRadius: 2 }}>
                 <Typography variant="body2" gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
-                  Lien de partage :
+                  Lien de partage généré :
                 </Typography>
-                <Typography variant="body2" sx={{ wordBreak: 'break-all', color: colors.primary }}>
-                  <a href={lienPartage} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: "white",
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: colors.divider,
+                    wordBreak: "break-all",
+                    position: "relative",
+                  }}
+                >
+                  <Typography variant="body2" sx={{ color: colors.primary }}>
                     {lienPartage}
-                  </a>
+                  </Typography>
+                  <Tooltip title="Copier le lien">
+                    <IconButton
+                      onClick={() => {
+                        navigator.clipboard.writeText(lienPartage)
+                        toast.success("Lien copié dans le presse-papier")
+                      }}
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        color: colors.primary,
+                      }}
+                      size="small"
+                    >
+                      <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 2, color: colors.textSecondary }}>
+                  Ce lien sera valide pendant {duree} minutes. Partagez-le uniquement avec des professionnels de santé
+                  autorisés.
                 </Typography>
               </Box>
             )}
           </Box>
-        </motion.div>
+        </Fade>
       </Modal>
 
-      <FileViewerModal
-        open={openFileModal}
-        onClose={() => setOpenFileModal(false)}
-        selectedFile={selectedFile}
+      <FileViewerModal open={openFileViewer} onClose={() => setOpenFileViewer(false)} selectedFile={selectedFile} />
+
+      <ConsultationDetailsModal
+        open={openConsultationDetailsModal}
+        onClose={() => setOpenConsultationDetailsModal(false)}
+        consultation={selectedConsultation}
+        dossier={selectedDossier}
+        fetchDossiers={fetchDossiers}
+        isCreationMode={!selectedConsultation}
+        scrollToConsultation={scrollToConsultation}
       />
     </Box>
-  );
-};
+  )
+}
 
 export default MedecinGererDossier;

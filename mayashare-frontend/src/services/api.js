@@ -109,6 +109,13 @@ export const updateDossier = (id, data) => api.put(`/dossiers/${id}`, data);
 
 export const deleteDossier = (id) => api.delete(`/dossiers/${id}`);
 
+// Consultations
+export const createConsultation = (data) => api.post("/consultations", data);
+
+export const getConsultationsByDossier = (idDossier) => api.get(`/consultations/dossier/${idDossier}`);
+
+export const updateConsultation = (idConsultation, data) => api.put(`/consultations/${idConsultation}`, data);
+
 // Rendez-vous
 export const createRendezVous = (data) => api.post("/rendezvous", data);
 
@@ -122,7 +129,8 @@ export const getRendezVousByMedecin = () => api.get("/rendezvous/medecin");
 
 export const getRendezVousForInfirmier = () => api.get("/rendezvous/infirmier");
 
-export const updateRendezVous = (id, data) => api.put(`/rendezvous/${id}`, data);
+// Utilisation de /cancel pour les opérations d'annulation
+export const updateRendezVous = (id, data) => api.put(`/rendezvous/${id}/cancel`, data);
 
 export const acceptRendezVous = (id, data) => api.put(`/rendezvous/${id}/accept`, data);
 
@@ -130,7 +138,7 @@ export const declineRendezVous = (id, data) => api.put(`/rendezvous/${id}/declin
 
 export const assignRendezVousToInfirmier = (id, data) => api.put(`/rendezvous/${id}/assign`, data);
 
-export const deleteRendezVous = (id) => api.delete(`/rendezvous/${id}`);
+export const cancelRendezVous = (id, data) => api.put(`/rendezvous/${id}/cancel`, data);
 
 // Hôpitaux
 export const getHopitaux = () => api.get("/hopitaux");

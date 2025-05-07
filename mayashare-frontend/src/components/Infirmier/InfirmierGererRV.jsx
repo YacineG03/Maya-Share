@@ -25,7 +25,7 @@ import {
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import { getRendezVousForInfirmier, acceptRendezVous, declineRendezVous, deleteRendezVous } from '../../services/api';
+import { getRendezVousForInfirmier, acceptRendezVous, declineRendezVous, cancelRendezVous } from '../../services/api';
 
 // Animation variants
 const rowVariants = {
@@ -88,8 +88,8 @@ const InfirmierGererRV = () => {
           toast.success('Rendez-vous refusé avec succès');
           break;
         case 'delete':
-          await deleteRendezVous(selectedRdv.idRendezVous);
-          toast.success('Rendez-vous supprimé avec succès');
+          await cancelRendezVous(selectedRdv.idRendezVous, { commentaire: 'Suppression demandée par l\'infirmier' });
+          toast.success('Rendez-vous annulé avec succès');
           break;
         default:
           break;
@@ -116,6 +116,8 @@ const InfirmierGererRV = () => {
         return <Chip label="Accepté" color="success" />;
       case 'décliné':
         return <Chip label="Refusé" color="error" />;
+      case 'annulé':
+        return <Chip label="Annulé" color="default" />;
       default:
         return <Chip label="Inconnu" color="default" />;
     }
@@ -281,7 +283,7 @@ const InfirmierGererRV = () => {
         <DialogTitle id="alert-dialog-title">
           {actionType === 'accept' && 'Accepter le rendez-vous'}
           {actionType === 'decline' && 'Refuser le rendez-vous'}
-          {actionType === 'delete' && 'Supprimer le rendez-vous'}
+          {actionType === 'delete' && 'Annuler le rendez-vous'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
@@ -290,10 +292,10 @@ const InfirmierGererRV = () => {
             {actionType === 'decline' &&
               `Voulez-vous refuser le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
             {actionType === 'delete' &&
-              `Voulez-vous vraiment supprimer ce rendez-vous ? Cette action est irréversible.`}
+              `Voulez-vous annuler ce rendez-vous ? Cette action mettra le rendez-vous à l'état "annulé".`}
           </DialogContentText>
 
-          {(actionType === 'accept' || actionType === 'decline') && (
+          {(actionType === 'accept' || actionType === 'decline' || actionType === 'delete') && (
             <TextField
               autoFocus
               margin="dense"
@@ -305,7 +307,7 @@ const InfirmierGererRV = () => {
               onChange={(e) => setCommentaire(e.target.value)}
               multiline
               rows={3}
-              required={actionType === 'decline'}
+              required={actionType === 'decline' || actionType === 'delete'}
             />
           )}
         </DialogContent>

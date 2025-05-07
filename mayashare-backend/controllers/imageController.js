@@ -12,9 +12,14 @@ const ORTHANC_PASS = 'passer';
 
 exports.uploadImage = async (req, res) => {
   try {
-    const { idDossier } = req.body;
+    const { idDossier, idConsultation } = req.body;
     if (!req.file) {
       return res.status(400).json({ message: 'Aucun fichier fourni' });
+    }
+
+    // Validation des champs obligatoires
+    if (!idDossier || !idConsultation || isNaN(idDossier) || isNaN(idConsultation)) {
+      return res.status(400).json({ message: 'idDossier et idConsultation sont requis et doivent être des nombres valides' });
     }
 
     // Étape 1 : Vérifier le buffer du fichier
@@ -64,6 +69,7 @@ exports.uploadImage = async (req, res) => {
       metadonnees: orthancId ? JSON.stringify({ orthancId }) : '{}',
       idUtilisateur: req.user.id,
       idDossier: parseInt(idDossier),
+      idConsultation: parseInt(idConsultation),
     };
 
     // Étape 4 : Enregistrer dans la base de données via le modèle
@@ -89,7 +95,7 @@ exports.uploadImage = async (req, res) => {
     if (error.response) {
       console.error('Réponse Orthanc:', error.response.data);
     }
-    res.status(500).json({ message: 'Erreur lors de l’upload du fichier', error: error.message });
+    res.status(500).json({ message: 'Erreur lors de l\'upload du fichier', error: error.message });
   }
 };
 
@@ -138,6 +144,7 @@ exports.getImage = (req, res) => {
       metadonnees: image.metadonnees,
       idUtilisateur: image.idUtilisateur,
       idDossier: image.idDossier,
+      idConsultation: image.idConsultation,
       url: imageUrl,
       dicomWebUrl: dicomWebUrl,
     });
@@ -182,6 +189,7 @@ exports.getImagesByUser = (req, res) => {
           metadonnees: image.metadonnees,
           idUtilisateur: image.idUtilisateur,
           idDossier: image.idDossier,
+          idConsultation: image.idConsultation,
           url: imageUrl,
           dicomWebUrl: dicomWebUrl,
         });
@@ -249,6 +257,7 @@ exports.getImagesByDossier = (req, res) => {
             metadonnees: image.metadonnees,
             idUtilisateur: image.idUtilisateur,
             idDossier: image.idDossier,
+            idConsultation: image.idConsultation,
             url: imageUrl,
             dicomWebUrl: dicomWebUrl,
           });
@@ -313,7 +322,7 @@ exports.deleteImage = (req, res) => {
 
           if (metadonnees && metadonnees.orthancId) {
             console.log(`Suppression de l’instance Orthanc ${metadonnees.orthancId} pour l’image ${imageId}`);
-            axios.delete(`http://localhost:8042/instances/${metadonnees.orthancId}`, {
+            axios.delete(`${ORTHANC_URL}/instances/${metadonnees.orthancId}`, {
               auth: {
                 username: ORTHANC_USER,
                 password: ORTHANC_PASS,

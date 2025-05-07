@@ -352,7 +352,7 @@ exports.acceptRendezVous = (req, res) => {
 };
 
 exports.declineRendezVous = (req, res) => {
-  if (req.user.role !== 'Médecin' && req.user.role !== 'Infirmier') {
+  if (req.user.role !== 'Médecin' && req.user.role !== 'Infirmier'  && req.user.role !== 'Patient') {
     return res.status(403).json({ message: 'Accès interdit.' });
   }
 
@@ -397,6 +397,67 @@ exports.declineRendezVous = (req, res) => {
           .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
 
         res.json({ message: 'Rendez-vous refusé avec succès.' });
+      });
+    });
+  });
+};
+
+exports.cancelRendezVous = (req, res) => {
+  if (req.user.role !== 'Patient') {
+    return res.status(403).json({ message: 'Accès interdit.' });
+  }
+
+  const id = req.params.id;
+  const rendezVousData = { etat: 'annulé', commentaire: req.body.commentaire || 'Annulation demandée par le patient' };
+
+  if (!rendezVousData.commentaire || rendezVousData.commentaire.trim() === '') {
+    return res.status(400).json({ message: 'Un commentaire est requis pour annuler un rendez-vous.' });
+  }
+
+  RendezVous.findById(id, (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(404).json({ message: 'Rendez-vous non trouvé.' });
+    }
+
+    const rendezVous = results[0];
+    if (req.user.role === 'Patient' && rendezVous.idPatient !== req.user.id) {
+      return res.status(403).json({ message: 'Accès interdit : ce rendez-vous ne vous appartient pas.' });
+    }
+
+    RendezVous.update(id, rendezVousData, (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Erreur lors de l\'annulation du rendez-vous.' });
+      }
+
+      Trace.create({ action: 'annulation rendez-vous', idUtilisateur: req.user.id }, (err) => {
+        if (err) console.error('Erreur lors de l’enregistrement de la traçabilité:', err);
+      });
+
+      User.findById(rendezVous.idPatient, (err, patientResults) => {
+        if (err || patientResults.length === 0) {
+          return res.status(500).json({ message: 'Erreur lors de la récupération du patient.' });
+        }
+
+        const patient = patientResults[0];
+        const subject = 'Rendez-vous annulé';
+        const text = `Bonjour ${patient.nom} ${patient.prenom},\n\nVotre rendez-vous du ${moment(rendezVous.dateRendezVous).format('DD/MM/YYYY à HH:mm')} a été annulé.\nMotif : ${rendezVousData.commentaire}\n\nCordialement,\nMediShareSénégal`;
+        sendEmail(patient.email, subject, text)
+          .then(() => console.log('E-mail envoyé au patient.'))
+          .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
+
+        // Notification au médecin
+        User.findById(rendezVous.idMedecin, (err, medecinResults) => {
+          if (!err && medecinResults.length > 0) {
+            const medecin = medecinResults[0];
+            const subjectMedecin = 'Rendez-vous annulé par le patient';
+            const textMedecin = `Bonjour Dr. ${medecin.prenom} ${medecin.nom},\n\nLe patient ${patient.nom} ${patient.prenom} a annulé son rendez-vous du ${moment(rendezVous.dateRendezVous).format('DD/MM/YYYY à HH:mm')}.\nMotif : ${rendezVousData.commentaire}\n\nCordialement,\nMediShareSénégal`;
+            sendEmail(medecin.email, subjectMedecin, textMedecin)
+              .then(() => console.log('E-mail envoyé au médecin.'))
+              .catch(err => console.error('Erreur lors de l’envoi de l’e-mail:', err));
+          }
+        });
+
+        res.json({ message: 'Rendez-vous annulé avec succès.' });
       });
     });
   });

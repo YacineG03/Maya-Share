@@ -11,6 +11,7 @@ router.get('/:id', authMiddleware, rendezVousController.getRendezVous);
 router.put('/:id/accept', authMiddleware, rendezVousController.acceptRendezVous);
 router.put('/:id/decline', authMiddleware, rendezVousController.declineRendezVous);
 router.put('/:id/assign', authMiddleware, rendezVousController.assignRendezVousToInfirmier);
+router.put('/:id/cancel', authMiddleware, rendezVousController.cancelRendezVous); // Route ajoutée pour l'annulation
 router.delete('/:id', authMiddleware, rendezVousController.deleteRendezVous);
 
 module.exports = router;

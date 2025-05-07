@@ -18,7 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import { getRendezVousByPatient, deleteRendezVous } from '../../services/api';
+import { getRendezVousByPatient, updateRendezVous } from '../../services/api';
 
 const PatientConsulterSuivi = () => {
   const [rendezVous, setRendezVous] = useState([]);
@@ -60,13 +60,14 @@ const PatientConsulterSuivi = () => {
 
   const handleCancelRendezVous = async () => {
     try {
-      await deleteRendezVous(selectedRdvId);
-      setRendezVous(rendezVous.filter((rdv) => rdv.idRendezVous !== selectedRdvId));
+      await updateRendezVous(selectedRdvId, { etat: 'annulé', commentaire: 'Annulation demandée par le patient' });
+      setRendezVous(rendezVous.map((rdv) => rdv.idRendezVous === selectedRdvId ? { ...rdv, etat: 'annulé' } : rdv));
       toast.success('Rendez-vous annulé avec succès !');
       handleCloseDialog();
     } catch (error) {
       console.error('Erreur lors de l\'annulation du rendez-vous:', error);
-      const errorMessage = error.response?.data?.message || 'Erreur lors de l\'annulation du rendez-vous';
+      const errorMessage = error.response?.data?.message || 'Une erreur est survenue lors de l\'annulation. Veuillez réessayer ou contacter le support.';
+      setError(errorMessage);
       toast.error(errorMessage);
     }
   };
@@ -79,6 +80,8 @@ const PatientConsulterSuivi = () => {
         return <Chip label="Accepté" color="success" />;
       case 'décliné':
         return <Chip label="Refusé" color="error" />;
+      case 'annulé':
+        return <Chip label="Annulé" color="default" />;
       default:
         return <Chip label="Inconnu" color="default" />;
     }
