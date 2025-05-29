@@ -4,6 +4,8 @@ const Trace = require('../models/traceModel');
 const Image = require('../models/imageModel');
 const axios = require('axios');
 
+const validBloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
 exports.createDossier = (req, res) => {
     if (req.user.role !== 'Médecin' && req.user.role !== 'Infirmier') {
         return res.status(403).json({ message: 'Accès interdit : seuls les médecins et infirmiers peuvent créer un dossier.' });
@@ -14,11 +16,20 @@ exports.createDossier = (req, res) => {
         return res.status(400).json({ message: 'idPatient doit être un nombre valide.' });
     }
 
+    const { groupeSanguin } = req.body;
+    if (groupeSanguin && !validBloodGroups.includes(groupeSanguin)) {
+        return res.status(400).json({ message: 'Groupe sanguin invalide.' });
+    }
+
     const dossierData = {
         idPatient: idPatient,
         idMedecin: req.user.role === 'Médecin' ? req.user.id : req.body.idMedecin || null,
         diagnostic: req.body.diagnostic || '',
         traitement: req.body.traitement || '',
+        groupeSanguin: groupeSanguin || null,
+        antecedentsMedicaux: req.body.antecedentsMedicaux || '',
+        allergies: req.body.allergies || '',
+        notesComplementaires: req.body.notesComplementaires || ''
     };
 
     if (req.user.role === 'Infirmier' && !dossierData.idMedecin) {
@@ -94,6 +105,10 @@ exports.getDossiersByPatient = (req, res) => {
                         diagnostic: dossier.diagnostic,
                         traitement: dossier.traitement,
                         etat: dossier.etat,
+                        groupeSanguin: dossier.groupeSanguin,
+                        antecedentsMedicaux: dossier.antecedentsMedicaux,
+                        allergies: dossier.allergies,
+                        notesComplementaires: dossier.notesComplementaires,
                         fichiers: fichiers,
                     };
                 });
@@ -122,6 +137,10 @@ exports.getDossiersByPatient = (req, res) => {
                 diagnostic: dossier.diagnostic,
                 traitement: dossier.traitement,
                 etat: dossier.etat,
+                groupeSanguin: dossier.groupeSanguin,
+                antecedentsMedicaux: dossier.antecedentsMedicaux,
+                allergies: dossier.allergies,
+                notesComplementaires: dossier.notesComplementaires,
                 fichiers: fichiers,
             };
         });
@@ -164,6 +183,10 @@ exports.getDossiersByMedecin = (req, res) => {
                         diagnostic: dossier.diagnostic,
                         traitement: dossier.traitement,
                         etat: dossier.etat,
+                        groupeSanguin: dossier.groupeSanguin,
+                        antecedentsMedicaux: dossier.antecedentsMedicaux,
+                        allergies: dossier.allergies,
+                        notesComplementaires: dossier.notesComplementaires,
                         fichiers: fichiers,
                     });
                 });
@@ -182,7 +205,7 @@ exports.updateDossier = (req, res) => {
     }
 
     const id = req.params.id;
-    const { diagnostic, traitement, etat } = req.body;
+    const { diagnostic, traitement, etat, groupeSanguin, antecedentsMedicaux, allergies, notesComplementaires } = req.body;
 
     if (!diagnostic || diagnostic.trim() === '') {
         return res.status(400).json({ message: 'Le diagnostic est requis.' });
@@ -192,6 +215,9 @@ exports.updateDossier = (req, res) => {
     }
     if (!['en cours', 'traité'].includes(etat)) {
         return res.status(400).json({ message: 'L’état doit être "en cours" ou "traité".' });
+    }
+    if (groupeSanguin && !validBloodGroups.includes(groupeSanguin)) {
+        return res.status(400).json({ message: 'Groupe sanguin invalide.' });
     }
 
     Dossier.findById(id, (err, results) => {
@@ -211,7 +237,7 @@ exports.updateDossier = (req, res) => {
                     return res.status(403).json({ message: 'Accès interdit : ce dossier n’a pas été partagé avec vous.' });
                 }
 
-                const dossierData = { diagnostic, traitement, etat };
+                const dossierData = { diagnostic, traitement, etat, groupeSanguin, antecedentsMedicaux, allergies, notesComplementaires };
                 Dossier.update(id, dossierData, (err) => {
                     if (err) {
                         return res.status(500).json({ message: 'Erreur lors de la mise à jour du dossier.' });
@@ -227,7 +253,7 @@ exports.updateDossier = (req, res) => {
             return;
         }
 
-        const dossierData = { diagnostic, traitement, etat };
+        const dossierData = { diagnostic, traitement, etat, groupeSanguin, antecedentsMedicaux, allergies, notesComplementaires };
         Dossier.update(id, dossierData, (err) => {
             if (err) {
                 return res.status(500).json({ message: 'Erreur lors de la mise à jour du dossier.' });
@@ -360,14 +386,14 @@ const fetchImages = (idDossier, res) => {
 
 exports.getDossiersForInfirmier = (req, res) => {
     if (req.user.role !== 'Infirmier') {
-      return res.status(403).json({ message: 'Accès interdit : réservé aux infirmiers.' });
+        return res.status(403).json({ message: 'Accès interdit : réservé aux infirmiers.' });
     }
-  
+
     Dossier.getDossiersForInfirmier(req.user.id, (err, results) => {
-      if (err) {
-        console.error('Erreur lors de la récupération des dossiers:', err);
-        return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
-      }
-      res.json({ dossiers: results });
+        if (err) {
+            console.error('Erreur lors de la récupération des dossiers:', err);
+            return res.status(500).json({ message: 'Erreur lors de la récupération des dossiers.' });
+        }
+        res.json({ dossiers: results });
     });
 };

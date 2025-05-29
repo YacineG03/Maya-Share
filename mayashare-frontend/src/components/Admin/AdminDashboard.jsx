@@ -1,7 +1,7 @@
 // src/components/Admin/AdminDashboard.js
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -20,17 +20,17 @@ import {
   Card,
   CardContent,
   Grid,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import HomeIcon from "@mui/icons-material/Home";
-import PeopleIcon from "@mui/icons-material/People";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from "@mui/icons-material/Settings";
-import AdminGererUtilisateurs from "./AdminGererUser";
-import AdminGererHopital from "./AdminGererHopital";
-import { getUsers, getHopitaux } from "../../services/api";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import AdminGererUtilisateurs from './AdminGererUser';
+import AdminGererHopital from './AdminGererHopital';
+import { getUsers, getHopitaux } from '../../services/api';
 
 // Animation variants
 const sidebarItemVariants = {
@@ -46,8 +46,8 @@ const sidebarItemVariants = {
   }),
   hover: {
     scale: 1.05,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
     transition: { duration: 0.2 },
   },
 };
@@ -95,7 +95,7 @@ const cardVariants = {
   },
   hover: {
     scale: 1.03,
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
     transition: { duration: 0.2 },
   },
 };
@@ -106,48 +106,48 @@ const SIDEBAR_WIDTH_MOBILE = 240;
 function AdminDashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [activeSection, setActiveSection] = useState("Accueil");
-  const [userName, setUserName] = useState("Admin");
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [activeSection, setActiveSection] = useState('Accueil');
+  const [userName, setUserName] = useState('Admin');
   const [loading, setLoading] = useState(true);
   const [contentLoaded, setContentLoaded] = useState(false);
-  const [userInitials, setUserInitials] = useState("AD");
+  const [userInitials, setUserInitials] = useState('AD');
   const [totalUsers, setTotalUsers] = useState({
     total: 0,
     patients: 0,
     medecins: 0,
     infirmiers: 0,
-    admins: 0
+    admins: 0,
   });
   const [totalHospitals, setTotalHospitals] = useState(0);
   const [loadingStats, setLoadingStats] = useState(true);
 
   const sidebarColors = {
-    background: "linear-gradient(195deg, #1E3A8A, #3B82F6)",
-    selectedItem: "rgba(255, 255, 255, 0.2)",
-    hoverItem: "rgba(255, 255, 255, 0.15)",
-    text: "#FFFFFF",
-    divider: "rgba(255, 255, 255, 0.2)",
-    avatarBg: "#2563EB",
+    background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
+    selectedItem: 'rgba(255, 255, 255, 0.2)',
+    hoverItem: 'rgba(255, 255, 255, 0.15)',
+    text: '#FFFFFF',
+    divider: 'rgba(255, 255, 255, 0.2)',
+    avatarBg: '#2563EB',
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
     const fetchUserInfo = async () => {
       try {
         setTimeout(() => {
-          setUserName("Administrateur");
-          setUserInitials("AD");
+          setUserName('Administrateur');
+          setUserInitials('AD');
           setLoading(false);
           setTimeout(() => setContentLoaded(true), 300);
         }, 800);
       } catch (err) {
-        console.error("Erreur:", err);
+        console.error('Erreur:', err);
         setLoading(false);
       }
     };
@@ -165,25 +165,33 @@ function AdminDashboard() {
         const allUsers = usersResponse.data.users || [];
 
         // Compter les utilisateurs par rôle
-        const patientCount = allUsers.filter(user => user.role === 'patient').length;
-        const medecinCount = allUsers.filter(user => user.role === 'medecin').length;
-        const infirmierCount = allUsers.filter(user => user.role === 'infirmier').length;
-        const adminCount = allUsers.filter(user => user.role === 'admin').length;
+        const patientCount = allUsers.filter(
+          (user) => user.role === 'patient'
+        ).length;
+        const medecinCount = allUsers.filter(
+          (user) => user.role === 'medecin'
+        ).length;
+        const infirmierCount = allUsers.filter(
+          (user) => user.role === 'infirmier'
+        ).length;
+        const adminCount = allUsers.filter(
+          (user) => user.role === 'admin'
+        ).length;
 
         setTotalUsers({
           total: usersResponse.data.total || allUsers.length,
           patients: patientCount,
           medecins: medecinCount,
           infirmiers: infirmierCount,
-          admins: adminCount
+          admins: adminCount,
         });
 
         // Récupérer le nombre total d'hôpitaux
         const hospitalsResponse = await getHopitaux();
         setTotalHospitals(hospitalsResponse.data.length || 0);
       } catch (err) {
-        console.error("Erreur lors de la récupération des statistiques :", err);
-        toast.error("Erreur lors de la récupération des statistiques.");
+        console.error('Erreur lors de la récupération des statistiques :', err);
+        toast.error('Erreur lors de la récupération des statistiques.');
       } finally {
         setLoadingStats(false);
       }
@@ -194,19 +202,19 @@ function AdminDashboard() {
 
   const handleLogout = () => {
     setContentLoaded(false);
-    toast.success("Déconnexion réussie !", {
-      position: "top-right",
+    toast.success('Déconnexion réussie !', {
+      position: 'top-right',
       autoClose: 1500,
       hideProgressBar: true,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "colored",
+      theme: 'colored',
     });
     setTimeout(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      navigate("/home");
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      navigate('/home');
     }, 1800);
   };
 
@@ -224,11 +232,11 @@ function AdminDashboard() {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          background: "linear-gradient(135deg, #F0F7FF, #D6E4FF)",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: 'linear-gradient(135deg, #F0F7FF, #D6E4FF)',
         }}
       >
         <motion.div
@@ -236,39 +244,43 @@ function AdminDashboard() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             gap: 16,
           }}
         >
           <motion.div
             animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <svg width={64} height={64} viewBox="0 0 100 100">
+            <svg width={64} height={64} viewBox='0 0 100 100'>
               <motion.circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="#2563EB"
-                strokeWidth="8"
-                fill="none"
-                strokeLinecap="round"
+                cx='50'
+                cy='50'
+                r='40'
+                stroke='#2563EB'
+                strokeWidth='8'
+                fill='none'
+                strokeLinecap='round'
                 initial={{ pathLength: 0, rotate: -90 }}
                 animate={{ pathLength: 1, rotate: 360 }}
                 transition={{
                   duration: 2,
-                  ease: "easeInOut",
+                  ease: 'easeInOut',
                   repeat: Infinity,
-                  repeatType: "loop",
+                  repeatType: 'loop',
                 }}
               />
             </svg>
           </motion.div>
           <Typography
-            variant="h6"
-            sx={{ fontWeight: 600, color: "#1E3A8A", fontFamily: "Inter, Roboto, sans-serif" }}
+            variant='h6'
+            sx={{
+              fontWeight: 600,
+              color: '#1E3A8A',
+              fontFamily: 'Inter, Roboto, sans-serif',
+            }}
           >
             Chargement...
           </Typography>
@@ -279,64 +291,82 @@ function AdminDashboard() {
 
   const menuItems = [
     {
-      text: "Accueil",
-      icon: <HomeIcon sx={{ fontSize: "1.5rem" }} />,
-      section: "Accueil",
+      text: 'Accueil',
+      icon: <HomeIcon sx={{ fontSize: '1.5rem' }} />,
+      section: 'Accueil',
     },
     {
-      text: "Gérer les utilisateurs",
-      icon: <PeopleIcon sx={{ fontSize: "1.5rem" }} />,
-      section: "Gérer les utilisateurs",
+      text: 'Gérer les utilisateurs',
+      icon: <PeopleIcon sx={{ fontSize: '1.5rem' }} />,
+      section: 'Gérer les utilisateurs',
     },
     {
-      text: "Gérer les hôpitaux",
-      icon: <LocalHospitalIcon sx={{ fontSize: "1.5rem" }} />,
-      section: "Gérer les hôpitaux",
+      text: 'Gérer les hôpitaux',
+      icon: <LocalHospitalIcon sx={{ fontSize: '1.5rem' }} />,
+      section: 'Gérer les hôpitaux',
     },
     {
-      text: "Paramètres",
-      icon: <SettingsIcon sx={{ fontSize: "1.5rem" }} />,
-      section: "Paramètres",
+      text: 'Paramètres',
+      icon: <SettingsIcon sx={{ fontSize: '1.5rem' }} />,
+      section: 'Paramètres',
     },
   ];
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden" }}>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+      }}
+    >
       {/* Sidebar */}
       <Drawer
-        variant="permanent"
+        variant='permanent'
         sx={{
           width: isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH,
           flexShrink: 0,
-          "& .MuiDrawer-paper": {
+          '& .MuiDrawer-paper': {
             width: isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH,
-            boxSizing: "border-box",
+            boxSizing: 'border-box',
             background: sidebarColors.background,
             color: sidebarColors.text,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: "none",
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
-            backdropFilter: "blur(8px)",
-            fontFamily: "Inter, Roboto, sans-serif",
+            display: 'flex',
+            flexDirection: 'column',
+            borderRight: 'none',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+            backdropFilter: 'blur(8px)',
+            fontFamily: 'Inter, Roboto, sans-serif',
           },
         }}
       >
-        <Slide direction="right" in={true} timeout={600}>
-          <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: isMobile ? 1.5 : 2 }}>
+        <Slide direction='right' in={true} timeout={600}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              p: isMobile ? 1.5 : 2,
+            }}
+          >
             {/* Logo & User Profile */}
-            <motion.div variants={logoVariants} initial="initial" animate="animate">
+            <motion.div
+              variants={logoVariants}
+              initial='initial'
+              animate='animate'
+            >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 2,
                   p: 2,
                   mb: 2,
                   borderRadius: 3,
-                  background: "rgba(255, 255, 255, 0.08)",
-                  transition: "all 0.3s ease",
-                  "&:hover": { background: "rgba(255, 255, 255, 0.12)" },
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': { background: 'rgba(255, 255, 255, 0.12)' },
                 }}
               >
                 <Avatar
@@ -345,17 +375,29 @@ function AdminDashboard() {
                     width: isMobile ? 36 : 42,
                     height: isMobile ? 36 : 42,
                     fontWeight: 600,
-                    transition: "transform 0.3s ease",
-                    "&:hover": { transform: "scale(1.1)" },
+                    transition: 'transform 0.3s ease',
+                    '&:hover': { transform: 'scale(1.1)' },
                   }}
                 >
                   {userInitials}
                 </Avatar>
                 <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: isMobile ? "0.9rem" : "1rem" }}>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: isMobile ? '0.9rem' : '1rem',
+                    }}
+                  >
                     {userName}
                   </Typography>
-                  <Typography variant="caption" sx={{ opacity: 0.8, fontSize: isMobile ? "0.7rem" : "0.75rem" }}>
+                  <Typography
+                    variant='caption'
+                    sx={{
+                      opacity: 0.8,
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
+                    }}
+                  >
                     Administrateur
                   </Typography>
                 </Box>
@@ -371,45 +413,48 @@ function AdminDashboard() {
                   key={item.section}
                   custom={index}
                   variants={sidebarItemVariants}
-                  initial="initial"
-                  animate="animate"
-                  whileHover="hover"
+                  initial='initial'
+                  animate='animate'
+                  whileHover='hover'
                 >
-                  <Tooltip title={item.text} placement="right" arrow>
+                  <Tooltip title={item.text} placement='right' arrow>
                     <ListItem
                       onClick={() => handleNavigation(item.section)}
-                      role="button"
+                      role='button'
                       aria-label={`Naviguer vers ${item.text}`}
                       sx={{
                         borderRadius: 3,
                         mb: 1,
                         py: 1.5,
                         px: 2,
-                        transition: "all 0.3s ease",
-                        "&.Mui-selected": {
+                        transition: 'all 0.3s ease',
+                        '&.Mui-selected': {
                           background: sidebarColors.selectedItem,
-                          backdropFilter: "blur(10px)",
-                          "&:hover": { background: sidebarColors.selectedItem },
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': { background: sidebarColors.selectedItem },
                         },
-                        "&:hover": {
+                        '&:hover': {
                           background: sidebarColors.hoverItem,
                         },
                         background:
                           activeSection === item.section
                             ? sidebarColors.selectedItem
-                            : "transparent",
-                        cursor: "pointer",
+                            : 'transparent',
+                        cursor: 'pointer',
                       }}
                     >
                       <ListItemIcon sx={{ minWidth: isMobile ? 32 : 36 }}>
-                        <Box sx={{ color: sidebarColors.text }}>{item.icon}</Box>
+                        <Box sx={{ color: sidebarColors.text }}>
+                          {item.icon}
+                        </Box>
                       </ListItemIcon>
                       <ListItemText
                         primary={item.text}
                         sx={{
-                          "& .MuiListItemText-primary": {
-                            fontWeight: activeSection === item.section ? 600 : 500,
-                            fontSize: isMobile ? "0.85rem" : "0.9rem",
+                          '& .MuiListItemText-primary': {
+                            fontWeight:
+                              activeSection === item.section ? 600 : 500,
+                            fontSize: isMobile ? '0.85rem' : '0.9rem',
                           },
                         }}
                       />
@@ -420,37 +465,42 @@ function AdminDashboard() {
             </List>
 
             {/* Footer / Logout */}
-            <Box sx={{ mt: "auto" }}>
+            <Box sx={{ mt: 'auto' }}>
               <Divider sx={{ borderColor: sidebarColors.divider, my: 1 }} />
               <motion.div
                 variants={sidebarItemVariants}
                 custom={menuItems.length}
-                initial="initial"
-                animate="animate"
-                whileHover="hover"
+                initial='initial'
+                animate='animate'
+                whileHover='hover'
               >
                 <ListItem
                   onClick={handleLogout}
-                  role="button"
-                  aria-label="Déconnexion"
+                  role='button'
+                  aria-label='Déconnexion'
                   sx={{
                     borderRadius: 3,
                     py: 1.5,
                     px: 2,
-                    transition: "all 0.3s ease",
-                    "&:hover": { background: sidebarColors.hoverItem },
-                    cursor: "pointer",
+                    transition: 'all 0.3s ease',
+                    '&:hover': { background: sidebarColors.hoverItem },
+                    cursor: 'pointer',
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: isMobile ? 32 : 36 }}>
-                    <LogoutIcon sx={{ color: sidebarColors.text, fontSize: isMobile ? "1.2rem" : "1.25rem" }} />
+                    <LogoutIcon
+                      sx={{
+                        color: sidebarColors.text,
+                        fontSize: isMobile ? '1.2rem' : '1.25rem',
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Déconnexion"
+                    primary='Déconnexion'
                     sx={{
-                      "& .MuiListItemText-primary": {
+                      '& .MuiListItemText-primary': {
                         fontWeight: 500,
-                        fontSize: isMobile ? "0.85rem" : "0.9rem",
+                        fontSize: isMobile ? '0.85rem' : '0.9rem',
                       },
                     }}
                   />
@@ -465,21 +515,22 @@ function AdminDashboard() {
       <Box
         sx={{
           flexGrow: 1,
-          background: "linear-gradient(135deg, #F0F7FF, #D6E4FF)",
-          height: "100%",
-          overflow: "auto",
-          position: "relative",
+          background: 'linear-gradient(135deg, #F0F7FF, #D6E4FF)',
+          height: '100%',
+          overflow: 'auto',
+          position: 'relative',
         }}
       >
         {/* Animated background elements */}
         <Box
           sx={{
-            position: "absolute",
+            position: 'absolute',
             top: 0,
             right: 0,
-            width: "50%",
-            height: "50%",
-            background: "radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)",
+            width: '50%',
+            height: '50%',
+            background:
+              'radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%)',
             zIndex: 0,
           }}
         />
@@ -487,19 +538,19 @@ function AdminDashboard() {
         <motion.div
           key={activeSection}
           variants={contentVariants}
-          initial="initial"
-          animate={contentLoaded ? "animate" : "exit"}
-          style={{ height: "100%", position: "relative", zIndex: 1 }}
+          initial='initial'
+          animate={contentLoaded ? 'animate' : 'exit'}
+          style={{ height: '100%', position: 'relative', zIndex: 1 }}
         >
           <Box sx={{ p: isMobile ? 2 : 3 }}>
             <Typography
-              variant="h5"
+              variant='h5'
               sx={{
                 mb: 3,
                 fontWeight: 600,
-                color: "#1E3A8A",
-                fontFamily: "Inter, Roboto, sans-serif",
-                fontSize: isMobile ? "1.25rem" : "1.5rem",
+                color: '#1E3A8A',
+                fontFamily: 'Inter, Roboto, sans-serif',
+                fontSize: isMobile ? '1.25rem' : '1.5rem',
               }}
             >
               {activeSection}
@@ -507,20 +558,20 @@ function AdminDashboard() {
 
             <Box
               sx={{
-                background: "#FFFFFF",
+                background: '#FFFFFF',
                 borderRadius: 3,
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
                 p: isMobile ? 2 : 3,
-                minHeight: "80vh",
+                minHeight: '80vh',
               }}
             >
-              {activeSection === "Accueil" && (
+              {activeSection === 'Accueil' && (
                 <Box
                   sx={{
                     py: 4,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     gap: 4,
                   }}
                 >
@@ -530,82 +581,116 @@ function AdminDashboard() {
                     transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <Typography
-                      variant="h4"
+                      variant='h4'
                       sx={{
                         fontWeight: 600,
-                        color: "#1E3A8A",
-                        fontFamily: "Inter, Roboto, sans-serif",
+                        color: '#1E3A8A',
+                        fontFamily: 'Inter, Roboto, sans-serif',
                         mb: 2,
-                        textAlign: "center",
+                        textAlign: 'center',
                       }}
                     >
                       Bienvenue, {userName} !
                     </Typography>
                     <Typography
-                      variant="body1"
+                      variant='body1'
                       sx={{
-                        color: "textSecondary",
+                        color: 'textSecondary',
                         maxWidth: 600,
-                        fontFamily: "Inter, Roboto, sans-serif",
-                        textAlign: "center",
+                        fontFamily: 'Inter, Roboto, sans-serif',
+                        textAlign: 'center',
                       }}
                     >
-                      Gérez efficacement les utilisateurs, les hôpitaux et les paramètres depuis cette interface
-                      d'administration. Sélectionnez une option dans le menu pour commencer.
+                      Gérez efficacement les utilisateurs, les hôpitaux et les
+                      paramètres depuis cette interface d'administration.
+                      Sélectionnez une option dans le menu pour commencer.
                     </Typography>
                   </motion.div>
 
                   {/* Statistiques */}
                   {loadingStats ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                    <Box
+                      sx={{ display: 'flex', justifyContent: 'center', py: 4 }}
+                    >
                       <CircularProgress />
                     </Box>
                   ) : (
-                    <Grid container spacing={3} justifyContent="center">
+                    <Grid container spacing={3} justifyContent='center'>
                       {/* Carte Utilisateurs */}
                       <Grid item xs={12} sm={6} md={4}>
-                        <motion.div variants={cardVariants} initial="initial" animate="animate" whileHover="hover">
+                        <motion.div
+                          variants={cardVariants}
+                          initial='initial'
+                          animate='animate'
+                          whileHover='hover'
+                        >
                           <Card
                             sx={{
-                              background: "linear-gradient(135deg, #3B82F6, #60A5FA)",
-                              color: "#FFFFFF",
+                              background:
+                                'linear-gradient(135deg, #3B82F6, #60A5FA)',
+                              color: '#FFFFFF',
                               borderRadius: 3,
-                              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
-                              transition: "all 0.3s ease",
-                              height: "100%",
+                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                              transition: 'all 0.3s ease',
+                              height: '100%',
                             }}
                           >
                             <CardContent>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  mb: 1,
+                                }}
+                              >
                                 <PeopleIcon sx={{ fontSize: 40 }} />
                                 <Box>
                                   <Typography
-                                    variant="h4"
-                                    sx={{ fontWeight: 600, fontFamily: "Inter, Roboto, sans-serif" }}
+                                    variant='h4'
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontFamily: 'Inter, Roboto, sans-serif',
+                                    }}
                                   >
                                     {totalUsers.total}
                                   </Typography>
                                   <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+                                    variant='body2'
+                                    sx={{
+                                      fontFamily: 'Inter, Roboto, sans-serif',
+                                    }}
                                   >
                                     Utilisateurs au total
                                   </Typography>
                                 </Box>
                               </Box>
-                              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.2)' }} />
+                              <Divider
+                                sx={{
+                                  my: 1,
+                                  borderColor: 'rgba(255,255,255,0.2)',
+                                }}
+                              />
                               <Grid container spacing={1}>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2">Patients: {totalUsers.patients}</Typography>
+                                  <Typography variant='body2'>
+                                    Patients: {totalUsers.patients}
+                                  </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2">Médecins: {totalUsers.medecins}</Typography>
+                                  <Typography variant='body2'>
+                                    Médecins: {totalUsers.medecins}
+                                  </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2">Infirmiers: {totalUsers.infirmiers}</Typography>
+                                  <Typography variant='body2'>
+                                    Infirmiers: {totalUsers.infirmiers}
+                                  </Typography>
                                 </Grid>
                                 <Grid item xs={6}>
-                                  <Typography variant="body2">Admins: {totalUsers.admins}</Typography>
+                                  <Typography variant='body2'>
+                                    Admins: {totalUsers.admins}
+                                  </Typography>
                                 </Grid>
                               </Grid>
                             </CardContent>
@@ -615,37 +700,66 @@ function AdminDashboard() {
 
                       {/* Carte Hôpitaux */}
                       <Grid item xs={12} sm={6} md={4}>
-                        <motion.div variants={cardVariants} initial="initial" animate="animate" whileHover="hover">
+                        <motion.div
+                          variants={cardVariants}
+                          initial='initial'
+                          animate='animate'
+                          whileHover='hover'
+                        >
                           <Card
                             sx={{
-                              background: "linear-gradient(135deg, #10B981, #34D399)",
-                              color: "#FFFFFF",
+                              background:
+                                'linear-gradient(135deg, #10B981, #34D399)',
+                              color: '#FFFFFF',
                               borderRadius: 3,
-                              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
-                              transition: "all 0.3s ease",
-                              height: "100%",
+                              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                              transition: 'all 0.3s ease',
+                              height: '100%',
                             }}
                           >
-                            <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                            <CardContent
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                height: '100%',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  mb: 1,
+                                }}
+                              >
                                 <LocalHospitalIcon sx={{ fontSize: 40 }} />
                                 <Box>
                                   <Typography
-                                    variant="h4"
-                                    sx={{ fontWeight: 600, fontFamily: "Inter, Roboto, sans-serif" }}
+                                    variant='h4'
+                                    sx={{
+                                      fontWeight: 600,
+                                      fontFamily: 'Inter, Roboto, sans-serif',
+                                    }}
                                   >
                                     {totalHospitals}
                                   </Typography>
                                   <Typography
-                                    variant="body2"
-                                    sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+                                    variant='body2'
+                                    sx={{
+                                      fontFamily: 'Inter, Roboto, sans-serif',
+                                    }}
                                   >
                                     Hôpitaux enregistrés
                                   </Typography>
                                 </Box>
                               </Box>
-                              <Divider sx={{ my: 1, borderColor: 'rgba(255,255,255,0.2)' }} />
-                              <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                              <Divider
+                                sx={{
+                                  my: 1,
+                                  borderColor: 'rgba(255,255,255,0.2)',
+                                }}
+                              />
+                              <Typography variant='body2' sx={{ flexGrow: 1 }}>
                                 Gérer les hôpitaux dans la section dédiée
                               </Typography>
                             </CardContent>
@@ -656,14 +770,16 @@ function AdminDashboard() {
                   )}
                 </Box>
               )}
-              {activeSection === "Gérer les utilisateurs" && <AdminGererUtilisateurs />}
-              {activeSection === "Gérer les hôpitaux" && <AdminGererHopital />}
-              {activeSection === "Paramètres" && (
-                <Box sx={{ textAlign: "center", py: 10 }}>
+              {activeSection === 'Gérer les utilisateurs' && (
+                <AdminGererUtilisateurs />
+              )}
+              {activeSection === 'Gérer les hôpitaux' && <AdminGererHopital />}
+              {activeSection === 'Paramètres' && (
+                <Box sx={{ textAlign: 'center', py: 10 }}>
                   <Typography
-                    variant="h6"
-                    color="textSecondary"
-                    sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+                    variant='h6'
+                    color='textSecondary'
+                    sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
                   >
                     Section Paramètres en développement
                   </Typography>

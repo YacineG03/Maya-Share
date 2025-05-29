@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -13,16 +13,16 @@ import {
   Slide,
   Avatar,
   Paper,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import EventIcon from "@mui/icons-material/Event";
-import FolderIcon from "@mui/icons-material/Folder";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
-import LogoutIcon from "@mui/icons-material/Logout";
-import PatientPrendreRDV from "./PatientPrendreRDV";
-import PatientConsulterDossier from "./PatientConsulterDossier";
-import PatientConsulterSuivi from "./PatientConsulterSuivi";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import EventIcon from '@mui/icons-material/Event';
+import FolderIcon from '@mui/icons-material/Folder';
+import MonitorHeartIcon from '@mui/icons-material/MonitorHeart';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PatientPrendreRDV from './PatientPrendreRDV';
+import PatientConsulterDossier from './PatientConsulterDossier';
+import PatientConsulterSuivi from './PatientConsulterSuivi';
 
 // Animation variants améliorées
 const sidebarItemVariants = {
@@ -38,10 +38,10 @@ const sidebarItemVariants = {
   }),
   hover: {
     scale: 1.02,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    transition: { 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    transition: {
       duration: 0.2,
-      ease: "easeOut"
+      ease: 'easeOut',
     },
   },
 };
@@ -79,39 +79,39 @@ const logoVariants = {
 
 // Nouvelle palette améliorée
 const colors = {
-  primary: "#0077B6", // Bleu plus profond
-  secondary: "#00B4D8", // Bleu clair
-  background: "#023E8A", // Bleu marine
-  lightBackground: "#F8F9FA", // Blanc cassé
-  text: "#FFFFFF",
-  divider: "rgba(255, 255, 255, 0.12)",
-  hover: "rgba(0, 180, 216, 0.7)",
-  active: "#0096C7", // Bleu turquoise
+  primary: '#0077B6', // Bleu plus profond
+  secondary: '#00B4D8', // Bleu clair
+  background: '#023E8A', // Bleu marine
+  lightBackground: '#F8F9FA', // Blanc cassé
+  text: '#FFFFFF',
+  divider: 'rgba(255, 255, 255, 0.12)',
+  hover: 'rgba(0, 180, 216, 0.7)',
+  active: '#0096C7', // Bleu turquoise
 };
 
 const SIDEBAR_WIDTH = 280;
 
 function PatientDashboard() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState("Prendre un rendez-vous");
-  const [userName, setUserName] = useState("Patient");
+  const [activeSection, setActiveSection] = useState('Prendre un rendez-vous');
+  const [userName, setUserName] = useState('Patient');
   const [loading, setLoading] = useState(true);
   const [contentLoaded, setContentLoaded] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
 
     const fetchUserInfo = async () => {
       try {
         // Simuler un chargement
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setUserName("Patient");
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        setUserName('Patient');
       } catch (err) {
-        console.error("Erreur :", err);
+        console.error('Erreur :', err);
       } finally {
         setLoading(false);
         setTimeout(() => setContentLoaded(true), 400);
@@ -123,19 +123,19 @@ function PatientDashboard() {
 
   const handleLogout = () => {
     setContentLoaded(false);
-    toast.success("Déconnexion réussie !", {
-      position: "top-right",
+    toast.success('Déconnexion réussie !', {
+      position: 'top-right',
       autoClose: 2000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: "colored",
+      theme: 'colored',
     });
     setTimeout(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      navigate("/home");
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      navigate('/home');
     }, 2000);
   };
 
@@ -153,10 +153,10 @@ function PatientDashboard() {
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
           background: `linear-gradient(135deg, ${colors.background} 0%, ${colors.primary} 100%)`,
         }}
       >
@@ -165,21 +165,21 @@ function PatientDashboard() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6 }}
         >
-          <Box sx={{ textAlign: "center" }}>
-            <CircularProgress 
-              size={60} 
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress
+              size={60}
               thickness={4}
-              sx={{ 
+              sx={{
                 color: colors.secondary,
-                mb: 2
-              }} 
+                mb: 2,
+              }}
             />
-            <Typography 
-              variant="h6" 
-              color="white"
-              sx={{ 
+            <Typography
+              variant='h6'
+              color='white'
+              sx={{
                 fontWeight: 500,
-                letterSpacing: 1.2
+                letterSpacing: 1.2,
               }}
             >
               Chargement...
@@ -191,132 +191,163 @@ function PatientDashboard() {
   }
 
   const menuItems = [
-    { text: "Prendre un rendez-vous", icon: <EventIcon />, section: "Prendre un rendez-vous" },
-    { text: "Consulter un dossier médical", icon: <FolderIcon />, section: "Consulter un dossier médical" },
-    { text: "Consulter l'état de suivi", icon: <MonitorHeartIcon />, section: "Consulter l'état de suivi" },
+    {
+      text: 'Prendre un rendez-vous',
+      icon: <EventIcon />,
+      section: 'Prendre un rendez-vous',
+    },
+    {
+      text: 'Consulter un dossier médical',
+      icon: <FolderIcon />,
+      section: 'Consulter un dossier médical',
+    },
+    {
+      text: "Consulter l'état de suivi",
+      icon: <MonitorHeartIcon />,
+      section: "Consulter l'état de suivi",
+    },
   ];
 
   return (
-    <Box sx={{ 
-      display: "flex", 
-      height: "100vh", 
-      width: "100vw", 
-      overflow: "hidden",
-      background: colors.lightBackground
-    }}>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        width: '100vw',
+        overflow: 'hidden',
+        background: colors.lightBackground,
+      }}
+    >
       {/* Sidebar redessinée */}
       <Drawer
-        variant="permanent"
+        variant='permanent'
         sx={{
           width: SIDEBAR_WIDTH,
           flexShrink: 0,
-          "& .MuiDrawer-paper": {
+          '& .MuiDrawer-paper': {
             width: SIDEBAR_WIDTH,
-            boxSizing: "border-box",
+            boxSizing: 'border-box',
             background: `linear-gradient(180deg, ${colors.background} 0%, ${colors.primary} 100%)`,
             color: colors.text,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: "none",
-            boxShadow: "4px 0 20px rgba(0, 0, 0, 0.1)",
+            display: 'flex',
+            flexDirection: 'column',
+            borderRight: 'none',
+            boxShadow: '4px 0 20px rgba(0, 0, 0, 0.1)',
           },
         }}
       >
-        <Slide direction="right" in={true} timeout={800}>
-          <Box sx={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            height: "100%",
-            px: 2
-          }}>
-            <motion.div 
-              variants={logoVariants} 
-              initial="initial" 
-              animate="animate"
+        <Slide direction='right' in={true} timeout={800}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              px: 2,
+            }}
+          >
+            <motion.div
+              variants={logoVariants}
+              initial='initial'
+              animate='animate'
               sx={{ pt: 4 }}
             >
-              <Box sx={{ 
-                display: "flex", 
-                alignItems: "center", 
-                mb: 3,
-                px: 2
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 3,
+                  px: 2,
+                }}
+              >
                 <Avatar
-                  sx={{ 
+                  sx={{
                     bgcolor: colors.secondary,
                     width: 40,
                     height: 40,
                     mr: 2,
                     fontSize: 20,
-                    fontWeight: "bold"
+                    fontWeight: 'bold',
                   }}
                 >
                   {userName.charAt(0)}
                 </Avatar>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography variant='h6' sx={{ fontWeight: 600 }}>
                     MayaShare
                   </Typography>
-                  <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  <Typography variant='body2' sx={{ opacity: 0.8 }}>
                     Bonjour, {userName}
                   </Typography>
                 </Box>
               </Box>
             </motion.div>
 
-            <Divider sx={{ 
-              backgroundColor: colors.divider, 
-              my: 1,
-              opacity: 0.5
-            }} />
+            <Divider
+              sx={{
+                backgroundColor: colors.divider,
+                my: 1,
+                opacity: 0.5,
+              }}
+            />
 
-            <List sx={{ 
-              px: 1, 
-              mt: 1, 
-              flex: 1,
-              "& .MuiListItem-root": {
-                borderRadius: 2,
-                mb: 1,
-              }
-            }}>
+            <List
+              sx={{
+                px: 1,
+                mt: 1,
+                flex: 1,
+                '& .MuiListItem-root': {
+                  borderRadius: 2,
+                  mb: 1,
+                },
+              }}
+            >
               {menuItems.map((item, index) => (
                 <motion.div
                   key={item.section}
                   custom={index}
                   variants={sidebarItemVariants}
-                  initial="initial"
-                  animate="animate"
-                  whileHover="hover"
+                  initial='initial'
+                  animate='animate'
+                  whileHover='hover'
                 >
                   <ListItem
                     onClick={() => handleNavigation(item.section)}
                     sx={{
                       py: 1.5,
-                      transition: "all 0.3s ease",
-                      backgroundColor: activeSection === item.section ? 
-                        colors.active : "transparent",
-                      "&:hover": {
+                      transition: 'all 0.3s ease',
+                      backgroundColor:
+                        activeSection === item.section
+                          ? colors.active
+                          : 'transparent',
+                      '&:hover': {
                         backgroundColor: colors.hover,
                       },
-                      cursor: "pointer",
+                      cursor: 'pointer',
                     }}
                   >
-                    <ListItemIcon sx={{ 
-                      minWidth: 40,
-                      color: activeSection === item.section ? 
-                        colors.text : "rgba(255, 255, 255, 0.8)"
-                    }}>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        color:
+                          activeSection === item.section
+                            ? colors.text
+                            : 'rgba(255, 255, 255, 0.8)',
+                      }}
+                    >
                       {item.icon}
                     </ListItemIcon>
                     <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{
                         sx: {
-                          fontWeight: activeSection === item.section ? 600 : 500,
-                          fontSize: "0.95rem",
-                          color: activeSection === item.section ? 
-                            colors.text : "rgba(255, 255, 255, 0.9)"
-                        }
+                          fontWeight:
+                            activeSection === item.section ? 600 : 500,
+                          fontSize: '0.95rem',
+                          color:
+                            activeSection === item.section
+                              ? colors.text
+                              : 'rgba(255, 255, 255, 0.9)',
+                        },
                       }}
                     />
                   </ListItem>
@@ -324,45 +355,49 @@ function PatientDashboard() {
               ))}
             </List>
 
-            <Box sx={{ mt: "auto", mb: 2 }}>
-              <Divider sx={{ 
-                backgroundColor: colors.divider,
-                my: 2,
-                opacity: 0.5
-              }} />
+            <Box sx={{ mt: 'auto', mb: 2 }}>
+              <Divider
+                sx={{
+                  backgroundColor: colors.divider,
+                  my: 2,
+                  opacity: 0.5,
+                }}
+              />
               <motion.div
                 variants={sidebarItemVariants}
                 custom={menuItems.length}
-                initial="initial"
-                animate="animate"
-                whileHover="hover"
+                initial='initial'
+                animate='animate'
+                whileHover='hover'
               >
                 <ListItem
                   onClick={handleLogout}
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
-                    transition: "all 0.3s ease",
-                    "&:hover": { 
-                      backgroundColor: colors.hover 
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: colors.hover,
                     },
-                    cursor: "pointer",
+                    cursor: 'pointer',
                   }}
                 >
-                  <ListItemIcon sx={{ 
-                    minWidth: 40,
-                    color: "rgba(255, 255, 255, 0.8)"
-                  }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                      color: 'rgba(255, 255, 255, 0.8)',
+                    }}
+                  >
                     <LogoutIcon />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Déconnexion"
+                    primary='Déconnexion'
                     primaryTypographyProps={{
                       sx: {
                         fontWeight: 500,
-                        fontSize: "0.95rem",
-                        color: "rgba(255, 255, 255, 0.9)"
-                      }
+                        fontSize: '0.95rem',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                      },
                     }}
                   />
                 </ListItem>
@@ -374,32 +409,36 @@ function PatientDashboard() {
 
       {/* Contenu principal */}
       <Box
-        component="main"
+        component='main'
         sx={{
           flexGrow: 1,
-          height: "100%",
-          overflow: "auto",
+          height: '100%',
+          overflow: 'auto',
           background: colors.lightBackground,
-          p: 3
+          p: 3,
         }}
       >
         <Paper
           component={motion.div}
           key={activeSection}
           variants={contentVariants}
-          initial="initial"
-          animate={contentLoaded ? "animate" : "exit"}
+          initial='initial'
+          animate={contentLoaded ? 'animate' : 'exit'}
           sx={{
-            height: "100%",
+            height: '100%',
             borderRadius: 3,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
-            overflow: "hidden",
-            background: "white"
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+            overflow: 'hidden',
+            background: 'white',
           }}
         >
-          {activeSection === "Prendre un rendez-vous" && <PatientPrendreRDV />}
-          {activeSection === "Consulter un dossier médical" && <PatientConsulterDossier />}
-          {activeSection === "Consulter l'état de suivi" && <PatientConsulterSuivi />}
+          {activeSection === 'Prendre un rendez-vous' && <PatientPrendreRDV />}
+          {activeSection === 'Consulter un dossier médical' && (
+            <PatientConsulterDossier />
+          )}
+          {activeSection === "Consulter l'état de suivi" && (
+            <PatientConsulterSuivi />
+          )}
         </Paper>
       </Box>
     </Box>

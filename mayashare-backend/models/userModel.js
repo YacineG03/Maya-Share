@@ -4,13 +4,24 @@ const bcrypt = require('bcryptjs');
 const User = {
     create: (userData, callback) => {
         const hashedPassword = bcrypt.hashSync(userData.motDePasse, 10);
-        const query = 'INSERT INTO Utilisateur (nom, prenom, role, identifiant, motDePasse, email, idHôpital, telephone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-        db.query(query, [userData.nom, userData.prenom, userData.role, userData.identifiant, hashedPassword, userData.email, userData.idHôpital, userData.telephone], callback);
+        const query = 'INSERT INTO Utilisateur (nom, prenom, sexe, dateNaissance, role, identifiant, motDePasse, email, idHopital, telephone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        db.query(query, [
+            userData.nom, 
+            userData.prenom, 
+            userData.sexe, 
+            userData.dateNaissance, 
+            userData.role, 
+            userData.identifiant, 
+            hashedPassword, 
+            userData.email, 
+            userData.idHopital, 
+            userData.telephone
+        ], callback);
     },
 
     findAll: (callback) => {
-        const query = 'SELECT * FROM Utilisateur ';
-        db.query(query,callback);
+        const query = 'SELECT * FROM Utilisateur';
+        db.query(query, callback);
     },
 
     findByIdentifiant: (identifiant, callback) => {
@@ -18,19 +29,27 @@ const User = {
         db.query(query, [identifiant], callback);
     }, 
     
-    findByEmail: (identifiant, callback) => {
+    findByEmail: (email, callback) => {
         const query = 'SELECT * FROM Utilisateur WHERE email = ?';
-        db.query(query, [identifiant], callback);
+        db.query(query, [email], callback);
     },
 
-    findByTel: (identifiant, callback) => {
+    findByTel: (telephone, callback) => {
         const query = 'SELECT * FROM Utilisateur WHERE telephone = ?';
-        db.query(query, [identifiant], callback);
+        db.query(query, [telephone], callback);
     },
 
     findById: (id, callback) => {
         const query = 'SELECT * FROM Utilisateur WHERE idUtilisateur = ?';
-        db.query(query, [id], callback);
+        db.query(query, [id], (err, results) => {
+            if (err) return callback(err);
+            // Formater la date pour éviter les problèmes de fuseau horaire
+            if (results.length > 0 && results[0].dateNaissance) {
+                const date = new Date(results[0].dateNaissance);
+                results[0].dateNaissance = date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+            }
+            callback(null, results);
+        });
     },
 
     findWithFilters: (filters, callback) => {
@@ -70,7 +89,17 @@ const User = {
             }
         }
     
-        db.query(query, params, callback);
+        db.query(query, params, (err, results) => {
+            if (err) return callback(err);
+            // Formater les dates pour tous les utilisateurs
+            results.forEach(user => {
+                if (user.dateNaissance) {
+                    const date = new Date(user.dateNaissance);
+                    user.dateNaissance = date.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                }
+            });
+            callback(null, results);
+        });
     },
 
     countWithFilters: (filters, callback) => {
@@ -101,13 +130,8 @@ const User = {
         db.query(query, params, callback);
     },
 
-    // update: (id, userData, callback) => {
-    //     const hashedPassword = userData.motDePasse ? bcrypt.hashSync(userData.motDePasse, 10) : null;
-    //     const query = 'UPDATE Utilisateur SET nom = ?, prenom = ?, role = ?, motDePasse = COALESCE(?, motDePasse), email = ?, idHôpital = ?, telephone = ? WHERE idUtilisateur = ?';
-    //     db.query(query, [userData.nom, userData.prenom, userData.role, hashedPassword, userData.email, userData.idHôpital, userData.telephone,id], callback);
-    // },
     findHopitalById: (idHopital, callback) => {
-        const query = 'SELECT idHôpital FROM Hopital WHERE idHôpital = ?';
+        const query = 'SELECT idHopital FROM Hopital WHERE idHopital = ?';
         db.query(query, [idHopital], callback);
     },
 
@@ -119,7 +143,7 @@ const User = {
             fields.push('nom = ?');
             params.push(userData.nom);
         }
-        if (userData.prenom) {
+        if (userData.prenom !== undefined) {
             fields.push('prenom = ?');
             params.push(userData.prenom);
         }
@@ -136,13 +160,25 @@ const User = {
             fields.push('email = ?');
             params.push(userData.email);
         }
-        if (userData.idHôpital !== undefined) { // Permet de mettre à jour même avec null
-            fields.push('idHôpital = ?');
-            params.push(userData.idHôpital);
+        if (userData.idHopital !== undefined) {
+            fields.push('idHopital = ?');
+            params.push(userData.idHopital);
         }
-        if (userData.telephone) {
+        if (userData.telephone !== undefined) {
             fields.push('telephone = ?');
             params.push(userData.telephone);
+        }
+        if (userData.sexe !== undefined) {
+            fields.push('sexe = ?');
+            params.push(userData.sexe);
+        }
+        if (userData.dateNaissance !== undefined) {
+            fields.push('dateNaissance = ?');
+            params.push(userData.dateNaissance);
+        }
+        if (userData.identifiant) {
+            fields.push('identifiant = ?');
+            params.push(userData.identifiant);
         }
     
         if (fields.length === 0) {
@@ -155,33 +191,28 @@ const User = {
         db.query(query, params, callback);
     },
 
-    updateHôpital: (id, idHôpital, callback) => {
-        const query = 'UPDATE Utilisateur SET idHôpital = ? WHERE idUtilisateur = ?';
-        db.query(query, [idHôpital, id], callback);
+    updateHôpital: (id, idHopital, callback) => {
+        const query = 'UPDATE Utilisateur SET idHopital = ? WHERE idUtilisateur = ?';
+        db.query(query, [idHopital, id], callback);
     },
 
-        // delete: (id, callback) => {
-        //     const query = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
-        //     db.query(query, [id], callback);
-        // }
-
-        delete: (id, callback) => {
-            // Supprimer les rendez-vous associés
-            const deleteRendezVousQuery = 'DELETE FROM RendezVous WHERE idPatient = ? OR idMedecin = ?';
-            db.query(deleteRendezVousQuery, [id, id], (err) => {
+    delete: (id, callback) => {
+        // Supprimer les rendez-vous associés
+        const deleteRendezVousQuery = 'DELETE FROM RendezVous WHERE idPatient = ? OR idMedecin = ?';
+        db.query(deleteRendezVousQuery, [id, id], (err) => {
+            if (err) return callback(err);
+        
+            // Supprimer les traces associées
+            const deleteTraceQuery = 'DELETE FROM Tracabilite WHERE idUtilisateur = ?';
+            db.query(deleteTraceQuery, [id], (err) => {
                 if (err) return callback(err);
         
-                // Supprimer les traces associées
-                const deleteTraceQuery = 'DELETE FROM Tracabilite WHERE idUtilisateur = ?';
-                db.query(deleteTraceQuery, [id], (err) => {
-                    if (err) return callback(err);
-        
-                    // Supprimer l'utilisateur
-                    const deleteUserQuery = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
-                    db.query(deleteUserQuery, [id], callback);
-                });
+                // Supprimer l'utilisateur
+                const deleteUserQuery = 'DELETE FROM Utilisateur WHERE idUtilisateur = ?';
+                db.query(deleteUserQuery, [id], callback);
             });
-        },
+        });
+    },
 };
 
 module.exports = User;

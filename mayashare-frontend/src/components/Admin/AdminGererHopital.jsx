@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,18 +19,18 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
-import { motion } from "framer-motion";
-import { toast } from "react-toastify";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import RefreshIcon from "@mui/icons-material/Refresh";
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   getHopitaux,
   createHopital,
   updateHopital,
   deleteHopital,
-} from "../../services/api";
+} from '../../services/api';
 
 // Animation variants
 const containerVariants = {
@@ -56,7 +56,7 @@ const rowVariants = {
     },
   },
   hover: {
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
     transition: { duration: 0.2 },
   },
 };
@@ -64,7 +64,7 @@ const rowVariants = {
 const buttonVariants = {
   hover: {
     scale: 1.05,
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
     transition: { duration: 0.2 },
   },
 };
@@ -88,18 +88,18 @@ const dialogVariants = {
 
 function AdminGererHopital() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [hopitaux, setHopitaux] = useState([]);
   const [filteredHopitaux, setFilteredHopitaux] = useState([]);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false); // Chargement déclenché par le bouton
   const [isDataLoaded, setIsDataLoaded] = useState(false); // Indique si les données ont été chargées
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [formData, setFormData] = useState({
-    nom: "",
-    adresse: "",
-    ville: "",
+    nom: '',
+    adresse: '',
+    ville: '',
   });
   const [editId, setEditId] = useState(null);
   const [errors, setErrors] = useState({});
@@ -126,10 +126,10 @@ function AdminGererHopital() {
       setHopitaux(response.data);
       setFilteredHopitaux(response.data);
       setIsDataLoaded(true);
-      toast.success("Liste des hôpitaux chargée avec succès.");
+      toast.success('Liste des hôpitaux chargée avec succès.');
     } catch (err) {
-      console.error("Erreur lors de la récupération des hôpitaux :", err);
-      toast.error("Erreur lors de la récupération des hôpitaux.");
+      console.error('Erreur lors de la récupération des hôpitaux :', err);
+      toast.error('Erreur lors de la récupération des hôpitaux.');
     } finally {
       setLoading(false);
     }
@@ -139,7 +139,7 @@ function AdminGererHopital() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   // Gestion de la recherche
@@ -150,14 +150,14 @@ function AdminGererHopital() {
   // Validation du formulaire
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.nom || formData.nom.trim() === "") {
-      newErrors.nom = "Le nom de l’hôpital est requis.";
+    if (!formData.nom || formData.nom.trim() === '') {
+      newErrors.nom = 'Le nom de l’hôpital est requis.';
     }
-    if (!formData.adresse || formData.adresse.trim() === "") {
-      newErrors.adresse = "L’adresse est requise.";
+    if (!formData.adresse || formData.adresse.trim() === '') {
+      newErrors.adresse = 'L’adresse est requise.';
     }
-    if (!formData.ville || formData.ville.trim() === "") {
-      newErrors.ville = "La ville est requise.";
+    if (!formData.ville || formData.ville.trim() === '') {
+      newErrors.ville = 'La ville est requise.';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -173,12 +173,12 @@ function AdminGererHopital() {
       setHopitaux((prev) => [...prev, newHopital]);
       setFilteredHopitaux((prev) => [...prev, newHopital]);
       setOpenAddDialog(false);
-      setFormData({ nom: "", adresse: "", ville: "" });
-      toast.success("Hôpital ajouté avec succès.");
+      setFormData({ nom: '', adresse: '', ville: '' });
+      toast.success('Hôpital ajouté avec succès.');
     } catch (err) {
-      console.error("Erreur lors de l’ajout de l’hôpital :", err);
+      console.error('Erreur lors de l’ajout de l’hôpital :', err);
       toast.error(
-        err.response?.data?.message || "Erreur lors de l’ajout de l’hôpital."
+        err.response?.data?.message || 'Erreur lors de l’ajout de l’hôpital.'
       );
     }
   };
@@ -212,21 +212,21 @@ function AdminGererHopital() {
         )
       );
       setOpenEditDialog(false);
-      setFormData({ nom: "", adresse: "", ville: "" });
+      setFormData({ nom: '', adresse: '', ville: '' });
       setEditId(null);
-      toast.success("Hôpital mis à jour avec succès.");
+      toast.success('Hôpital mis à jour avec succès.');
     } catch (err) {
-      console.error("Erreur lors de la mise à jour de l’hôpital :", err);
+      console.error('Erreur lors de la mise à jour de l’hôpital :', err);
       toast.error(
         err.response?.data?.message ||
-          "Erreur lors de la mise à jour de l’hôpital."
+          'Erreur lors de la mise à jour de l’hôpital.'
       );
     }
   };
 
   // Supprimer un hôpital
   const handleDeleteHopital = async (id) => {
-    if (!window.confirm("Voulez-vous vraiment supprimer cet hôpital ?")) return;
+    if (!window.confirm('Voulez-vous vraiment supprimer cet hôpital ?')) return;
 
     try {
       await deleteHopital(id);
@@ -234,19 +234,19 @@ function AdminGererHopital() {
       setFilteredHopitaux((prev) =>
         prev.filter((hopital) => hopital.id !== id)
       );
-      toast.success("Hôpital supprimé avec succès.");
+      toast.success('Hôpital supprimé avec succès.');
     } catch (err) {
-      console.error("Erreur lors de la suppression de l’hôpital :", err);
+      console.error('Erreur lors de la suppression de l’hôpital :', err);
       toast.error(
         err.response?.data?.message ||
-          "Erreur lors de la suppression de l’hôpital."
+          'Erreur lors de la suppression de l’hôpital.'
       );
     }
   };
 
   // Gestion de l'ouverture/fermeture des dialogues
   const handleOpenAddDialog = () => {
-    setFormData({ nom: "", adresse: "", ville: "" });
+    setFormData({ nom: '', adresse: '', ville: '' });
     setErrors({});
     setOpenAddDialog(true);
   };
@@ -258,7 +258,7 @@ function AdminGererHopital() {
 
   const handleCloseEditDialog = () => {
     setOpenEditDialog(false);
-    setFormData({ nom: "", adresse: "", ville: "" });
+    setFormData({ nom: '', adresse: '', ville: '' });
     setEditId(null);
     setErrors({});
   };
@@ -267,52 +267,64 @@ function AdminGererHopital() {
     <Box
       sx={{
         p: isMobile ? 2 : 3,
-        background: "#FFFFFF",
+        background: '#FFFFFF',
         borderRadius: 3,
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
-        minHeight: "100%",
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+        minHeight: '100%',
       }}
     >
-      <motion.div variants={containerVariants} initial="initial" animate="animate">
+      <motion.div
+        variants={containerVariants}
+        initial='initial'
+        animate='animate'
+      >
         {/* Titre et description */}
         <Typography
-          variant="h4"
+          variant='h4'
           gutterBottom
           sx={{
             fontWeight: 600,
-            color: "#1E3A8A",
-            fontFamily: "Inter, Roboto, sans-serif",
-            fontSize: isMobile ? "1.5rem" : "2rem",
+            color: '#1E3A8A',
+            fontFamily: 'Inter, Roboto, sans-serif',
+            fontSize: isMobile ? '1.5rem' : '2rem',
           }}
         >
           Gérer les hôpitaux
         </Typography>
         <Typography
-          variant="body1"
+          variant='body1'
           gutterBottom
           sx={{
-            color: "textSecondary",
-            fontFamily: "Inter, Roboto, sans-serif",
+            color: 'textSecondary',
+            fontFamily: 'Inter, Roboto, sans-serif',
             mb: 3,
           }}
         >
-          Ici, vous pouvez ajouter, modifier ou supprimer des hôpitaux. Cliquez sur "Rafraîchir" pour charger la liste.
+          Ici, vous pouvez ajouter, modifier ou supprimer des hôpitaux. Cliquez
+          sur "Rafraîchir" pour charger la liste.
         </Typography>
 
         {/* Boutons et barre de recherche */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: isMobile ? "wrap" : "nowrap" }}>
-          <motion.div variants={buttonVariants} whileHover="hover">
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            mb: 3,
+            flexWrap: isMobile ? 'wrap' : 'nowrap',
+          }}
+        >
+          <motion.div variants={buttonVariants} whileHover='hover'>
             <Button
-              variant="contained"
+              variant='contained'
               sx={{
-                background: "linear-gradient(195deg, #1E3A8A, #3B82F6)",
-                color: "#FFFFFF",
-                fontFamily: "Inter, Roboto, sans-serif",
+                background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
+                color: '#FFFFFF',
+                fontFamily: 'Inter, Roboto, sans-serif',
                 px: isMobile ? 2 : 3,
                 py: 1.2,
                 borderRadius: 2,
-                "&:hover": {
-                  background: "linear-gradient(195deg, #2563EB, #60A5FA)",
+                '&:hover': {
+                  background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
                 },
               }}
               onClick={handleOpenAddDialog}
@@ -320,37 +332,37 @@ function AdminGererHopital() {
               Ajouter un hôpital
             </Button>
           </motion.div>
-          <motion.div variants={buttonVariants} whileHover="hover">
+          <motion.div variants={buttonVariants} whileHover='hover'>
             <Button
-              variant="contained"
+              variant='contained'
               sx={{
-                background: "linear-gradient(195deg, #10B981, #34D399)",
-                color: "#FFFFFF",
-                fontFamily: "Inter, Roboto, sans-serif",
+                background: 'linear-gradient(195deg, #10B981, #34D399)',
+                color: '#FFFFFF',
+                fontFamily: 'Inter, Roboto, sans-serif',
                 px: isMobile ? 2 : 3,
                 py: 1.2,
                 borderRadius: 2,
-                "&:hover": {
-                  background: "linear-gradient(195deg, #059669, #10B981)",
+                '&:hover': {
+                  background: 'linear-gradient(195deg, #059669, #10B981)',
                 },
               }}
               onClick={handleRefresh}
               startIcon={<RefreshIcon />}
-              aria-label="Rafraîchir la liste des hôpitaux"
+              aria-label='Rafraîchir la liste des hôpitaux'
             >
               Rafraîchir
             </Button>
           </motion.div>
           <TextField
-            label="Rechercher un hôpital"
+            label='Rechercher un hôpital'
             value={search}
             onChange={handleSearchChange}
             fullWidth
             disabled={!isDataLoaded} // Désactiver la recherche si les données ne sont pas chargées
             sx={{
-              maxWidth: isMobile ? "100%" : 400,
-              fontFamily: "Inter, Roboto, sans-serif",
-              "& .MuiInputBase-root": {
+              maxWidth: isMobile ? '100%' : 400,
+              fontFamily: 'Inter, Roboto, sans-serif',
+              '& .MuiInputBase-root': {
                 borderRadius: 2,
               },
             }}
@@ -361,31 +373,38 @@ function AdminGererHopital() {
         {loading ? (
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               py: 4,
             }}
           >
             <motion.div
               animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
             >
-              <CircularProgress sx={{ color: "#2563EB" }} />
+              <CircularProgress sx={{ color: '#2563EB' }} />
             </motion.div>
           </Box>
         ) : !isDataLoaded ? (
           <Box
             sx={{
-              textAlign: "center",
+              textAlign: 'center',
               py: 4,
-              fontFamily: "Inter, Roboto, sans-serif",
+              fontFamily: 'Inter, Roboto, sans-serif',
             }}
-            aria-live="polite"
+            aria-live='polite'
           >
             <Typography
-              variant="body1"
-              sx={{ color: "textSecondary", fontSize: isMobile ? "0.9rem" : "1rem" }}
+              variant='body1'
+              sx={{
+                color: 'textSecondary',
+                fontSize: isMobile ? '0.9rem' : '1rem',
+              }}
             >
               Cliquez sur "Rafraîchir" pour charger la liste des hôpitaux.
             </Typography>
@@ -394,11 +413,11 @@ function AdminGererHopital() {
           <TableContainer
             component={Paper}
             sx={{
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
               borderRadius: 3,
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
-              overflowX: "auto",
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+              overflowX: 'auto',
             }}
           >
             <Table>
@@ -407,9 +426,9 @@ function AdminGererHopital() {
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: "#1E3A8A",
-                      fontFamily: "Inter, Roboto, sans-serif",
-                      fontSize: isMobile ? "0.85rem" : "0.9rem",
+                      color: '#1E3A8A',
+                      fontFamily: 'Inter, Roboto, sans-serif',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
                     }}
                   >
                     Nom
@@ -417,9 +436,9 @@ function AdminGererHopital() {
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: "#1E3A8A",
-                      fontFamily: "Inter, Roboto, sans-serif",
-                      fontSize: isMobile ? "0.85rem" : "0.9rem",
+                      color: '#1E3A8A',
+                      fontFamily: 'Inter, Roboto, sans-serif',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
                     }}
                   >
                     Adresse
@@ -427,20 +446,20 @@ function AdminGererHopital() {
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: "#1E3A8A",
-                      fontFamily: "Inter, Roboto, sans-serif",
-                      fontSize: isMobile ? "0.85rem" : "0.9rem",
+                      color: '#1E3A8A',
+                      fontFamily: 'Inter, Roboto, sans-serif',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
                     }}
                   >
                     Ville
                   </TableCell>
                   <TableCell
-                    align="right"
+                    align='right'
                     sx={{
                       fontWeight: 600,
-                      color: "#1E3A8A",
-                      fontFamily: "Inter, Roboto, sans-serif",
-                      fontSize: isMobile ? "0.85rem" : "0.9rem",
+                      color: '#1E3A8A',
+                      fontFamily: 'Inter, Roboto, sans-serif',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
                     }}
                   >
                     Actions
@@ -452,9 +471,9 @@ function AdminGererHopital() {
                   <TableRow>
                     <TableCell
                       colSpan={4}
-                      align="center"
-                      sx={{ fontFamily: "Inter, Roboto, sans-serif", py: 4 }}
-                      aria-live="polite"
+                      align='center'
+                      sx={{ fontFamily: 'Inter, Roboto, sans-serif', py: 4 }}
+                      aria-live='polite'
                     >
                       Aucun hôpital trouvé.
                     </TableCell>
@@ -464,42 +483,42 @@ function AdminGererHopital() {
                     <motion.tr
                       key={hopital.id}
                       variants={rowVariants}
-                      initial="initial"
-                      animate="animate"
-                      whileHover="hover"
-                      style={{ cursor: "pointer" }}
+                      initial='initial'
+                      animate='animate'
+                      whileHover='hover'
+                      style={{ cursor: 'pointer' }}
                     >
                       <TableCell
                         sx={{
-                          fontFamily: "Inter, Roboto, sans-serif",
-                          fontSize: isMobile ? "0.8rem" : "0.9rem",
+                          fontFamily: 'Inter, Roboto, sans-serif',
+                          fontSize: isMobile ? '0.8rem' : '0.9rem',
                         }}
                       >
                         {hopital.nom}
                       </TableCell>
                       <TableCell
                         sx={{
-                          fontFamily: "Inter, Roboto, sans-serif",
-                          fontSize: isMobile ? "0.8rem" : "0.9rem",
+                          fontFamily: 'Inter, Roboto, sans-serif',
+                          fontSize: isMobile ? '0.8rem' : '0.9rem',
                         }}
                       >
                         {hopital.adresse}
                       </TableCell>
                       <TableCell
                         sx={{
-                          fontFamily: "Inter, Roboto, sans-serif",
-                          fontSize: isMobile ? "0.8rem" : "0.9rem",
+                          fontFamily: 'Inter, Roboto, sans-serif',
+                          fontSize: isMobile ? '0.8rem' : '0.9rem',
                         }}
                       >
                         {hopital.ville}
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align='right'>
                         <motion.div
                           whileHover={{ scale: 1.2, rotate: 10 }}
                           transition={{ duration: 0.2 }}
                         >
                           <IconButton
-                            color="primary"
+                            color='primary'
                             onClick={() => handleEditHopital(hopital)}
                             aria-label={`Modifier l'hôpital ${hopital.nom}`}
                           >
@@ -511,7 +530,7 @@ function AdminGererHopital() {
                           transition={{ duration: 0.2 }}
                         >
                           <IconButton
-                            color="error"
+                            color='error'
                             onClick={() => handleDeleteHopital(hopital.id)}
                             aria-label={`Supprimer l'hôpital ${hopital.nom}`}
                           >
@@ -532,93 +551,96 @@ function AdminGererHopital() {
       <Dialog open={openAddDialog} onClose={handleCloseAddDialog}>
         <motion.div
           variants={dialogVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
+          initial='initial'
+          animate='animate'
+          exit='exit'
         >
           <DialogTitle
             sx={{
               fontWeight: 600,
-              color: "#1E3A8A",
-              fontFamily: "Inter, Roboto, sans-serif",
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
+              color: '#1E3A8A',
+              fontFamily: 'Inter, Roboto, sans-serif',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
             }}
           >
             Ajouter un hôpital
           </DialogTitle>
           <DialogContent
             sx={{
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
-              fontFamily: "Inter, Roboto, sans-serif",
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
+              fontFamily: 'Inter, Roboto, sans-serif',
             }}
           >
             <TextField
-              label="Nom"
-              name="nom"
+              label='Nom'
+              name='nom'
               value={formData.nom}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.nom}
               helperText={errors.nom}
-              aria-required="true"
-              aria-describedby={errors.nom ? "nom-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.nom ? 'nom-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
             <TextField
-              label="Adresse"
-              name="adresse"
+              label='Adresse'
+              name='adresse'
               value={formData.adresse}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.adresse}
               helperText={errors.adresse}
-              aria-required="true"
-              aria-describedby={errors.adresse ? "adresse-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.adresse ? 'adresse-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
             <TextField
-              label="Ville"
-              name="ville"
+              label='Ville'
+              name='ville'
               value={formData.ville}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.ville}
               helperText={errors.ville}
-              aria-required="true"
-              aria-describedby={errors.ville ? "ville-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.ville ? 'ville-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
           </DialogContent>
           <DialogActions
             sx={{
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
               p: 2,
             }}
           >
-            <motion.div variants={buttonVariants} whileHover="hover">
+            <motion.div variants={buttonVariants} whileHover='hover'>
               <Button
                 onClick={handleCloseAddDialog}
-                sx={{ fontFamily: "Inter, Roboto, sans-serif", color: "#1E3A8A" }}
+                sx={{
+                  fontFamily: 'Inter, Roboto, sans-serif',
+                  color: '#1E3A8A',
+                }}
               >
                 Annuler
               </Button>
             </motion.div>
-            <motion.div variants={buttonVariants} whileHover="hover">
+            <motion.div variants={buttonVariants} whileHover='hover'>
               <Button
                 onClick={handleAddHopital}
-                variant="contained"
+                variant='contained'
                 sx={{
-                  background: "linear-gradient(195deg, #1E3A8A, #3B82F6)",
-                  color: "#FFFFFF",
-                  fontFamily: "Inter, Roboto, sans-serif",
-                  "&:hover": {
-                    background: "linear-gradient(195deg, #2563EB, #60A5FA)",
+                  background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
+                  color: '#FFFFFF',
+                  fontFamily: 'Inter, Roboto, sans-serif',
+                  '&:hover': {
+                    background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
                   },
                 }}
               >
@@ -633,93 +655,96 @@ function AdminGererHopital() {
       <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
         <motion.div
           variants={dialogVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
+          initial='initial'
+          animate='animate'
+          exit='exit'
         >
           <DialogTitle
             sx={{
               fontWeight: 600,
-              color: "#1E3A8A",
-              fontFamily: "Inter, Roboto, sans-serif",
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
+              color: '#1E3A8A',
+              fontFamily: 'Inter, Roboto, sans-serif',
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
             }}
           >
             Modifier un hôpital
           </DialogTitle>
           <DialogContent
             sx={{
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
-              fontFamily: "Inter, Roboto, sans-serif",
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
+              fontFamily: 'Inter, Roboto, sans-serif',
             }}
           >
             <TextField
-              label="Nom"
-              name="nom"
+              label='Nom'
+              name='nom'
               value={formData.nom}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.nom}
               helperText={errors.nom}
-              aria-required="true"
-              aria-describedby={errors.nom ? "nom-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.nom ? 'nom-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
             <TextField
-              label="Adresse"
-              name="adresse"
+              label='Adresse'
+              name='adresse'
               value={formData.adresse}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.adresse}
               helperText={errors.adresse}
-              aria-required="true"
-              aria-describedby={errors.adresse ? "adresse-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.adresse ? 'adresse-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
             <TextField
-              label="Ville"
-              name="ville"
+              label='Ville'
+              name='ville'
               value={formData.ville}
               onChange={handleChange}
               fullWidth
-              margin="normal"
+              margin='normal'
               error={!!errors.ville}
               helperText={errors.ville}
-              aria-required="true"
-              aria-describedby={errors.ville ? "ville-error" : undefined}
-              sx={{ fontFamily: "Inter, Roboto, sans-serif" }}
+              aria-required='true'
+              aria-describedby={errors.ville ? 'ville-error' : undefined}
+              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
             />
           </DialogContent>
           <DialogActions
             sx={{
-              background: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(8px)",
+              background: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(8px)',
               p: 2,
             }}
           >
-            <motion.div variants={buttonVariants} whileHover="hover">
+            <motion.div variants={buttonVariants} whileHover='hover'>
               <Button
                 onClick={handleCloseEditDialog}
-                sx={{ fontFamily: "Inter, Roboto, sans-serif", color: "#1E3A8A" }}
+                sx={{
+                  fontFamily: 'Inter, Roboto, sans-serif',
+                  color: '#1E3A8A',
+                }}
               >
                 Annuler
               </Button>
             </motion.div>
-            <motion.div variants={buttonVariants} whileHover="hover">
+            <motion.div variants={buttonVariants} whileHover='hover'>
               <Button
                 onClick={handleUpdateHopital}
-                variant="contained"
+                variant='contained'
                 sx={{
-                  background: "linear-gradient(195deg, #1E3A8A, #3B82F6)",
-                  color: "#FFFFFF",
-                  fontFamily: "Inter, Roboto, sans-serif",
-                  "&:hover": {
-                    background: "linear-gradient(195deg, #2563EB, #60A5FA)",
+                  background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
+                  color: '#FFFFFF',
+                  fontFamily: 'Inter, Roboto, sans-serif',
+                  '&:hover': {
+                    background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
                   },
                 }}
               >

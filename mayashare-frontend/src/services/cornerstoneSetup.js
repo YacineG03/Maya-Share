@@ -13,12 +13,14 @@ cornerstoneWADOImageLoader.configure({
 cornerstoneWADOImageLoader.webWorkerManager.initialize({
   maxWebWorkers: navigator.hardwareConcurrency || 1,
   startWebWorkersOnDemand: true,
-  webWorkerPath: '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
+  webWorkerPath:
+    '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
   taskConfiguration: {
     decodeTask: {
       loadCodecsOnStartup: true,
       initializeCodecsOnStartup: false,
-      codecsPath: '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderCodecs.min.js',
+      codecsPath:
+        '/node_modules/cornerstone-wado-image-loader/dist/cornerstoneWADOImageLoaderCodecs.min.js',
     },
   },
 });

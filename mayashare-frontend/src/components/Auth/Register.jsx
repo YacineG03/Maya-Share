@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { register } from "../../services/api";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { register } from '../../services/api';
 import {
   Box,
   Button,
@@ -13,27 +13,27 @@ import {
   Container,
   InputAdornment,
   IconButton,
-} from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
-import PhoneIcon from "@mui/icons-material/Phone";
-import EmailIcon from "@mui/icons-material/Email";
-import LockIcon from "@mui/icons-material/Lock";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import HowToRegIcon from "@mui/icons-material/HowToReg";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+} from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 function Register() {
   const [formData, setFormData] = useState({
-    nom: "",
-    prenom: "",
-    telephone: "",
-    email: "",
-    motDePasse: "",
-    confirmMotDePasse: "",
+    nom: '',
+    prenom: '',
+    telephone: '',
+    email: '',
+    motDePasse: '',
+    confirmMotDePasse: '',
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -42,7 +42,7 @@ function Register() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError("");
+    if (error) setError('');
   };
 
   const handleClickShowPassword = () => {
@@ -55,19 +55,19 @@ function Register() {
 
   const validateForm = () => {
     if (!formData.prenom.trim()) {
-      setError("Le prénom est requis");
+      setError('Le prénom est requis');
       return false;
     }
     if (!formData.nom.trim()) {
-      setError("Le nom est requis");
+      setError('Le nom est requis');
       return false;
     }
     if (!formData.telephone.trim()) {
-      setError("Le numéro de téléphone est requis");
+      setError('Le numéro de téléphone est requis');
       return false;
     }
     if (!/^\+?[1-9]\d{1,14}$/.test(formData.telephone)) {
-      setError("Numéro de téléphone invalide");
+      setError('Numéro de téléphone invalide');
       return false;
     }
     if (!formData.email.trim()) {
@@ -79,15 +79,15 @@ function Register() {
       return false;
     }
     if (!formData.motDePasse) {
-      setError("Le mot de passe est requis");
+      setError('Le mot de passe est requis');
       return false;
     }
     if (formData.motDePasse.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+      setError('Le mot de passe doit contenir au moins 6 caractères');
       return false;
     }
     if (formData.motDePasse !== formData.confirmMotDePasse) {
-      setError("Les mots de passe ne correspondent pas");
+      setError('Les mots de passe ne correspondent pas');
       return false;
     }
     return true;
@@ -98,18 +98,18 @@ function Register() {
     if (!validateForm()) return;
 
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
       const { confirmMotDePasse, ...dataToSend } = formData;
-      console.log("Données envoyées :", dataToSend); // Débogage
+      console.log('Données envoyées :', dataToSend); // Débogage
       await register(dataToSend);
       setCompleted(true);
       setTimeout(() => {
-        navigate("/login");
+        navigate('/login');
       }, 1500);
     } catch (err) {
-      console.error("Erreur complète :", err); // Débogage
+      console.error('Erreur complète :', err); // Débogage
       setError(err.response?.data?.message || "Erreur lors de l'inscription.");
       setLoading(false);
     }
@@ -118,59 +118,62 @@ function Register() {
   return (
     <Box
       sx={{
-        height: "100vh",
-        width: "100vw",
+        height: '100vh',
+        width: '100vw',
         margin: 0,
         padding: 0,
-        position: "absolute",
+        position: 'absolute',
         top: 0,
         left: 0,
-        overflow: "hidden",
-        background: "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
+        overflow: 'hidden',
+        background: 'linear-gradient(135deg, #0078D7 0%, #004E8C 100%)',
       }}
     >
-      <Grid container sx={{ height: "100%", width: "100%", margin: 0, padding: 0 }}>
+      <Grid
+        container
+        sx={{ height: '100%', width: '100%', margin: 0, padding: 0 }}
+      >
         {/* Partie gauche : Formulaire */}
         <Grid
           item
           xs={12}
           md={6}
           sx={{
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
             padding: { xs: 3, md: 6 },
-            height: "100%",
-            boxSizing: "border-box",
+            height: '100%',
+            boxSizing: 'border-box',
           }}
         >
-          <Container maxWidth="sm">
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
-              <LocalHospitalIcon sx={{ fontSize: 50, color: "#0078D7" }} />
+          <Container maxWidth='sm'>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+              <LocalHospitalIcon sx={{ fontSize: 50, color: '#0078D7' }} />
             </Box>
 
             <Typography
-              variant="h3"
-              color="#0078D7"
+              variant='h3'
+              color='#0078D7'
               gutterBottom
               sx={{
-                textAlign: "center",
-                fontSize: { xs: "1.8rem", md: "2.5rem" },
-                fontWeight: "bold",
+                textAlign: 'center',
+                fontSize: { xs: '1.8rem', md: '2.5rem' },
+                fontWeight: 'bold',
               }}
             >
               Inscription Patient
             </Typography>
 
             <Typography
-              variant="body1"
-              color="#5A5A5A"
+              variant='body1'
+              color='#5A5A5A'
               gutterBottom
               sx={{
-                textAlign: "center",
-                fontSize: { xs: "0.875rem", md: "1rem" },
+                textAlign: 'center',
+                fontSize: { xs: '0.875rem', md: '1rem' },
                 mb: 4,
               }}
             >
@@ -178,34 +181,30 @@ function Register() {
             </Typography>
 
             {error && (
-              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              <Alert severity='error' sx={{ mb: 3, borderRadius: 2 }}>
                 {error}
               </Alert>
             )}
 
             <Box
-              component="form"
+              component='form'
               onSubmit={handleSubmit}
               sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 3,
               }}
             >
               {completed ? (
-                <Box sx={{ textAlign: "center" }}>
+                <Box sx={{ textAlign: 'center' }}>
                   <CheckCircleIcon
-                    sx={{ fontSize: 80, color: "#4CAF50", mb: 2 }}
+                    sx={{ fontSize: 80, color: '#4CAF50', mb: 2 }}
                   />
-                  <Typography
-                    variant="h5"
-                    color="#0078D7"
-                    sx={{ mb: 2 }}
-                  >
+                  <Typography variant='h5' color='#0078D7' sx={{ mb: 2 }}>
                     Inscription réussie !
                   </Typography>
-                  <Typography variant="body1" color="#5A5A5A">
+                  <Typography variant='body1' color='#5A5A5A'>
                     Redirection vers la connexion...
                   </Typography>
                 </Box>
@@ -213,205 +212,201 @@ function Register() {
                 <>
                   <TextField
                     fullWidth
-                    label="Prénom"
-                    variant="outlined"
-                    name="prenom"
+                    label='Prénom'
+                    variant='outlined'
+                    name='prenom'
                     value={formData.prenom}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <PersonIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
                   <TextField
                     fullWidth
-                    label="Nom"
-                    variant="outlined"
-                    name="nom"
+                    label='Nom'
+                    variant='outlined'
+                    name='nom'
                     value={formData.nom}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <PersonIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <PersonIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
                   <TextField
                     fullWidth
-                    label="Téléphone"
-                    variant="outlined"
-                    name="telephone"
+                    label='Téléphone'
+                    variant='outlined'
+                    name='telephone'
                     value={formData.telephone}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <PhoneIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <PhoneIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
                   <TextField
                     fullWidth
-                    label="Email"
-                    variant="outlined"
-                    name="email"
+                    label='Email'
+                    variant='outlined'
+                    name='email'
                     value={formData.email}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <EmailIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <EmailIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
                   <TextField
                     fullWidth
-                    label="Mot de passe"
-                    variant="outlined"
-                    type={showPassword ? "text" : "password"}
-                    name="motDePasse"
+                    label='Mot de passe'
+                    variant='outlined'
+                    type={showPassword ? 'text' : 'password'}
+                    name='motDePasse'
                     value={formData.motDePasse}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <LockIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
-                        <InputAdornment position="end">
+                        <InputAdornment position='end'>
                           <IconButton
                             onClick={handleClickShowPassword}
-                            edge="end"
-                            sx={{ color: "#5A5A5A" }}
+                            edge='end'
+                            sx={{ color: '#5A5A5A' }}
                           >
-                            {showPassword ? (
-                              <VisibilityOff />
-                            ) : (
-                              <Visibility />
-                            )}
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
                   <TextField
                     fullWidth
-                    label="Confirmer le mot de passe"
-                    variant="outlined"
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmMotDePasse"
+                    label='Confirmer le mot de passe'
+                    variant='outlined'
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name='confirmMotDePasse'
                     value={formData.confirmMotDePasse}
                     onChange={handleChange}
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#0078D7" }} />
+                        <InputAdornment position='start'>
+                          <LockIcon sx={{ color: '#0078D7' }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
-                        <InputAdornment position="end">
+                        <InputAdornment position='end'>
                           <IconButton
                             onClick={handleClickShowConfirmPassword}
-                            edge="end"
-                            sx={{ color: "#5A5A5A" }}
+                            edge='end'
+                            sx={{ color: '#5A5A5A' }}
                           >
                             {showConfirmPassword ? (
                               <VisibilityOff />
@@ -422,22 +417,22 @@ function Register() {
                         </InputAdornment>
                       ),
                     }}
-                    InputLabelProps={{ style: { color: "#5A5A5A" } }}
+                    InputLabelProps={{ style: { color: '#5A5A5A' } }}
                     sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "& fieldset": {
-                          borderColor: "rgba(90, 90, 90, 0.3)",
+                      '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                          borderColor: 'rgba(90, 90, 90, 0.3)',
                         },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(0, 120, 215, 0.5)",
+                        '&:hover fieldset': {
+                          borderColor: 'rgba(0, 120, 215, 0.5)',
                         },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#0078D7",
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#0078D7',
                         },
-                        backgroundColor: "rgba(240, 240, 240, 0.7)",
-                        borderRadius: "12px",
+                        backgroundColor: 'rgba(240, 240, 240, 0.7)',
+                        borderRadius: '12px',
                       },
-                      "& .MuiInputBase-input": { color: "#333333" },
+                      '& .MuiInputBase-input': { color: '#333333' },
                     }}
                     required
                   />
@@ -446,24 +441,24 @@ function Register() {
             </Box>
 
             {!completed && (
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                 <Button
-                  type="submit"
-                  variant="contained"
+                  type='submit'
+                  variant='contained'
                   disabled={loading}
                   startIcon={loading ? null : <HowToRegIcon />}
                   sx={{
-                    backgroundColor: "#0078D7",
-                    borderRadius: "12px",
+                    backgroundColor: '#0078D7',
+                    borderRadius: '12px',
                     px: 3,
                     py: 1.2,
-                    color: "#fff",
-                    "&:hover": { backgroundColor: "#0066B4" },
+                    color: '#fff',
+                    '&:hover': { backgroundColor: '#0066B4' },
                   }}
                   onClick={handleSubmit}
                 >
                   {loading ? (
-                    <CircularProgress size={24} sx={{ color: "#fff" }} />
+                    <CircularProgress size={24} sx={{ color: '#fff' }} />
                   ) : (
                     "S'inscrire"
                   )}
@@ -472,18 +467,18 @@ function Register() {
             )}
 
             <Typography
-              variant="body2"
-              color="#5A5A5A"
-              sx={{ mt: 4, textAlign: "center" }}
+              variant='body2'
+              color='#5A5A5A'
+              sx={{ mt: 4, textAlign: 'center' }}
             >
-              Vous avez déjà un compte ?{" "}
+              Vous avez déjà un compte ?{' '}
               <Link
-                href="/login"
-                underline="hover"
-                color="#0078D7"
+                href='/login'
+                underline='hover'
+                color='#0078D7'
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate("/login");
+                  navigate('/login');
                 }}
               >
                 Connectez-vous !
@@ -498,44 +493,43 @@ function Register() {
           xs={12}
           md={6}
           sx={{
-            background:
-              "linear-gradient(135deg, #0078D7 0%, #004E8C 100%)",
-            display: { xs: "none", md: "flex" },
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
+            background: 'linear-gradient(135deg, #0078D7 0%, #004E8C 100%)',
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
             padding: { xs: 2, md: 6 },
-            height: "100%",
-            textAlign: "center",
-            boxSizing: "border-box",
+            height: '100%',
+            textAlign: 'center',
+            boxSizing: 'border-box',
           }}
         >
-          <Container maxWidth="md">
+          <Container maxWidth='md'>
             <Typography
-              variant="h2"
-              color="#FFFFFF"
+              variant='h2'
+              color='#FFFFFF'
               gutterBottom
               sx={{
-                fontSize: { xs: "1.8rem", md: "3rem" },
-                fontWeight: "bold",
+                fontSize: { xs: '1.8rem', md: '3rem' },
+                fontWeight: 'bold',
               }}
             >
               Bienvenue sur Votre Portail Santé
             </Typography>
             <Typography
-              variant="h6"
-              color="#E0E0E0"
+              variant='h6'
+              color='#E0E0E0'
               gutterBottom
-              sx={{ fontSize: { xs: "0.9rem", md: "1.2rem" }, mb: 6 }}
+              sx={{ fontSize: { xs: '0.9rem', md: '1.2rem' }, mb: 6 }}
             >
-              Inscrivez-vous pour gérer vos rendez-vous et dossiers
-              médicaux en toute simplicité.
+              Inscrivez-vous pour gérer vos rendez-vous et dossiers médicaux en
+              toute simplicité.
             </Typography>
             <Box
-              component="img"
-              src="Prevention_sante_1.jpg"
-              alt="Illustration Santé"
-              sx={{ maxWidth: "100%", mt: 2 }}
+              component='img'
+              src='Prevention_sante_1.jpg'
+              alt='Illustration Santé'
+              sx={{ maxWidth: '100%', mt: 2 }}
             />
           </Container>
         </Grid>
