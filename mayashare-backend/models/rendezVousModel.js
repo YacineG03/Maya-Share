@@ -89,14 +89,11 @@ const RendezVous = {
       WHERE rv.idMedecin = ?
       ORDER BY rv.dateRendezVous DESC
     `;
-    console.log('Exécution de la requête SQL pour idMedecin:', idMedecin);
-    console.log('Requête SQL:', query);
     db.query(query, [idMedecin], (err, results) => {
       if (err) {
         console.error('Erreur SQL:', err);
         return callback(err, null);
       }
-      console.log('Résultats de la requête:', results);
       callback(null, results);
     });
   },
@@ -150,6 +147,37 @@ const RendezVous = {
       AND DATE(dateRendezVous) = DATE(?)
     `;
     db.query(query, [idPatient, idMedecin, dateRendezVous], callback);
+  },
+
+  createPartageAgenda: (partageData, callback) => {
+    const query = 'INSERT INTO PartagesAgenda (idMedecin, idInfirmier, idRendezVous, dateDebut, dateFin, dateCreation) VALUES (?, ?, ?, ?, ?, NOW())';
+    db.query(query, [
+      partageData.idMedecin,
+      partageData.idInfirmier,
+      partageData.idRendezVous,
+      partageData.dateDebut,
+      partageData.dateFin
+    ], callback);
+  },
+
+  findPartagesByInfirmier: (idInfirmier, callback) => {
+    const query = `
+      SELECT 
+        pa.idPartage,
+        pa.idMedecin,
+        pa.idInfirmier,
+        pa.idRendezVous,
+        pa.dateDebut,
+        pa.dateFin,
+        pa.dateCreation,
+        CONCAT(m.nom, ' ', m.prenom) AS nomMedecin
+      FROM PartagesAgenda pa
+      JOIN Utilisateur m ON pa.idMedecin = m.idUtilisateur
+      WHERE pa.idInfirmier = ?
+      AND pa.dateFin >= CURDATE()
+      ORDER BY pa.dateCreation DESC
+    `;
+    db.query(query, [idInfirmier], callback);
   },
 };
 

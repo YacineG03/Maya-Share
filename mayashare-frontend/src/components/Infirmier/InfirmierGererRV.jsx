@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,8 +14,8 @@ import {
   Alert,
   Dialog,
   DialogActions,
-  DialogContent,
   DialogContentText,
+  DialogContent,
   DialogTitle,
   Card,
   CardContent,
@@ -31,6 +32,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import Calendar from 'react-calendar'; // Importation de react-calendar
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -41,11 +43,14 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import CommentIcon from '@mui/icons-material/Comment';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   getRendezVousForInfirmier,
   acceptRendezVous,
   declineRendezVous,
   cancelRendezVous,
+  getSharedAgendasForInfirmier,
+  getRendezVousByMedecinForInfirmier,
 } from '../../services/api';
 
 // Palette de couleurs
@@ -123,10 +128,14 @@ const InfirmierGererRV = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   const [rendezVous, setRendezVous] = useState([]);
+  const [partages, setPartages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openSharedDialog, setOpenSharedDialog] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState(null);
+  const [selectedSharedRdv, setSelectedSharedRdv] = useState(null);
+  const [selectedPartage, setSelectedPartage] = useState(null);
   const [actionType, setActionType] = useState('');
   const [commentaire, setCommentaire] = useState('');
   const [filter, setFilter] = useState('tous');
@@ -141,7 +150,7 @@ const InfirmierGererRV = () => {
       const response = await getRendezVousForInfirmier();
       const data = Array.isArray(response.data)
         ? response.data
-        : response.data.rendezVous || [];
+        : response.data?.rendezVous || [];
       setRendezVous(data);
     } catch (err) {
       const errorMessage =
@@ -154,9 +163,56 @@ const InfirmierGererRV = () => {
     }
   };
 
+  const fetchSharedAgendas = async () => {
+    try {
+      const response = await getSharedAgendasForInfirmier();
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.partages || [];
+      setPartages(data);
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message || 'Erreur de chargement des agendas partagés';
+      toast.error(errorMessage);
+      setPartages([]);
+    }
+  };
+
   useEffect(() => {
     fetchRendezVous();
+    fetchSharedAgendas();
   }, []);
+
+  const handleViewSharedAgenda = async (idPartage) => {
+    try {
+      const partage = partages.find((p) => p.idPartage === idPartage);
+      if (!partage || !partage.dateDebut || !partage.dateFin) {
+        throw new Error('Les dates de partage ne sont pas disponibles.');
+      }
+
+      const response = await getRendezVousByMedecinForInfirmier({
+        idPartage,
+        dateDebut: partage.dateDebut,
+        dateFin: partage.dateFin,
+      });
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.rendezVous || [];
+
+      if (data.length > 0) {
+        setSelectedSharedRdv(data);
+        setSelectedPartage(partage);
+        setOpenSharedDialog(true);
+      } else {
+        toast.error('Aucun rendez-vous trouvé pour ce partage.');
+      }
+    } catch (err) {
+      const errorMessage = err.message || 'Erreur lors de la récupération des détails du rendez-vous';
+      toast.error(errorMessage);
+      console.error('Erreur de réponse:', err);
+    }
+  };
 
   const handleAction = async () => {
     try {
@@ -169,9 +225,7 @@ const InfirmierGererRV = () => {
           break;
         case 'decline':
           if (!commentaire.trim()) {
-            toast.error(
-              'Un commentaire est requis pour refuser un rendez-vous'
-            );
+            toast.error('Un commentaire est requis pour refuser un rendez-vous');
             return;
           }
           await declineRendezVous(selectedRdv.idRendezVous, { commentaire });
@@ -315,28 +369,37 @@ const InfirmierGererRV = () => {
   };
 
   const toggleExpandRdv = (rdv) => {
-    setExpandedRdv(expandedRdv?.idRendezVous === rdv.idRendezVous ? null : rdv);
+    setExpandedRdv(expandedRdv?.idRendezVous === rdv?.idRendezVous ? null : rdv);
   };
 
-  // Filtrer les rendez-vous en fonction de la recherche et du statut
   const filteredRendezVous = rendezVous.filter((rdv) => {
     const matchesSearch =
       searchTerm === '' ||
-      rdv.nomPatient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rdv.prenomPatient?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rdv.nomMedecin?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rdv.motif?.toLowerCase().includes(searchTerm.toLowerCase());
+      (rdv?.nomPatient?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (rdv?.prenomPatient?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (rdv?.nomMedecin?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (rdv?.motif?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
-    const matchesStatus = filter === 'tous' || rdv.etat === filter;
+    const matchesStatus = filter === 'tous' || rdv?.etat === filter;
 
     return matchesSearch && matchesStatus;
   });
 
-  // Compter les rendez-vous par statut pour les badges
   const countByStatus = {
-    'en attente': rendezVous.filter((rdv) => rdv.etat === 'en attente').length,
-    accepté: rendezVous.filter((rdv) => rdv.etat === 'accepté').length,
-    décliné: rendezVous.filter((rdv) => rdv.etat === 'décliné').length,
+    'en attente': rendezVous.filter((rdv) => rdv?.etat === 'en attente').length,
+    accepté: rendezVous.filter((rdv) => rdv?.etat === 'accepté').length,
+    décliné: rendezVous.filter((rdv) => rdv?.etat === 'décliné').length,
+  };
+
+  const getDatesInRange = (startDate, endDate) => {
+    const dates = [];
+    let currentDate = new Date(startDate);
+    const lastDate = new Date(endDate);
+    while (currentDate <= lastDate) {
+      dates.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return dates;
   };
 
   return (
@@ -347,7 +410,6 @@ const InfirmierGererRV = () => {
         minHeight: '100vh',
       }}
     >
-      {/* En-tête avec titre et boutons d'action */}
       <Box
         sx={{
           display: 'flex',
@@ -406,7 +468,10 @@ const InfirmierGererRV = () => {
               variant='outlined'
               color='primary'
               startIcon={<RefreshIcon />}
-              onClick={fetchRendezVous}
+              onClick={() => {
+                fetchRendezVous();
+                fetchSharedAgendas();
+              }}
               disabled={loading}
               sx={{
                 borderColor: colors.primary,
@@ -429,7 +494,6 @@ const InfirmierGererRV = () => {
         </Box>
       </Box>
 
-      {/* Barre de recherche et filtres */}
       <Paper
         elevation={0}
         sx={{
@@ -476,7 +540,6 @@ const InfirmierGererRV = () => {
         </Box>
       </Paper>
 
-      {/* Tabs de filtrage */}
       <Tabs
         value={tabValue}
         onChange={handleTabChange}
@@ -628,7 +691,10 @@ const InfirmierGererRV = () => {
                 variant='contained'
                 color='primary'
                 startIcon={<RefreshIcon />}
-                onClick={fetchRendezVous}
+                onClick={() => {
+                  fetchRendezVous();
+                  fetchSharedAgendas();
+                }}
                 sx={{
                   bgcolor: colors.primary,
                   '&:hover': { bgcolor: colors.secondary },
@@ -645,326 +711,367 @@ const InfirmierGererRV = () => {
           </motion.div>
         </Box>
       ) : (
-        <Grid container spacing={3}>
-          {filteredRendezVous.map((rdv, index) => (
-            <Grid item xs={12} md={6} lg={4} key={rdv.idRendezVous}>
-              <motion.div
-                custom={index}
-                variants={cardVariants}
-                initial='hidden'
-                animate='visible'
-                whileHover='hover'
-              >
-                <Card
-                  elevation={
-                    expandedRdv?.idRendezVous === rdv.idRendezVous ? 3 : 1
-                  }
-                  sx={{
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    border: `1px solid ${expandedRdv?.idRendezVous === rdv.idRendezVous ? 'transparent' : colors.divider}`,
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
+        <Grid container gap={3}>
+          {filteredRendezVous.map((rdv, index) => {
+            const partage = partages.find(
+              (p) => p.idRendezVous === rdv.idRendezVous
+            );
+
+            return (
+              <Grid xs={12} sm={6} md={4} key={rdv?.idRendezVous}>
+                <motion.div
+                  custom={index}
+                  variants={cardVariants}
+                  initial='hidden'
+                  animate='visible'
+                  whileHover='hover'
                 >
-                  <Box
+                  <Card
+                    elevation={
+                      expandedRdv?.idRendezVous === rdv?.idRendezVous ? 3 : 1
+                    }
                     sx={{
-                      p: 2,
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease',
+                      border: `1px solid ${expandedRdv?.idRendezVous === rdv?.idRendezVous ? 'transparent' : colors.divider}`,
+                      height: '100%',
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      cursor: 'pointer',
-                      bgcolor:
-                        expandedRdv?.idRendezVous === rdv.idRendezVous
-                          ? colors.infoLight
-                          : 'white',
+                      flexDirection: 'column',
                     }}
-                    onClick={() => toggleExpandRdv(rdv)}
                   >
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor:
-                            rdv.etat === 'en attente'
-                              ? colors.warningLight
-                              : rdv.etat === 'accepté'
+                    <Box
+                      sx={{
+                        p: 2,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        cursor: 'pointer',
+                        bgcolor:
+                          expandedRdv?.idRendezVous === rdv?.idRendezVous
+                            ? colors.infoLight
+                            : 'white',
+                      }}
+                      onClick={() => toggleExpandRdv(rdv)}
+                    >
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor:
+                              rdv?.etat === 'en attente'
+                                ? colors.warningLight
+                                : rdv?.etat === 'accepté'
                                 ? colors.successLight
                                 : colors.errorLight,
-                          color:
-                            rdv.etat === 'en attente'
-                              ? colors.warning
-                              : rdv.etat === 'accepté'
+                            color:
+                              rdv?.etat === 'en attente'
+                                ? colors.warning
+                                : rdv?.etat === 'accepté'
                                 ? colors.success
                                 : colors.error,
-                        }}
-                      >
-                        {rdv.prenomPatient?.charAt(0) || 'P'}
-                      </Avatar>
-                      <Box>
-                        <Typography
-                          variant='subtitle1'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {rdv.prenomPatient} {rdv.nomPatient}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            flexWrap: 'wrap',
                           }}
                         >
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                            }}
-                          >
-                            <CalendarMonthIcon
-                              sx={{ fontSize: 16, color: colors.textSecondary }}
-                            />
-                            <Typography variant='body2' color='text.secondary'>
-                              {formatDate(rdv.dateRendezVous)}
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                            }}
-                          >
-                            <AccessTimeIcon
-                              sx={{ fontSize: 16, color: colors.textSecondary }}
-                            />
-                            <Typography variant='body2' color='text.secondary'>
-                              {formatTime(rdv.dateRendezVous)}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
-                    {getStatusLabel(rdv.etat)}
-                  </Box>
-
-                  <Collapse in={expandedRdv?.idRendezVous === rdv.idRendezVous}>
-                    <CardContent sx={{ pt: 0 }}>
-                      <Divider sx={{ mb: 2 }} />
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.5,
-                        }}
-                      >
+                          {rdv?.prenomPatient?.charAt(0) || 'P'}
+                        </Avatar>
                         <Box>
                           <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            gutterBottom
+                            variant='subtitle1'
+                            sx={{ fontWeight: 600 }}
                           >
-                            Médecin
+                            {rdv?.prenomPatient} {rdv?.nomPatient}
                           </Typography>
                           <Box
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
+                              flexWrap: 'wrap',
                             }}
                           >
-                            <Avatar
+                            <Box
                               sx={{
-                                width: 28,
-                                height: 28,
-                                bgcolor: colors.infoLight,
-                                color: colors.info,
-                                fontSize: '0.8rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
                               }}
                             >
-                              <LocalHospitalIcon sx={{ fontSize: 16 }} />
-                            </Avatar>
-                            <Typography
-                              variant='body2'
-                              sx={{ fontWeight: 500 }}
+                              <CalendarMonthIcon
+                                sx={{ fontSize: 16, color: colors.textSecondary }}
+                              />
+                              <Typography variant='body2' color='text.secondary'>
+                                {formatDate(rdv?.dateRendezVous)}
+                              </Typography>
+                            </Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
                             >
-                              Dr. {rdv.nomMedecin || 'Non spécifié'}
-                            </Typography>
+                              <AccessTimeIcon
+                                sx={{ fontSize: 16, color: colors.textSecondary }}
+                              />
+                              <Typography variant='body2' color='text.secondary'>
+                                {formatTime(rdv?.dateRendezVous)}
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
+                      </Box>
+                      {getStatusLabel(rdv?.etat)}
+                    </Box>
 
-                        <Box>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            gutterBottom
-                          >
-                            Motif
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              fontWeight: 500,
-                              bgcolor: colors.background,
-                              p: 1.5,
-                              borderRadius: 2,
-                            }}
-                          >
-                            {rdv.motif || 'Aucun motif spécifié'}
-                          </Typography>
-                        </Box>
+                    <Collapse in={expandedRdv?.idRendezVous === rdv?.idRendezVous}>
+                      <CardContent sx={{ pt: 0 }}>
+                        <Divider sx={{ mb: 2 }} />
 
-                        {rdv.commentaire && (
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1.5,
+                          }}
+                        >
                           <Box>
                             <Typography
                               variant='body2'
                               color='text.secondary'
                               gutterBottom
                             >
-                              Commentaire
+                              Médecin
                             </Typography>
                             <Box
                               sx={{
                                 display: 'flex',
+                                alignItems: 'center',
                                 gap: 1,
+                              }}
+                            >
+                              <Avatar
+                                sx={{
+                                  width: 28,
+                                  height: 28,
+                                  bgcolor: colors.infoLight,
+                                  color: colors.info,
+                                  fontSize: '0.8rem',
+                                }}
+                              >
+                                <LocalHospitalIcon sx={{ fontSize: 16 }} />
+                              </Avatar>
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
+                                Dr. {rdv?.nomMedecin || 'Non spécifié'}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                              gutterBottom
+                            >
+                              Motif
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                fontWeight: 500,
                                 bgcolor: colors.background,
                                 p: 1.5,
                                 borderRadius: 2,
                               }}
                             >
-                              <CommentIcon
-                                sx={{
-                                  color: colors.textSecondary,
-                                  fontSize: 18,
-                                  mt: 0.3,
-                                }}
-                              />
-                              <Typography variant='body2'>
-                                {rdv.commentaire}
-                              </Typography>
-                            </Box>
+                              {rdv?.motif || 'Aucun motif spécifié'}
+                            </Typography>
                           </Box>
+
+                          {rdv?.commentaire && (
+                            <Box>
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                gutterBottom
+                              >
+                                Commentaire
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  gap: 1,
+                                  bgcolor: colors.background,
+                                  p: 1.5,
+                                  borderRadius: 2,
+                                }}
+                              >
+                                <CommentIcon
+                                  sx={{
+                                    color: colors.textSecondary,
+                                    fontSize: 18,
+                                    mt: 0.3,
+                                  }}
+                                />
+                                <Typography variant='body2'>
+                                  {rdv?.commentaire}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          )}
+
+                          {partage && (
+                            <Box>
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                gutterBottom
+                              >
+                                Agenda Partagé
+                              </Typography>
+                              <motion.div
+                                variants={buttonVariants}
+                                whileHover='hover'
+                                whileTap='tap'
+                              >
+                                <Button
+                                  variant='contained'
+                                  color='info'
+                                  size='small'
+                                  startIcon={<VisibilityIcon />}
+                                  onClick={() => handleViewSharedAgenda(partage.idPartage)}
+                                  sx={{
+                                    bgcolor: colors.info,
+                                    '&:hover': {
+                                      bgcolor: colors.info,
+                                      filter: 'brightness(0.9)',
+                                    },
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Voir l'agenda partagé
+                                </Button>
+                              </motion.div>
+                            </Box>
+                          )}
+                        </Box>
+                      </CardContent>
+
+                      <CardActions
+                        sx={{
+                          p: 2,
+                          pt: 0,
+                          justifyContent: 'flex-end',
+                          mt: 'auto',
+                        }}
+                      >
+                        {rdv?.etat === 'en attente' && (
+                          <>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover='hover'
+                              whileTap='tap'
+                            >
+                              <Button
+                                variant='contained'
+                                color='success'
+                                size='small'
+                                startIcon={<CheckCircleIcon />}
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('accept');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  bgcolor: colors.success,
+                                  '&:hover': {
+                                    bgcolor: colors.success,
+                                    filter: 'brightness(0.9)',
+                                  },
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                Accepter
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover='hover'
+                              whileTap='tap'
+                            >
+                              <Button
+                                variant='outlined'
+                                color='error'
+                                size='small'
+                                startIcon={<CancelIcon />}
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('decline');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  borderColor: colors.error,
+                                  color: colors.error,
+                                  '&:hover': {
+                                    borderColor: colors.error,
+                                    bgcolor: colors.errorLight,
+                                  },
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 500,
+                                  ml: 1,
+                                }}
+                              >
+                                Refuser
+                              </Button>
+                            </motion.div>
+                          </>
                         )}
-                      </Box>
-                    </CardContent>
-
-                    <CardActions
-                      sx={{
-                        p: 2,
-                        pt: 0,
-                        justifyContent: 'flex-end',
-                        mt: 'auto',
-                      }}
-                    >
-                      {rdv.etat === 'en attente' && (
-                        <>
-                          <motion.div
-                            variants={buttonVariants}
-                            whileHover='hover'
-                            whileTap='tap'
-                          >
-                            <Button
-                              variant='contained'
-                              color='success'
-                              size='small'
-                              startIcon={<CheckCircleIcon />}
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('accept');
-                                setOpenDialog(true);
-                              }}
-                              sx={{
-                                bgcolor: colors.success,
-                                '&:hover': {
-                                  bgcolor: colors.success,
-                                  filter: 'brightness(0.9)',
-                                },
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 500,
-                              }}
-                            >
-                              Accepter
-                            </Button>
-                          </motion.div>
-                          <motion.div
-                            variants={buttonVariants}
-                            whileHover='hover'
-                            whileTap='tap'
-                          >
-                            <Button
-                              variant='outlined'
-                              color='error'
-                              size='small'
-                              startIcon={<CancelIcon />}
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('decline');
-                                setOpenDialog(true);
-                              }}
-                              sx={{
-                                borderColor: colors.error,
-                                color: colors.error,
-                                '&:hover': {
-                                  borderColor: colors.error,
-                                  bgcolor: colors.errorLight,
-                                },
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                ml: 1,
-                              }}
-                            >
-                              Refuser
-                            </Button>
-                          </motion.div>
-                        </>
-                      )}
-                      <motion.div
-                        variants={buttonVariants}
-                        whileHover='hover'
-                        whileTap='tap'
-                      >
-                        <Button
-                          variant='text'
-                          color='error'
-                          size='small'
-                          startIcon={<DeleteIcon />}
-                          onClick={() => {
-                            setSelectedRdv(rdv);
-                            setActionType('delete');
-                            setOpenDialog(true);
-                          }}
-                          sx={{
-                            color: colors.error,
-                            '&:hover': { bgcolor: colors.errorLight },
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 500,
-                            ml: rdv.etat === 'en attente' ? 1 : 0,
-                          }}
+                        <motion.div
+                          variants={buttonVariants}
+                          whileHover='hover'
+                          whileTap='tap'
                         >
-                          Supprimer
-                        </Button>
-                      </motion.div>
-                    </CardActions>
-                  </Collapse>
+                          <Button
+                            variant='text'
+                            color='error'
+                            size='small'
+                            startIcon={<DeleteIcon />}
+                            onClick={() => {
+                              setSelectedRdv(rdv);
+                              setActionType('delete');
+                              setOpenDialog(true);
+                            }}
+                            sx={{
+                              color: colors.error,
+                              '&:hover': { bgcolor: colors.errorLight },
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              fontWeight: 500,
+                              ml: rdv?.etat === 'en attente' ? 1 : 0,
+                            }}
+                          >
+                            Supprimer
+                          </Button>
+                        </motion.div>
+                      </CardActions>
+                    </Collapse>
 
-                  {expandedRdv?.idRendezVous !== rdv.idRendezVous && (
-                    <CardActions
-                      sx={{
-                        p: 2,
-                        pt: 0,
-                        justifyContent: 'flex-end',
-                        mt: 'auto',
-                      }}
-                    >
-                      {rdv.etat === 'en attente' && (
-                        <>
+                    {expandedRdv?.idRendezVous !== rdv?.idRendezVous && (
+                      <CardActions
+                        sx={{
+                          p: 2,
+                          pt: 0,
+                          justifyContent: 'flex-end',
+                          mt: 'auto',
+                        }}
+                      >
+                        {partage && (
                           <motion.div
                             variants={buttonVariants}
                             whileHover='hover'
@@ -972,17 +1079,13 @@ const InfirmierGererRV = () => {
                           >
                             <Button
                               variant='contained'
-                              color='success'
+                              color='info'
                               size='small'
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('accept');
-                                setOpenDialog(true);
-                              }}
+                              onClick={() => handleViewSharedAgenda(partage.idPartage)}
                               sx={{
-                                bgcolor: colors.success,
+                                bgcolor: colors.info,
                                 '&:hover': {
-                                  bgcolor: colors.success,
+                                  bgcolor: colors.info,
                                   filter: 'brightness(0.9)',
                                 },
                                 borderRadius: 2,
@@ -992,77 +1095,111 @@ const InfirmierGererRV = () => {
                                 p: 1,
                               }}
                             >
-                              <CheckCircleIcon fontSize='small' />
+                              <VisibilityIcon fontSize='small' />
                             </Button>
                           </motion.div>
-                          <motion.div
-                            variants={buttonVariants}
-                            whileHover='hover'
-                            whileTap='tap'
-                          >
-                            <Button
-                              variant='outlined'
-                              color='error'
-                              size='small'
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('decline');
-                                setOpenDialog(true);
-                              }}
-                              sx={{
-                                borderColor: colors.error,
-                                color: colors.error,
-                                '&:hover': {
-                                  borderColor: colors.error,
-                                  bgcolor: colors.errorLight,
-                                },
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: 500,
-                                ml: 1,
-                                minWidth: 0,
-                                p: 1,
-                              }}
+                        )}
+                        {rdv?.etat === 'en attente' && (
+                          <>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover='hover'
+                              whileTap='tap'
                             >
-                              <CancelIcon fontSize='small' />
-                            </Button>
-                          </motion.div>
-                        </>
-                      )}
-                      <motion.div
-                        variants={buttonVariants}
-                        whileHover='hover'
-                        whileTap='tap'
-                      >
-                        <Button
-                          variant='text'
-                          color='error'
-                          size='small'
-                          onClick={() => {
-                            setSelectedRdv(rdv);
-                            setActionType('delete');
-                            setOpenDialog(true);
-                          }}
-                          sx={{
-                            color: colors.error,
-                            '&:hover': { bgcolor: colors.errorLight },
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 500,
-                            ml: rdv.etat === 'en attente' ? 1 : 0,
-                            minWidth: 0,
-                            p: 1,
-                          }}
+                              <Button
+                                variant='contained'
+                                color='success'
+                                size='small'
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('accept');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  bgcolor: colors.success,
+                                  '&:hover': {
+                                    bgcolor: colors.success,
+                                    filter: 'brightness(0.9)',
+                                  },
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 500,
+                                  minWidth: 0,
+                                  p: 1,
+                                }}
+                              >
+                                <CheckCircleIcon fontSize='small' />
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover='hover'
+                              whileTap='tap'
+                            >
+                              <Button
+                                variant='outlined'
+                                color='error'
+                                size='small'
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('decline');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  borderColor: colors.error,
+                                  color: colors.error,
+                                  '&:hover': {
+                                    borderColor: colors.error,
+                                    bgcolor: colors.errorLight,
+                                  },
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 500,
+                                  ml: 1,
+                                  minWidth: 0,
+                                  p: 1,
+                                }}
+                              >
+                                <CancelIcon fontSize='small' />
+                              </Button>
+                            </motion.div>
+                          </>
+                        )}
+                        <motion.div
+                          variants={buttonVariants}
+                          whileHover='hover'
+                          whileTap='tap'
                         >
-                          <DeleteIcon fontSize='small' />
-                        </Button>
-                      </motion.div>
-                    </CardActions>
-                  )}
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
+                          <Button
+                            variant='text'
+                            color='error'
+                            size='small'
+                            onClick={() => {
+                              setSelectedRdv(rdv);
+                              setActionType('delete');
+                              setOpenDialog(true);
+                            }}
+                            sx={{
+                              color: colors.error,
+                              '&:hover': { bgcolor: colors.errorLight },
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              fontWeight: 500,
+                              ml: rdv?.etat === 'en attente' || partage ? 1 : 0,
+                              minWidth: 0,
+                              p: 1,
+                            }}
+                          >
+                            <DeleteIcon fontSize='small' />
+                          </Button>
+                        </motion.div>
+                      </CardActions>
+                    )}
+                  </Card>
+                </motion.div>
+              </Grid>
+            );
+          })}
         </Grid>
       )}
 
@@ -1160,6 +1297,85 @@ const InfirmierGererRV = () => {
             }}
           >
             Confirmer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openSharedDialog}
+        onClose={() => {
+          setOpenSharedDialog(false);
+          setSelectedPartage(null);
+          setSelectedSharedRdv(null);
+        }}
+        aria-labelledby='shared-dialog-title'
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+            maxWidth: 400,
+          },
+        }}
+      >
+        <DialogTitle id='shared-dialog-title' sx={{ pb: 1 }}>
+          Détails de l'agenda partagé
+        </DialogTitle>
+        <DialogContent>
+          {selectedPartage && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant='body2' color='text.secondary' gutterBottom>
+                Période du partage : du {formatDate(selectedPartage.dateDebut)} au {formatDate(selectedPartage.dateFin)}
+              </Typography>
+              <Calendar
+                value={[new Date(selectedPartage.dateDebut), new Date(selectedPartage.dateFin)]}
+                tileClassName={({ date, view }) => {
+                  if (view === 'month') {
+                    const start = new Date(selectedPartage.dateDebut);
+                    const end = new Date(selectedPartage.dateFin);
+                    if (date >= start && date <= end) {
+                      return 'highlight';
+                    }
+                  }
+                  return null;
+                }}
+                calendarType='iso8601' // Corrected from 'ISO 8601' to 'iso8601'
+                minDetail='month'
+                maxDetail='month'
+                showNeighboringMonth={false}
+                sx={{
+                  '& .highlight': {
+                    backgroundColor: colors.infoLight,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={() => {
+              setOpenSharedDialog(false);
+              setSelectedPartage(null);
+              setSelectedSharedRdv(null);
+            }}
+            variant='outlined'
+            sx={{
+              borderColor: colors.primary,
+              color: colors.primary,
+              '&:hover': {
+                borderColor: colors.secondary,
+                color: colors.secondary,
+              },
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Fermer
           </Button>
         </DialogActions>
       </Dialog>

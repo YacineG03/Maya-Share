@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -39,8 +40,6 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import PersonIcon from '@mui/icons-material/Person';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import {
   getRendezVousByMedecin,
   acceptRendezVous,
@@ -48,6 +47,7 @@ import {
   cancelRendezVous,
   assignRendezVousToInfirmier,
   getUsers,
+  shareAgenda,
 } from '../../services/api';
 
 // Palette de couleurs modernisée
@@ -119,13 +119,18 @@ const MedecinGererRV = () => {
   const [openAssignModal, setOpenAssignModal] = useState(false);
   const [infirmiers, setInfirmiers] = useState([]);
   const [selectedInfirmier, setSelectedInfirmier] = useState('');
+  const [shareDateDebut, setShareDateDebut] = useState('');
+  const [shareDateFin, setShareDateFin] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // "list" ou "agenda"
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
+    console.log('Current filter:', filter);
     fetchData();
-  }, []);
+  }, [filter]);
+
+  useEffect(() => {
+    console.log('Rendez-vous state:', rendezVous);
+  }, [rendezVous]);
 
   const fetchData = async () => {
     try {
@@ -133,9 +138,9 @@ const MedecinGererRV = () => {
       setRefreshing(true);
 
       const response = await getRendezVousByMedecin();
-      const data = Array.isArray(response.data)
-        ? response.data
-        : response.data.rendezVous || [];
+      console.log('Raw response.data:', response.data); // Log pour débogage
+      const data = Array.isArray(response.data) ? response.data : (response.data.rendezVous || []);
+      console.log('Fetched data:', data); // Log des données traitées
       setRendezVous(data);
       setError(null);
 
@@ -144,6 +149,11 @@ const MedecinGererRV = () => {
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || 'Erreur de chargement des rendez-vous';
+      console.log('Erreur dans fetchData:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: errorMessage,
+      });
       setError(errorMessage);
       toast.error(errorMessage);
       setRendezVous([]);
@@ -164,18 +174,18 @@ const MedecinGererRV = () => {
           break;
         case 'decline':
           if (!commentaire.trim()) {
-            toast.error(
-              'Un commentaire est requis pour refuser un rendez-vous'
-            );
+            toast.error('Un commentaire est requis pour refuser un rendez-vous');
             return;
           }
           await declineRendezVous(selectedRdv.idRendezVous, { commentaire });
           toast.success('Rendez-vous refusé avec succès');
           break;
-        case 'delete':
-          await cancelRendezVous(selectedRdv.idRendezVous, {
-            commentaire: 'Suppression demandée par le médecin',
-          });
+        case 'cancel':
+          if (!commentaire.trim()) {
+            toast.error('Un commentaire est requis pour annuler un rendez-vous');
+            return;
+          }
+          await cancelRendezVous(selectedRdv.idRendezVous, { commentaire });
           toast.success('Rendez-vous annulé avec succès');
           break;
         case 'assign':
@@ -187,6 +197,21 @@ const MedecinGererRV = () => {
             idInfirmier: selectedInfirmier,
           });
           toast.success('Rendez-vous assigné avec succès');
+
+          // Si les dates de partage sont renseignées, partager l'agenda avec idRendezVous
+          if (shareDateDebut && shareDateFin) {
+            if (new Date(shareDateDebut) > new Date(shareDateFin)) {
+              toast.error('La date de début doit être antérieure à la date de fin');
+              return;
+            }
+            await shareAgenda({
+              idRendezVous: selectedRdv.idRendezVous,
+              idInfirmier: selectedInfirmier,
+              dateDebut: shareDateDebut,
+              dateFin: shareDateFin,
+            });
+            toast.success('Agenda partagé avec succès');
+          }
           break;
         default:
           break;
@@ -199,10 +224,20 @@ const MedecinGererRV = () => {
       setActionType('');
       setCommentaire('');
       setSelectedInfirmier('');
+      setShareDateDebut('');
+      setShareDateFin('');
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || 'Une erreur est survenue';
       toast.error(errorMessage);
+      setOpenDialog(false);
+      setOpenAssignModal(false);
+      setSelectedRdv(null);
+      setActionType('');
+      setCommentaire('');
+      setSelectedInfirmier('');
+      setShareDateDebut('');
+      setShareDateFin('');
     }
   };
 
@@ -275,65 +310,7 @@ const MedecinGererRV = () => {
   const filteredRendezVous = rendezVous.filter(
     (rdv) => filter === 'tous' || rdv.etat === filter
   );
-
-  const getDaysInMonth = (year, month) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (year, month) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const getMonthData = () => {
-    const year = selectedDate.getFullYear();
-    const month = selectedDate.getMonth();
-    const daysInMonth = getDaysInMonth(year, month);
-    const firstDay = getFirstDayOfMonth(year, month);
-    const days = [];
-
-    // Ajouter les jours vides avant le 1er du mois
-    for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
-      days.push(null);
-    }
-
-    // Ajouter les jours du mois
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const events = filteredRendezVous.filter((rdv) => {
-        const rdvDate = new Date(rdv.dateRendezVous);
-        return (
-          rdvDate.getDate() === day &&
-          rdvDate.getMonth() === month &&
-          rdvDate.getFullYear() === year
-        );
-      });
-      days.push({ day, events });
-    }
-
-    return days;
-  };
-
-  const monthData = getMonthData();
-  const weeks = [];
-  for (let i = 0; i < monthData.length; i += 7) {
-    weeks.push(monthData.slice(i, i + 7));
-  }
-
-  const handleDayClick = (day) => {
-    if (day) {
-      const events = filteredRendezVous.filter((rdv) => {
-        const rdvDate = new Date(rdv.dateRendezVous);
-        return (
-          rdvDate.getDate() === day.day &&
-          rdvDate.getMonth() === selectedDate.getMonth() &&
-          rdvDate.getFullYear() === selectedDate.getFullYear()
-        );
-      });
-      setSelectedRdv({ day, events });
-      setOpenDialog(true);
-      setActionType('view');
-    }
-  };
+  console.log('Filtered rendez-vous:', filteredRendezVous);
 
   const renderMobileView = () => {
     if (loading && !refreshing) {
@@ -408,7 +385,7 @@ const MedecinGererRV = () => {
                   variant='subtitle1'
                   sx={{ fontWeight: 600, color: colors.text }}
                 >
-                  {rdv.nomPatient} {rdv.prenomPatient}
+                  {rdv.nomPatient}
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
                   {formatDate(rdv.dateRendezVous)} à{' '}
@@ -453,8 +430,8 @@ const MedecinGererRV = () => {
                 <>
                   <motion.div
                     variants={buttonVariants}
-                    whileHover='hover'
-                    whileTap='tap'
+                    whileHover="hover"
+                    whileTap="tap"
                   >
                     <Button
                       variant='contained'
@@ -477,8 +454,8 @@ const MedecinGererRV = () => {
                   </motion.div>
                   <motion.div
                     variants={buttonVariants}
-                    whileHover='hover'
-                    whileTap='tap'
+                    whileHover="hover"
+                    whileTap="tap"
                   >
                     <Button
                       variant='outlined'
@@ -502,8 +479,8 @@ const MedecinGererRV = () => {
               )}
               <motion.div
                 variants={buttonVariants}
-                whileHover='hover'
-                whileTap='tap'
+                whileHover="hover"
+                whileTap="tap"
               >
                 <Button
                   variant='outlined'
@@ -526,8 +503,8 @@ const MedecinGererRV = () => {
               </motion.div>
               <motion.div
                 variants={buttonVariants}
-                whileHover='hover'
-                whileTap='tap'
+                whileHover="hover"
+                whileTap="tap"
               >
                 <Button
                   variant='outlined'
@@ -535,7 +512,7 @@ const MedecinGererRV = () => {
                   size='small'
                   onClick={() => {
                     setSelectedRdv(rdv);
-                    setActionType('delete');
+                    setActionType('cancel');
                     setOpenDialog(true);
                   }}
                   sx={{
@@ -544,7 +521,7 @@ const MedecinGererRV = () => {
                     textTransform: 'none',
                   }}
                 >
-                  Supprimer
+                  Annuler
                 </Button>
               </motion.div>
             </Box>
@@ -555,165 +532,6 @@ const MedecinGererRV = () => {
   };
 
   const renderDesktopView = () => {
-    if (viewMode === 'agenda') {
-      return (
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600, color: colors.text }}
-            >
-              Agenda -{' '}
-              {selectedDate.toLocaleString('fr-FR', {
-                month: 'long',
-                year: 'numeric',
-              })}
-            </Typography>
-            <Box>
-              <Button
-                variant='outlined'
-                color='primary'
-                onClick={() => setViewMode('list')}
-                sx={{ mr: 1, textTransform: 'none', fontWeight: 500 }}
-              >
-                Retour à la liste
-              </Button>
-              <Button
-                variant='outlined'
-                color='primary'
-                onClick={() =>
-                  setSelectedDate(
-                    new Date(
-                      selectedDate.getFullYear(),
-                      selectedDate.getMonth() - 1,
-                      1
-                    )
-                  )
-                }
-                sx={{ mr: 1, textTransform: 'none', fontWeight: 500 }}
-              >
-                Mois précédent
-              </Button>
-              <Button
-                variant='outlined'
-                color='primary'
-                onClick={() =>
-                  setSelectedDate(
-                    new Date(
-                      selectedDate.getFullYear(),
-                      selectedDate.getMonth() + 1,
-                      1
-                    )
-                  )
-                }
-                sx={{ textTransform: 'none', fontWeight: 500 }}
-              >
-                Mois suivant
-              </Button>
-            </Box>
-          </Box>
-          <Paper sx={{ p: 2, borderRadius: 2, boxShadow: colors.shadow }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 1,
-              }}
-            >
-              {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map((day) => (
-                <Typography
-                  key={day}
-                  sx={{
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    color: colors.textSecondary,
-                  }}
-                >
-                  {day}
-                </Typography>
-              ))}
-            </Box>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 1,
-                mt: 1,
-              }}
-            >
-              {weeks.map((week, weekIndex) =>
-                week.map((day, dayIndex) => (
-                  <motion.div
-                    key={weekIndex * 7 + dayIndex}
-                    variants={itemVariants}
-                    initial='hidden'
-                    animate='visible'
-                    whileHover='hover'
-                    onClick={() => handleDayClick(day)}
-                    sx={{
-                      border: '1px solid #eee',
-                      p: 1,
-                      minHeight: 100,
-                      backgroundColor: day ? 'white' : '#f5f5f5',
-                      borderRadius: 4,
-                      cursor: day ? 'pointer' : 'default',
-                      position: 'relative',
-                      '&:hover': {
-                        backgroundColor: day ? colors.hover : '#f5f5f5',
-                      },
-                    }}
-                  >
-                    {day && (
-                      <Typography
-                        sx={{
-                          fontWeight: 500,
-                          color: colors.text,
-                          mb: 1,
-                        }}
-                      >
-                        {day.day}
-                      </Typography>
-                    )}
-                    {day &&
-                      day.events.map((event, eventIndex) => {
-                        const eventDate = new Date(event.dateRendezVous);
-                        const startTime = eventDate.toLocaleTimeString(
-                          'fr-FR',
-                          {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          }
-                        );
-                        let color = colors.warning;
-                        if (event.etat === 'accepté') color = colors.success;
-                        if (event.etat === 'décliné' || event.etat === 'annulé')
-                          color = colors.error;
-                        return (
-                          <Chip
-                            key={eventIndex}
-                            label={`${startTime} - ${event.motif || 'Non spécifié'}`}
-                            sx={{
-                              mt: 0.5,
-                              backgroundColor: color,
-                              color: 'white',
-                              fontSize: '0.75rem',
-                              '& .MuiChip-label': {
-                                whiteSpace: 'normal',
-                                lineHeight: 1.2,
-                              },
-                            }}
-                          />
-                        );
-                      })}
-                  </motion.div>
-                ))
-              )}
-            </Box>
-          </Paper>
-        </Box>
-      );
-    }
-
     return (
       <TableContainer
         component={Paper}
@@ -782,13 +600,8 @@ const MedecinGererRV = () => {
               </TableRow>
             ) : (
               filteredRendezVous.map((rdv) => (
-                <motion.tr
+                <TableRow
                   key={rdv.idRendezVous}
-                  variants={itemVariants}
-                  initial='hidden'
-                  animate='visible'
-                  whileHover='hover'
-                  component={TableRow}
                   sx={{
                     '&:hover': {
                       backgroundColor: colors.hover,
@@ -810,7 +623,7 @@ const MedecinGererRV = () => {
                         {rdv.nomPatient ? rdv.nomPatient.charAt(0) : 'P'}
                       </Avatar>
                       <Typography variant='body2' sx={{ fontWeight: 500 }}>
-                        {rdv.nomPatient} {rdv.prenomPatient}
+                        {rdv.nomPatient}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -825,8 +638,8 @@ const MedecinGererRV = () => {
                         <>
                           <motion.div
                             variants={buttonVariants}
-                            whileHover='hover'
-                            whileTap='tap'
+                            whileHover="hover"
+                            whileTap="tap"
                           >
                             <Button
                               variant='contained'
@@ -849,8 +662,8 @@ const MedecinGererRV = () => {
                           </motion.div>
                           <motion.div
                             variants={buttonVariants}
-                            whileHover='hover'
-                            whileTap='tap'
+                            whileHover="hover"
+                            whileTap="tap"
                           >
                             <Button
                               variant='outlined'
@@ -874,8 +687,8 @@ const MedecinGererRV = () => {
                       )}
                       <motion.div
                         variants={buttonVariants}
-                        whileHover='hover'
-                        whileTap='tap'
+                        whileHover="hover"
+                        whileTap="tap"
                       >
                         <Button
                           variant='outlined'
@@ -898,8 +711,8 @@ const MedecinGererRV = () => {
                       </motion.div>
                       <motion.div
                         variants={buttonVariants}
-                        whileHover='hover'
-                        whileTap='tap'
+                        whileHover="hover"
+                        whileTap="tap"
                       >
                         <Button
                           variant='outlined'
@@ -907,7 +720,7 @@ const MedecinGererRV = () => {
                           size='small'
                           onClick={() => {
                             setSelectedRdv(rdv);
-                            setActionType('delete');
+                            setActionType('cancel');
                             setOpenDialog(true);
                           }}
                           sx={{
@@ -916,12 +729,12 @@ const MedecinGererRV = () => {
                             textTransform: 'none',
                           }}
                         >
-                          Supprimer
+                          Annuler
                         </Button>
                       </motion.div>
                     </Box>
                   </TableCell>
-                </motion.tr>
+                </TableRow>
               ))
             )}
           </TableBody>
@@ -952,7 +765,6 @@ const MedecinGererRV = () => {
               type: 'spring',
               stiffness: 260,
               damping: 20,
-              duration: 0.5,
             }}
           >
             <Badge
@@ -988,32 +800,17 @@ const MedecinGererRV = () => {
               {filter !== 'tous' ? `(${filter})` : 'au total'}
             </Typography>
           </Box>
-          <Box sx={{ ml: 'auto' }}>
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
             <motion.div
               variants={buttonVariants}
-              whileHover='hover'
-              whileTap='tap'
+              whileHover="hover"
+              whileTap="tap"
             >
               <Button
-                variant={viewMode === 'agenda' ? 'contained' : 'outlined'}
-                color='primary'
-                startIcon={<CalendarTodayIcon />}
-                onClick={() => setViewMode('agenda')}
-                sx={{ mr: 1, textTransform: 'none', fontWeight: 500 }}
-              >
-                Voir mon agenda
-              </Button>
-            </motion.div>
-            <motion.div
-              variants={buttonVariants}
-              whileHover='hover'
-              whileTap='tap'
-            >
-              <Button
-                variant={viewMode === 'list' ? 'contained' : 'outlined'}
+                variant='contained'
                 color='primary'
                 startIcon={<EventAvailableIcon />}
-                onClick={() => setViewMode('list')}
+                onClick={() => fetchData()}
                 sx={{ textTransform: 'none', fontWeight: 500 }}
               >
                 Liste des rendez-vous
@@ -1029,7 +826,7 @@ const MedecinGererRV = () => {
             alignItems: 'center',
             mb: 3,
             flexDirection: { xs: 'column', sm: 'row' },
-            gap: { xs: 2, sm: 0 },
+            gap: 2,
           }}
         >
           <FormControl
@@ -1062,8 +859,8 @@ const MedecinGererRV = () => {
 
           <motion.div
             variants={buttonVariants}
-            whileHover='hover'
-            whileTap='tap'
+            whileHover="hover"
+            whileTap="tap"
           >
             <Button
               variant='outlined'
@@ -1104,295 +901,92 @@ const MedecinGererRV = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Dialogue de confirmation ou vue des détails */}
+      {/* Dialogue de confirmation */}
       <Dialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={() => {
+          setOpenDialog(false);
+          setSelectedRdv(null);
+          setActionType('');
+          setCommentaire('');
+        }}
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: 2,
             boxShadow: colors.shadow,
-            maxWidth: 500,
+            maxWidth: 400,
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 600, pt: 3 }}>
-          {actionType === 'view' &&
-            `Détails des rendez-vous - ${selectedRdv?.day.day} ${selectedDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}`}
+        <DialogTitle sx={{ fontWeight: 600, color: colors.text }}>
           {actionType === 'accept' && 'Accepter le rendez-vous'}
           {actionType === 'decline' && 'Refuser le rendez-vous'}
-          {actionType === 'delete' && 'Annuler le rendez-vous'}
-        </DialogTitle>
-        <DialogContent>
-          {actionType === 'view' && selectedRdv?.events.length > 0 ? (
-            selectedRdv.events.map((event, index) => (
-              <Box key={index} sx={{ mb: 2 }}>
-                <Typography sx={{ color: colors.textSecondary }}>
-                  <strong>Patient:</strong> {event.nomPatient}{' '}
-                  {event.prenomPatient}
-                </Typography>
-                <Typography sx={{ color: colors.textSecondary }}>
-                  <strong>Heure:</strong> {formatTime(event.dateRendezVous)}
-                </Typography>
-                <Typography sx={{ color: colors.textSecondary }}>
-                  <strong>Motif:</strong> {event.motif || 'Non spécifié'}
-                </Typography>
-                <Typography sx={{ color: colors.textSecondary }}>
-                  <strong>Statut:</strong> {getStatusLabel(event.etat)}
-                </Typography>
-                {event.nomInfirmier && (
-                  <Typography sx={{ color: colors.textSecondary }}>
-                    <strong>Infirmier:</strong> {event.nomInfirmier}
-                  </Typography>
-                )}
-                {event.etat === 'en attente' && (
-                  <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                    <motion.div
-                      variants={buttonVariants}
-                      whileHover='hover'
-                      whileTap='tap'
-                    >
-                      <Button
-                        variant='contained'
-                        color='success'
-                        size='small'
-                        onClick={() => {
-                          setSelectedRdv(event);
-                          setActionType('accept');
-                          setOpenDialog(true);
-                        }}
-                        sx={{
-                          fontWeight: 500,
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          boxShadow: 'none',
-                        }}
-                      >
-                        Accepter
-                      </Button>
-                    </motion.div>
-                    <motion.div
-                      variants={buttonVariants}
-                      whileHover='hover'
-                      whileTap='tap'
-                    >
-                      <Button
-                        variant='outlined'
-                        color='error'
-                        size='small'
-                        onClick={() => {
-                          setSelectedRdv(event);
-                          setActionType('decline');
-                          setOpenDialog(true);
-                        }}
-                        sx={{
-                          fontWeight: 500,
-                          borderRadius: 2,
-                          textTransform: 'none',
-                        }}
-                      >
-                        Refuser
-                      </Button>
-                    </motion.div>
-                    <motion.div
-                      variants={buttonVariants}
-                      whileHover='hover'
-                      whileTap='tap'
-                    >
-                      <Button
-                        variant='outlined'
-                        color='error'
-                        size='small'
-                        onClick={() => {
-                          setSelectedRdv(event);
-                          setActionType('delete');
-                          setOpenDialog(true);
-                        }}
-                        sx={{
-                          fontWeight: 500,
-                          borderRadius: 2,
-                          textTransform: 'none',
-                        }}
-                      >
-                        Supprimer
-                      </Button>
-                    </motion.div>
-                  </Box>
-                )}
-              </Box>
-            ))
-          ) : actionType === 'view' && selectedRdv?.events.length === 0 ? (
-            <DialogContentText sx={{ color: colors.textSecondary }}>
-              Aucun rendez-vous ce jour.
-            </DialogContentText>
-          ) : (
-            <>
-              <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
-                {actionType === 'accept' &&
-                  `Voulez-vous accepter le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
-                {actionType === 'decline' &&
-                  `Voulez-vous refuser le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
-                {actionType === 'delete' &&
-                  `Voulez-vous annuler ce rendez-vous ? Cette action mettra le rendez-vous à l'état "annulé".`}
-              </DialogContentText>
-
-              {(actionType === 'accept' ||
-                actionType === 'decline' ||
-                actionType === 'delete') && (
-                <TextField
-                  autoFocus
-                  margin='dense'
-                  label='Commentaire'
-                  type='text'
-                  fullWidth
-                  variant='outlined'
-                  value={commentaire}
-                  onChange={(e) => setCommentaire(e.target.value)}
-                  multiline
-                  rows={3}
-                  required={actionType === 'decline' || actionType === 'delete'}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-              )}
-            </>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          {(actionType === 'accept' ||
-            actionType === 'decline' ||
-            actionType === 'delete') && (
-            <>
-              <Button
-                onClick={() => setOpenDialog(false)}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  borderRadius: 2,
-                }}
-              >
-                Annuler
-              </Button>
-              <motion.div
-                variants={buttonVariants}
-                whileHover='hover'
-                whileTap='tap'
-              >
-                <Button
-                  onClick={handleAction}
-                  color={
-                    actionType === 'delete'
-                      ? 'error'
-                      : actionType === 'accept'
-                        ? 'success'
-                        : 'primary'
-                  }
-                  variant='contained'
-                  autoFocus
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    boxShadow: 'none',
-                  }}
-                >
-                  Confirmer
-                </Button>
-              </motion.div>
-            </>
-          )}
-          {actionType === 'view' && (
-            <Button
-              onClick={() => setOpenDialog(false)}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 500,
-                borderRadius: 2,
-              }}
-            >
-              Fermer
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialogue d'assignation */}
-      <Dialog
-        open={openAssignModal}
-        onClose={() => setOpenAssignModal(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: colors.shadow,
-            maxWidth: 500,
-          },
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 600, pt: 3 }}>
-          Assigner le rendez-vous à un infirmier
+          {actionType === 'cancel' && 'Annuler le rendez-vous'}
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
-            Sélectionnez un infirmier pour assigner le rendez-vous de{' '}
-            {selectedRdv?.nomPatient} prévu le{' '}
-            {formatDate(selectedRdv?.dateRendezVous)}.
+            {actionType === 'accept' &&
+              `Voulez-vous accepter le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
+            {actionType === 'decline' &&
+              `Veuillez indiquer la raison du refus du rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)}.`}
+            {actionType === 'cancel' &&
+              `Veuillez indiquer la raison de l'annulation du rendez-vous avec ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)}.`}
           </DialogContentText>
-          <FormControl fullWidth variant='outlined' sx={{ mt: 1 }}>
-            <InputLabel id='infirmier-select-label'>
-              Choisir un infirmier
-            </InputLabel>
-            <Select
-              labelId='infirmier-select-label'
-              value={selectedInfirmier}
-              onChange={(e) => setSelectedInfirmier(e.target.value)}
-              label='Choisir un infirmier'
-              sx={{
-                borderRadius: 2,
-              }}
-            >
-              <MenuItem value='' disabled>
-                Choisir un infirmier
-              </MenuItem>
-              {infirmiers.map((infirmier) => (
-                <MenuItem
-                  key={infirmier.idUtilisateur}
-                  value={infirmier.idUtilisateur}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <PersonIcon
-                      sx={{ mr: 1, color: colors.primary, fontSize: 20 }}
-                    />
-                    {infirmier.nom} {infirmier.prenom}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <TextField
+            autoFocus
+            margin='dense'
+            label='Commentaire'
+            type='text'
+            fullWidth
+            variant='standard'
+            value={commentaire}
+            onChange={(e) => setCommentaire(e.target.value)}
+            multiline
+            rows={3}
+            required={actionType === 'decline' || actionType === 'cancel'}
+            helperText={
+              actionType === 'accept'
+                ? 'Optionnel'
+                : 'Obligatoire pour refuser ou annuler'
+            }
+            sx={{
+              '& .MuiInputBase-root': {
+                borderRadius: 1,
+              },
+            }}
+          />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
+        <DialogActions sx={{ p: 2 }}>
           <Button
-            onClick={() => setOpenAssignModal(false)}
+            onClick={() => {
+              setOpenDialog(false);
+              setSelectedRdv(null);
+              setActionType('');
+              setCommentaire('');
+            }}
             sx={{
               textTransform: 'none',
               fontWeight: 500,
-              borderRadius: 2,
+              color: colors.textSecondary,
             }}
           >
-            Annuler
+            Fermer
           </Button>
           <motion.div
             variants={buttonVariants}
-            whileHover='hover'
-            whileTap='tap'
+            whileHover="hover"
+            whileTap="tap"
           >
             <Button
               onClick={handleAction}
-              color='primary'
+              color={
+                actionType === 'cancel'
+                  ? 'error'
+                  : actionType === 'accept'
+                  ? 'success'
+                  : 'primary'
+              }
               variant='contained'
-              autoFocus
               sx={{
                 textTransform: 'none',
                 fontWeight: 500,
@@ -1400,7 +994,123 @@ const MedecinGererRV = () => {
                 boxShadow: 'none',
               }}
             >
-              Assigner
+              Confirmer
+            </Button>
+          </motion.div>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogue d'assignation et partage d'agenda */}
+      <Dialog
+        open={openAssignModal}
+        onClose={() => {
+          setOpenAssignModal(false);
+          setSelectedRdv(null);
+          setActionType('');
+          setSelectedInfirmier('');
+          setShareDateDebut('');
+          setShareDateFin('');
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+            maxWidth: 400,
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: colors.text }}>
+          Assigner le rendez-vous et partager l’agenda
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
+            Sélectionnez un infirmier pour le rendez-vous de{' '}
+            {selectedRdv?.nomPatient} prévu le{' '}
+            {formatDate(selectedRdv?.dateRendezVous)}. Vous pouvez également partager votre agenda si souhaité.
+          </DialogContentText>
+          <FormControl fullWidth variant='outlined' sx={{
+            '& .MuiOutlinedInput-root': { borderRadius: 2 },
+            mb: 2,
+          }}>
+            <InputLabel id='infirmier-assign-select-label'>Infirmier</InputLabel>
+            <Select
+              labelId='infirmier-assign-select-label'
+              value={selectedInfirmier}
+              onChange={(e) => setSelectedInfirmier(e.target.value)}
+              label='Infirmier'
+            >
+              <MenuItem value='' disabled>
+                Sélectionner un infirmier
+              </MenuItem>
+              {infirmiers.map((infirmier) => (
+                <MenuItem
+                  key={infirmier.idUtilisateur}
+                  value={infirmier.idUtilisateur}
+                >
+                  {infirmier.nom} {infirmier.prenom}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant='body2' sx={{ mb: 1, color: colors.textSecondary }}>
+            Partager l’agenda (optionnel) :
+          </Typography>
+          <TextField
+            fullWidth
+            type='date'
+            label='Date de début'
+            InputLabelProps={{ shrink: true }}
+            variant='outlined'
+            value={shareDateDebut}
+            onChange={(e) => setShareDateDebut(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            type='date'
+            label='Date de fin'
+            InputLabelProps={{ shrink: true }}
+            variant='outlined'
+            value={shareDateFin}
+            onChange={(e) => setShareDateFin(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => {
+              setOpenAssignModal(false);
+              setSelectedRdv(null);
+              setActionType('');
+              setSelectedInfirmier('');
+              setShareDateDebut('');
+              setShareDateFin('');
+            }}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 500,
+              color: colors.textSecondary,
+            }}
+          >
+            Annuler
+          </Button>
+          <motion.div
+            variants={buttonVariants}
+            whileHover="hover"
+            whileTap="tap"
+          >
+            <Button
+              onClick={handleAction}
+              color='primary'
+              variant='contained'
+              disabled={!selectedInfirmier}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                borderRadius: 2,
+                boxShadow: 'none',
+              }}
+            >
+              Assigner et partager
             </Button>
           </motion.div>
         </DialogActions>

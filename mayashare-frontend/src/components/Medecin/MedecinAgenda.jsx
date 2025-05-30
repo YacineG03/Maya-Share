@@ -833,7 +833,7 @@ const MedecinAgenda = () => {
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600, color: colors.text }}>
-                      {event.nomPatient} {event.prenomPatient}
+                      {event.nomPatient}
                     </Typography>
                     {getStatusLabel(event.etat)}
                   </Box>
@@ -962,9 +962,9 @@ const MedecinAgenda = () => {
             <>
               <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
                 {actionType === "accept" &&
-                  `Voulez-vous accepter le rendez-vous de ${selectedRdv?.nomPatient} ${selectedRdv?.prenomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
+                  `Voulez-vous accepter le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
                 {actionType === "decline" &&
-                  `Voulez-vous refuser le rendez-vous de ${selectedRdv?.nomPatient} ${selectedRdv?.prenomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
+                  `Voulez-vous refuser le rendez-vous de ${selectedRdv?.nomPatient} prévu le ${formatDate(selectedRdv?.dateRendezVous)} ?`}
                 {actionType === "delete" &&
                   `Voulez-vous annuler ce rendez-vous ? Cette action mettra le rendez-vous à l'état "annulé".`}
               </DialogContentText>
@@ -1045,8 +1045,8 @@ const MedecinAgenda = () => {
         <DialogTitle sx={{ fontWeight: 600, pt: 3 }}>Assigner le rendez-vous à un infirmier</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
-            Sélectionnez un infirmier pour assigner le rendez-vous de {selectedRdv?.nomPatient}{" "}
-            {selectedRdv?.prenomPatient} prévu le {formatDate(selectedRdv?.dateRendezVous)}.
+            Sélectionnez un infirmier pour assigner le rendez-vous de {selectedRdv?.nomPatient}
+            prévu le {formatDate(selectedRdv?.dateRendezVous)}.
           </DialogContentText>
           <FormControl fullWidth variant={"outlined"} sx={{ mt: 1 }}>
             <InputLabel id={"infirmier-select-label"}>Choisir un infirmier</InputLabel>

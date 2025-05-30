@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import axios from 'axios';
 
 const api = axios.create({
@@ -74,22 +75,44 @@ export const getImagesByUser = () => api.get('/images/user');
 export const getImagesByDossier = (idDossier) =>
   api.get(`/images/dossier/${idDossier}`);
 
+export const getImage = (id) => api.get(`/images/${id}`);
+
 export const deleteImage = (id) => api.delete(`/images/${id}`);
 
 // WADO
 export const getWadoUrl = (instanceId) =>
   api.get('/images/wado', {
-    params: { requestType: 'WADO', instanceID: instanceId },
+    params: { requestType: 'WADO', instanceId },
   });
 
 // Partages
-export const shareDossier = (data) => api.post('/shares/dossier', data);
+export const shareDossier = (idDossier, data) => api.post('/shares/dossier', data);
 
 export const getShares = () => api.get('/shares');
 
 export const getShareById = (id) => api.get(`/shares/${id}`);
 
 export const deleteShare = (id) => api.delete(`/shares/${id}`);
+
+// Agendas partagés
+export const getSharedAgendas = () => api.get('/rendezvous/shared-agendas');
+
+export const getSharedAgendasForInfirmier = () => api.get('/rendezvous/shared-agendas/infirmier');
+
+export const getMedecinRendezVous = (idMedecin, dateDebut, dateFin) =>
+  api.get('/rendezvous/medecin-rendezvous', {
+    params: { idMedecin, dateDebut, dateFin },
+  });
+
+export const getRendezVousByMedecinForInfirmier = (params = {}) => {
+  const { idPartage, dateDebut, dateFin } = params;
+  if (!idPartage) {
+    throw new Error('idPartage est requis');
+  }
+  return api.get('/rendezvous/medecin-rendezvous/infirmier', {
+    params: { idPartage, dateDebut, dateFin },
+  });
+};
 
 // Traçabilité
 export const getTraces = () => api.get('/traces');
@@ -117,8 +140,7 @@ export const createConsultation = (data) => api.post('/consultations', data);
 export const getConsultationsByDossier = (idDossier) =>
   api.get(`/consultations/dossier/${idDossier}`);
 
-export const updateConsultation = (idConsultation, data) =>
-  api.put(`/consultations/${idConsultation}`, data);
+export const updateConsultation = (idConsultation, data) => api.put(`/consultations/${idConsultation}`, data);
 
 // Rendez-vous
 export const createRendezVous = (data) => api.post('/rendezvous', data);
@@ -133,7 +155,6 @@ export const getRendezVousByMedecin = () => api.get('/rendezvous/medecin');
 
 export const getRendezVousForInfirmier = () => api.get('/rendezvous/infirmier');
 
-// Utilisation de /cancel pour les opérations d'annulation
 export const updateRendezVous = (id, data) =>
   api.put(`/rendezvous/${id}/cancel`, data);
 
@@ -148,6 +169,8 @@ export const assignRendezVousToInfirmier = (id, data) =>
 
 export const cancelRendezVous = (id, data) =>
   api.put(`/rendezvous/${id}/cancel`, data);
+
+export const shareAgenda = (data) => api.post('/rendezvous/share', data);
 
 // Hôpitaux
 export const getHopitaux = () => api.get('/hopitaux');
