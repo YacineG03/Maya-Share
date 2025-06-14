@@ -21,7 +21,7 @@ const RendezVous = {
         h.nom AS nomHopital, 
         h.adresse AS adresseHopital
       FROM Utilisateur u
-      LEFT JOIN Hopital h ON u.idHôpital = h.idHôpital
+      LEFT JOIN Hopital h ON u.idHopital = h.idHopital
       WHERE u.idUtilisateur = ?
     `;
     db.query(query, [idMedecin], callback);
@@ -62,7 +62,7 @@ const RendezVous = {
       FROM RendezVous rv
       JOIN Utilisateur m ON rv.idMedecin = m.idUtilisateur
       LEFT JOIN Utilisateur i ON rv.idInfirmier = i.idUtilisateur
-      LEFT JOIN Hopital h ON m.idHôpital = h.idHôpital
+      LEFT JOIN Hopital h ON m.idHopital = h.idHopital
       WHERE rv.idPatient = ?
       ORDER BY rv.dateRendezVous DESC
     `;

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -14,17 +15,21 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
-  IconButton,
-  CircularProgress,
+  Card,
+  CardContent,
+  Skeleton,
+  Avatar,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import {
   getHopitaux,
   createHopital,
@@ -32,68 +37,79 @@ import {
   deleteHopital,
 } from '../../services/api';
 
-// Animation variants
+const colors = {
+  primary: '#0077B6',
+  primaryLight: '#0096C7',
+  secondary: '#00B4D8',
+  secondaryLight: '#48CAE4',
+  background: '#F8F9FA',
+  cardBackground: 'white',
+  text: '#1A202C',
+  textSecondary: '#4A5568',
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+  info: '#3B82F6',
+  divider: 'rgba(0, 0, 0, 0.08)',
+  shadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+  hover: 'rgba(0, 119, 182, 0.05)',
+};
+
+// Animation variants (identique à MedecinGererRV)
 const containerVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: {
+  hidden: { opacity: 0 },
+  visible: {
     opacity: 1,
-    y: 0,
     transition: {
-      duration: 0.6,
-      ease: [0.16, 1, 0.3, 1],
+      duration: 0.5,
+      when: 'beforeChildren',
+      staggerChildren: 0.1,
     },
   },
 };
 
-const rowVariants = {
-  initial: { opacity: 0, y: 10 },
-  animate: {
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.3,
-      ease: [0.16, 1, 0.3, 1],
+      duration: 0.4,
+      ease: [0.25, 0.1, 0.25, 1.0],
     },
   },
   hover: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: colors.hover,
     transition: { duration: 0.2 },
   },
 };
 
 const buttonVariants = {
-  hover: {
-    scale: 1.05,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: { duration: 0.2 },
-  },
+  hover: { scale: 1.05, transition: { duration: 0.2 } },
+  tap: { scale: 0.95, transition: { duration: 0.1 } },
 };
 
 const dialogVariants = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
     opacity: 1,
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.16, 1, 0.3, 1],
+      ease: [0.25, 0.1, 0.25, 1.0],
     },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    transition: { duration: 0.3 },
   },
 };
 
-function AdminGererHopital() {
+const AdminGererHopital = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const [hopitaux, setHopitaux] = useState([]);
   const [filteredHopitaux, setFilteredHopitaux] = useState([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false); // Chargement déclenché par le bouton
-  const [isDataLoaded, setIsDataLoaded] = useState(false); // Indique si les données ont été chargées
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -103,10 +119,11 @@ function AdminGererHopital() {
   });
   const [editId, setEditId] = useState(null);
   const [errors, setErrors] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Filtrer les hôpitaux en fonction de la recherche
+  // Charger les hôpitaux
   useEffect(() => {
-    if (isDataLoaded) {
+    if (search) {
       const lowerCaseSearch = search.toLowerCase();
       const filtered = hopitaux.filter(
         (hopital) =>
@@ -115,36 +132,34 @@ function AdminGererHopital() {
           hopital.ville.toLowerCase().includes(lowerCaseSearch)
       );
       setFilteredHopitaux(filtered);
+    } else {
+      setFilteredHopitaux(hopitaux);
     }
-  }, [search, hopitaux, isDataLoaded]);
+  }, [search, hopitaux]);
 
-  // Charger les hôpitaux après clic sur "Rafraîchir"
-  const handleRefresh = async () => {
-    setLoading(true);
+  const fetchData = async () => {
     try {
+      setLoading(true);
+      setRefreshing(true);
       const response = await getHopitaux();
-      setHopitaux(response.data);
-      setFilteredHopitaux(response.data);
-      setIsDataLoaded(true);
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data.hopitaux || [];
+      setHopitaux(data);
+      setFilteredHopitaux(data);
+      setError(null);
       toast.success('Liste des hôpitaux chargée avec succès.');
     } catch (err) {
-      console.error('Erreur lors de la récupération des hôpitaux :', err);
-      toast.error('Erreur lors de la récupération des hôpitaux.');
+      const errorMessage =
+        err.response?.data?.message || 'Erreur de chargement des hôpitaux';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setHopitaux([]);
+      setFilteredHopitaux([]);
     } finally {
       setLoading(false);
+      setTimeout(() => setRefreshing(false), 500);
     }
-  };
-
-  // Gestion des changements dans le formulaire
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: '' }));
-  };
-
-  // Gestion de la recherche
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
   };
 
   // Validation du formulaire
@@ -163,29 +178,47 @@ function AdminGererHopital() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Gestion des changements dans le formulaire
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
+  };
+
+  // Gestion de la recherche
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
+
   // Ajouter un hôpital
   const handleAddHopital = async () => {
     if (!validateForm()) return;
 
     try {
       const response = await createHopital(formData);
-      const newHopital = { id: response.data.id, ...formData };
+      const newHopital = { idHopital: response.data.id, ...formData };
       setHopitaux((prev) => [...prev, newHopital]);
       setFilteredHopitaux((prev) => [...prev, newHopital]);
       setOpenAddDialog(false);
       setFormData({ nom: '', adresse: '', ville: '' });
       toast.success('Hôpital ajouté avec succès.');
     } catch (err) {
-      console.error('Erreur lors de l’ajout de l’hôpital :', err);
-      toast.error(
-        err.response?.data?.message || 'Erreur lors de l’ajout de l’hôpital.'
-      );
+      const errorMessage =
+        err.response?.data?.message || 'Erreur lors de l’ajout de l’hôpital.';
+      toast.error(errorMessage);
     }
+  };
+
+  // Ouvrir le formulaire d'ajout
+  const handleOpenAddDialog = () => {
+    setFormData({ nom: '', adresse: '', ville: '' });
+    setErrors({});
+    setOpenAddDialog(true);
   };
 
   // Ouvrir le formulaire de modification
   const handleEditHopital = (hopital) => {
-    setEditId(hopital.id);
+    setEditId(hopital.idHopital);
     setFormData({
       nom: hopital.nom,
       adresse: hopital.adresse,
@@ -200,15 +233,15 @@ function AdminGererHopital() {
 
     try {
       await updateHopital(editId, formData);
-      const updatedHopital = { id: editId, ...formData };
+      const updatedHopital = { idHopital: editId, ...formData };
       setHopitaux((prev) =>
         prev.map((hopital) =>
-          hopital.id === editId ? updatedHopital : hopital
+          hopital.idHopital === editId ? updatedHopital : hopital
         )
       );
       setFilteredHopitaux((prev) =>
         prev.map((hopital) =>
-          hopital.id === editId ? updatedHopital : hopital
+          hopital.idHopital === editId ? updatedHopital : hopital
         )
       );
       setOpenEditDialog(false);
@@ -216,363 +249,454 @@ function AdminGererHopital() {
       setEditId(null);
       toast.success('Hôpital mis à jour avec succès.');
     } catch (err) {
-      console.error('Erreur lors de la mise à jour de l’hôpital :', err);
-      toast.error(
+      const errorMessage =
         err.response?.data?.message ||
-          'Erreur lors de la mise à jour de l’hôpital.'
-      );
+        'Erreur lors de la mise à jour de l’hôpital.';
+      toast.error(errorMessage);
     }
   };
 
   // Supprimer un hôpital
   const handleDeleteHopital = async (id) => {
-    if (!window.confirm('Voulez-vous vraiment supprimer cet hôpital ?')) return;
-
     try {
       await deleteHopital(id);
-      setHopitaux((prev) => prev.filter((hopital) => hopital.id !== id));
+      setHopitaux((prev) => prev.filter((hopital) => hopital.idHopital !== id));
       setFilteredHopitaux((prev) =>
-        prev.filter((hopital) => hopital.id !== id)
+        prev.filter((hopital) => hopital.idHopital !== id)
       );
       toast.success('Hôpital supprimé avec succès.');
     } catch (err) {
-      console.error('Erreur lors de la suppression de l’hôpital :', err);
-      toast.error(
+      const errorMessage =
         err.response?.data?.message ||
-          'Erreur lors de la suppression de l’hôpital.'
-      );
+        'Erreur lors de la suppression de l’hôpital.';
+      toast.error(errorMessage);
     }
   };
 
-  // Gestion de l'ouverture/fermeture des dialogues
-  const handleOpenAddDialog = () => {
-    setFormData({ nom: '', adresse: '', ville: '' });
-    setErrors({});
-    setOpenAddDialog(true);
+  // Vue mobile avec cartes
+  const renderMobileView = () => {
+    if (loading && !refreshing) {
+      return Array.from(new Array(3)).map((_, index) => (
+        <Card
+          key={index}
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+          }}
+        >
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Skeleton
+                variant='circular'
+                width={40}
+                height={40}
+                sx={{ mr: 2 }}
+              />
+              <Box sx={{ width: '100%' }}>
+                <Skeleton variant='text' width='60%' height={24} />
+                <Skeleton variant='text' width='40%' height={20} />
+              </Box>
+            </Box>
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={100}
+              sx={{ borderRadius: 1 }}
+            />
+          </CardContent>
+        </Card>
+      ));
+    }
+
+    return filteredHopitaux.map((hopital, index) => (
+      <motion.div
+        key={hopital.idHopital}
+        variants={itemVariants}
+        initial='hidden'
+        animate='visible'
+        whileHover='hover'
+        custom={index}
+      >
+        <Card
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+            overflow: 'visible',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
+            },
+          }}
+        >
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Avatar
+                sx={{
+                  bgcolor: colors.primary,
+                  color: 'white',
+                  fontWeight: 'bold',
+                  mr: 2,
+                }}
+              >
+                {hopital.nom ? hopital.nom.charAt(0) : 'H'}
+              </Avatar>
+              <Box>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600, color: colors.text }}
+                >
+                  {hopital.nom}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  {hopital.ville}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Typography
+              variant='body2'
+              sx={{ mb: 2, color: colors.textSecondary }}
+            >
+              <strong>Adresse:</strong> {hopital.adresse}
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <motion.div
+                variants={buttonVariants}
+                whileHover='hover'
+                whileTap='tap'
+              >
+                <Button
+                  variant='outlined'
+                  color='primary'
+                  size='small'
+                  startIcon={<EditIcon />}
+                  onClick={() => handleEditHopital(hopital)}
+                  sx={{
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                  }}
+                >
+                  Modifier
+                </Button>
+              </motion.div>
+              <motion.div
+                variants={buttonVariants}
+                whileHover='hover'
+                whileTap='tap'
+              >
+                <Button
+                  variant='outlined'
+                  color='error'
+                  size='small'
+                  startIcon={<DeleteIcon />}
+                  onClick={() => handleDeleteHopital(hopital.idHopital)}
+                  sx={{
+                    fontWeight: 500,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                  }}
+                >
+                  Supprimer
+                </Button>
+              </motion.div>
+            </Box>
+          </CardContent>
+        </Card>
+      </motion.div>
+    ));
   };
 
-  const handleCloseAddDialog = () => {
-    setOpenAddDialog(false);
-    setErrors({});
-  };
-
-  const handleCloseEditDialog = () => {
-    setOpenEditDialog(false);
-    setFormData({ nom: '', adresse: '', ville: '' });
-    setEditId(null);
-    setErrors({});
+  // Vue desktop avec tableau
+  const renderDesktopView = () => {
+    return (
+      <TableContainer
+        component={Paper}
+        sx={{ boxShadow: colors.shadow, borderRadius: 2 }}
+      >
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: 'rgba(0, 119, 182, 0.05)' }}>
+              <TableCell sx={{ fontWeight: 600, color: colors.text }}>
+                Nom
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, color: colors.text }}>
+                Adresse
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, color: colors.text }}>
+                Ville
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, color: colors.text }}>
+                Actions
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading && !refreshing ? (
+              Array.from(new Array(5)).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Skeleton variant='text' width={150} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant='text' width={200} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant='text' width={100} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant='rectangular' width={200} height={40} />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : filteredHopitaux.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} align='center' sx={{ py: 4 }}>
+                  <Typography color='text.secondary'>
+                    Aucun hôpital trouvé.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredHopitaux.map((hopital) => (
+                <TableRow
+                  key={hopital.idHopital}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: colors.hover,
+                    },
+                    transition: 'background-color 0.3s ease',
+                  }}
+                >
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          mr: 1,
+                          bgcolor: colors.primary,
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {hopital.nom ? hopital.nom.charAt(0) : 'H'}
+                      </Avatar>
+                      <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                        {hopital.nom}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{hopital.adresse}</TableCell>
+                  <TableCell>{hopital.ville}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover='hover'
+                        whileTap='tap'
+                      >
+                        <Button
+                          variant='outlined'
+                          color='primary'
+                          size='small'
+                          startIcon={<EditIcon />}
+                          onClick={() => handleEditHopital(hopital)}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                          }}
+                        >
+                          Modifier
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover='hover'
+                        whileTap='tap'
+                      >
+                        <Button
+                          variant='outlined'
+                          color='error'
+                          size='small'
+                          startIcon={<DeleteIcon />}
+                          onClick={() => handleDeleteHopital(hopital.idHopital)}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                          }}
+                        >
+                          Supprimer
+                        </Button>
+                      </motion.div>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
   };
 
   return (
     <Box
       sx={{
-        p: isMobile ? 2 : 3,
-        background: '#FFFFFF',
-        borderRadius: 3,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-        minHeight: '100%',
+        p: { xs: 2, md: 4 },
+        bgcolor: colors.background,
+        height: '100%',
+        overflow: 'auto',
       }}
     >
       <motion.div
         variants={containerVariants}
-        initial='initial'
-        animate='animate'
+        initial='hidden'
+        animate='visible'
       >
-        {/* Titre et description */}
-        <Typography
-          variant='h4'
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            color: '#1E3A8A',
-            fontFamily: 'Inter, Roboto, sans-serif',
-            fontSize: isMobile ? '1.5rem' : '2rem',
-          }}
-        >
-          Gérer les hôpitaux
-        </Typography>
-        <Typography
-          variant='body1'
-          gutterBottom
-          sx={{
-            color: 'textSecondary',
-            fontFamily: 'Inter, Roboto, sans-serif',
-            mb: 3,
-          }}
-        >
-          Ici, vous pouvez ajouter, modifier ou supprimer des hôpitaux. Cliquez
-          sur "Rafraîchir" pour charger la liste.
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{
+              type: 'spring',
+              stiffness: 260,
+              damping: 20,
+            }}
+          >
+            <Avatar sx={{ bgcolor: colors.primary, width: 56, height: 56 }}>
+              <LocalHospitalIcon fontSize='large' />
+            </Avatar>
+          </motion.div>
+          <Box>
+            <Typography
+              variant='h4'
+              component='h1'
+              sx={{
+                fontWeight: 700,
+                color: colors.text,
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
+              }}
+            >
+              Gestion des hôpitaux
+            </Typography>
+            <Typography variant='body1' color='text.secondary' sx={{ mt: 0.5 }}>
+              {filteredHopitaux.length} hôpital
+              {filteredHopitaux.length !== 1 ? 'aux' : ''} au total
+            </Typography>
+          </Box>
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+            <motion.div
+              variants={buttonVariants}
+              whileHover='hover'
+              whileTap='tap'
+            >
+              <Button
+                variant='contained'
+                color='primary'
+                startIcon={<LocalHospitalIcon />}
+                onClick={handleOpenAddDialog}
+                sx={{ textTransform: 'none', fontWeight: 500 }}
+              >
+                Ajouter un hôpital
+              </Button>
+            </motion.div>
+            <motion.div
+              variants={buttonVariants}
+              whileHover='hover'
+              whileTap='tap'
+            >
+              <Button
+                variant='contained'
+                color='primary'
+                startIcon={<RefreshIcon />}
+                onClick={fetchData}
+                disabled={refreshing}
+                sx={{ textTransform: 'none', fontWeight: 500 }}
+              >
+                {refreshing ? 'Actualisation...' : 'Actualiser'}
+              </Button>
+            </motion.div>
+          </Box>
+        </Box>
 
-        {/* Boutons et barre de recherche */}
         <Box
           sx={{
             display: 'flex',
-            gap: 2,
+            justifyContent: 'flex-end',
+            alignItems: 'center',
             mb: 3,
-            flexWrap: isMobile ? 'wrap' : 'nowrap',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
           }}
         >
-          <motion.div variants={buttonVariants} whileHover='hover'>
-            <Button
-              variant='contained'
-              sx={{
-                background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
-                color: '#FFFFFF',
-                fontFamily: 'Inter, Roboto, sans-serif',
-                px: isMobile ? 2 : 3,
-                py: 1.2,
-                borderRadius: 2,
-                '&:hover': {
-                  background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
-                },
-              }}
-              onClick={handleOpenAddDialog}
-            >
-              Ajouter un hôpital
-            </Button>
-          </motion.div>
-          <motion.div variants={buttonVariants} whileHover='hover'>
-            <Button
-              variant='contained'
-              sx={{
-                background: 'linear-gradient(195deg, #10B981, #34D399)',
-                color: '#FFFFFF',
-                fontFamily: 'Inter, Roboto, sans-serif',
-                px: isMobile ? 2 : 3,
-                py: 1.2,
-                borderRadius: 2,
-                '&:hover': {
-                  background: 'linear-gradient(195deg, #059669, #10B981)',
-                },
-              }}
-              onClick={handleRefresh}
-              startIcon={<RefreshIcon />}
-              aria-label='Rafraîchir la liste des hôpitaux'
-            >
-              Rafraîchir
-            </Button>
-          </motion.div>
           <TextField
             label='Rechercher un hôpital'
             value={search}
             onChange={handleSearchChange}
             fullWidth
-            disabled={!isDataLoaded} // Désactiver la recherche si les données ne sont pas chargées
             sx={{
-              maxWidth: isMobile ? '100%' : 400,
-              fontFamily: 'Inter, Roboto, sans-serif',
-              '& .MuiInputBase-root': {
+              maxWidth: { xs: '100%', sm: 300 },
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
               },
             }}
           />
         </Box>
 
-        {/* Contenu principal */}
-        {loading ? (
+        {error && (
           <Box
             sx={{
+              mb: 3,
+              p: 2,
+              bgcolor: colors.error,
+              color: 'white',
+              borderRadius: 2,
               display: 'flex',
-              justifyContent: 'center',
               alignItems: 'center',
-              py: 4,
             }}
           >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-            >
-              <CircularProgress sx={{ color: '#2563EB' }} />
-            </motion.div>
+            <Typography>{error}</Typography>
           </Box>
-        ) : !isDataLoaded ? (
-          <Box
-            sx={{
-              textAlign: 'center',
-              py: 4,
-              fontFamily: 'Inter, Roboto, sans-serif',
-            }}
-            aria-live='polite'
-          >
-            <Typography
-              variant='body1'
-              sx={{
-                color: 'textSecondary',
-                fontSize: isMobile ? '0.9rem' : '1rem',
-              }}
-            >
-              Cliquez sur "Rafraîchir" pour charger la liste des hôpitaux.
-            </Typography>
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            sx={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-              borderRadius: 3,
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-              overflowX: 'auto',
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: '#1E3A8A',
-                      fontFamily: 'Inter, Roboto, sans-serif',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}
-                  >
-                    Nom
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: '#1E3A8A',
-                      fontFamily: 'Inter, Roboto, sans-serif',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}
-                  >
-                    Adresse
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: 600,
-                      color: '#1E3A8A',
-                      fontFamily: 'Inter, Roboto, sans-serif',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}
-                  >
-                    Ville
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 600,
-                      color: '#1E3A8A',
-                      fontFamily: 'Inter, Roboto, sans-serif',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}
-                  >
-                    Actions
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredHopitaux.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      align='center'
-                      sx={{ fontFamily: 'Inter, Roboto, sans-serif', py: 4 }}
-                      aria-live='polite'
-                    >
-                      Aucun hôpital trouvé.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredHopitaux.map((hopital) => (
-                    <motion.tr
-                      key={hopital.id}
-                      variants={rowVariants}
-                      initial='initial'
-                      animate='animate'
-                      whileHover='hover'
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <TableCell
-                        sx={{
-                          fontFamily: 'Inter, Roboto, sans-serif',
-                          fontSize: isMobile ? '0.8rem' : '0.9rem',
-                        }}
-                      >
-                        {hopital.nom}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: 'Inter, Roboto, sans-serif',
-                          fontSize: isMobile ? '0.8rem' : '0.9rem',
-                        }}
-                      >
-                        {hopital.adresse}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          fontFamily: 'Inter, Roboto, sans-serif',
-                          fontSize: isMobile ? '0.8rem' : '0.9rem',
-                        }}
-                      >
-                        {hopital.ville}
-                      </TableCell>
-                      <TableCell align='right'>
-                        <motion.div
-                          whileHover={{ scale: 1.2, rotate: 10 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <IconButton
-                            color='primary'
-                            onClick={() => handleEditHopital(hopital)}
-                            aria-label={`Modifier l'hôpital ${hopital.nom}`}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </motion.div>
-                        <motion.div
-                          whileHover={{ scale: 1.2, rotate: -10 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <IconButton
-                            color='error'
-                            onClick={() => handleDeleteHopital(hopital.id)}
-                            aria-label={`Supprimer l'hôpital ${hopital.nom}`}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </motion.div>
-                      </TableCell>
-                    </motion.tr>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
         )}
+
+        <AnimatePresence>
+          {isMobile ? renderMobileView() : renderDesktopView()}
+        </AnimatePresence>
       </motion.div>
 
       {/* Dialogue pour ajouter un hôpital */}
-      <Dialog open={openAddDialog} onClose={handleCloseAddDialog}>
+      <Dialog
+        open={openAddDialog}
+        onClose={() => {
+          setOpenAddDialog(false);
+          setFormData({ nom: '', adresse: '', ville: '' });
+          setErrors({});
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+            maxWidth: 400,
+          },
+        }}
+      >
         <motion.div
           variants={dialogVariants}
-          initial='initial'
-          animate='animate'
-          exit='exit'
+          initial='hidden'
+          animate='visible'
         >
-          <DialogTitle
-            sx={{
-              fontWeight: 600,
-              color: '#1E3A8A',
-              fontFamily: 'Inter, Roboto, sans-serif',
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
+          <DialogTitle sx={{ fontWeight: 600, color: colors.text }}>
             Ajouter un hôpital
           </DialogTitle>
-          <DialogContent
-            sx={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-              fontFamily: 'Inter, Roboto, sans-serif',
-            }}
-          >
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
+              Remplissez les informations pour ajouter un nouvel hôpital.
+            </DialogContentText>
             <TextField
               label='Nom'
               name='nom'
@@ -582,9 +706,7 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.nom}
               helperText={errors.nom}
-              aria-required='true'
-              aria-describedby={errors.nom ? 'nom-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
             <TextField
               label='Adresse'
@@ -595,9 +717,7 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.adresse}
               helperText={errors.adresse}
-              aria-required='true'
-              aria-describedby={errors.adresse ? 'adresse-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
             <TextField
               label='Ville'
@@ -608,40 +728,38 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.ville}
               helperText={errors.ville}
-              aria-required='true'
-              aria-describedby={errors.ville ? 'ville-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
           </DialogContent>
-          <DialogActions
-            sx={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-              p: 2,
-            }}
-          >
-            <motion.div variants={buttonVariants} whileHover='hover'>
-              <Button
-                onClick={handleCloseAddDialog}
-                sx={{
-                  fontFamily: 'Inter, Roboto, sans-serif',
-                  color: '#1E3A8A',
-                }}
-              >
-                Annuler
-              </Button>
-            </motion.div>
-            <motion.div variants={buttonVariants} whileHover='hover'>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={() => {
+                setOpenAddDialog(false);
+                setFormData({ nom: '', adresse: '', ville: '' });
+                setErrors({});
+              }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                color: colors.textSecondary,
+              }}
+            >
+              Annuler
+            </Button>
+            <motion.div
+              variants={buttonVariants}
+              whileHover='hover'
+              whileTap='tap'
+            >
               <Button
                 onClick={handleAddHopital}
+                color='primary'
                 variant='contained'
                 sx={{
-                  background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
-                  color: '#FFFFFF',
-                  fontFamily: 'Inter, Roboto, sans-serif',
-                  '&:hover': {
-                    background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
-                  },
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  boxShadow: 'none',
                 }}
               >
                 Ajouter
@@ -652,31 +770,34 @@ function AdminGererHopital() {
       </Dialog>
 
       {/* Dialogue pour modifier un hôpital */}
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
+      <Dialog
+        open={openEditDialog}
+        onClose={() => {
+          setOpenEditDialog(false);
+          setFormData({ nom: '', adresse: '', ville: '' });
+          setEditId(null);
+          setErrors({});
+        }}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+            maxWidth: 400,
+          },
+        }}
+      >
         <motion.div
           variants={dialogVariants}
-          initial='initial'
-          animate='animate'
-          exit='exit'
+          initial='hidden'
+          animate='visible'
         >
-          <DialogTitle
-            sx={{
-              fontWeight: 600,
-              color: '#1E3A8A',
-              fontFamily: 'Inter, Roboto, sans-serif',
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
+          <DialogTitle sx={{ fontWeight: 600, color: colors.text }}>
             Modifier un hôpital
           </DialogTitle>
-          <DialogContent
-            sx={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-              fontFamily: 'Inter, Roboto, sans-serif',
-            }}
-          >
+          <DialogContent>
+            <DialogContentText sx={{ mb: 2, color: colors.textSecondary }}>
+              Modifiez les informations de l’hôpital.
+            </DialogContentText>
             <TextField
               label='Nom'
               name='nom'
@@ -686,9 +807,7 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.nom}
               helperText={errors.nom}
-              aria-required='true'
-              aria-describedby={errors.nom ? 'nom-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
             <TextField
               label='Adresse'
@@ -699,9 +818,7 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.adresse}
               helperText={errors.adresse}
-              aria-required='true'
-              aria-describedby={errors.adresse ? 'adresse-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
             <TextField
               label='Ville'
@@ -712,40 +829,39 @@ function AdminGererHopital() {
               margin='normal'
               error={!!errors.ville}
               helperText={errors.ville}
-              aria-required='true'
-              aria-describedby={errors.ville ? 'ville-error' : undefined}
-              sx={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+              sx={{ '& .MuiInputBase-root': { borderRadius: 2 } }}
             />
           </DialogContent>
-          <DialogActions
-            sx={{
-              background: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(8px)',
-              p: 2,
-            }}
-          >
-            <motion.div variants={buttonVariants} whileHover='hover'>
-              <Button
-                onClick={handleCloseEditDialog}
-                sx={{
-                  fontFamily: 'Inter, Roboto, sans-serif',
-                  color: '#1E3A8A',
-                }}
-              >
-                Annuler
-              </Button>
-            </motion.div>
-            <motion.div variants={buttonVariants} whileHover='hover'>
+          <DialogActions sx={{ p: 2 }}>
+            <Button
+              onClick={() => {
+                setOpenEditDialog(false);
+                setFormData({ nom: '', adresse: '', ville: '' });
+                setEditId(null);
+                setErrors({});
+              }}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                color: colors.textSecondary,
+              }}
+            >
+              Annuler
+            </Button>
+            <motion.div
+              variants={buttonVariants}
+              whileHover='hover'
+              whileTap='tap'
+            >
               <Button
                 onClick={handleUpdateHopital}
+                color='primary'
                 variant='contained'
                 sx={{
-                  background: 'linear-gradient(195deg, #1E3A8A, #3B82F6)',
-                  color: '#FFFFFF',
-                  fontFamily: 'Inter, Roboto, sans-serif',
-                  '&:hover': {
-                    background: 'linear-gradient(195deg, #2563EB, #60A5FA)',
-                  },
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  boxShadow: 'none',
                 }}
               >
                 Mettre à jour
@@ -756,6 +872,6 @@ function AdminGererHopital() {
       </Dialog>
     </Box>
   );
-}
+};
 
 export default AdminGererHopital;

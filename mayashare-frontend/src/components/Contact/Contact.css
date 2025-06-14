@@ -1,0 +1,217 @@
+.hp-container {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9fafb;
+  color: #1f2937;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hp-contact-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+  flex: 1;
+}
+
+.hp-contact-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.hp-contact-icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0891b2;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.hp-header-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.hp-contact-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.hp-contact-subtitle {
+  font-size: 1.1rem;
+  color: #64748b;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.hp-contact-form-container {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-bottom: 3rem;
+}
+
+.hp-success-message {
+  text-align: center;
+  padding: 2rem;
+}
+
+.hp-success-icon {
+  width: 60px;
+  height: 60px;
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.hp-success-message h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #0f172a;
+}
+
+.hp-success-message p {
+  color: #64748b;
+}
+
+.hp-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hp-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hp-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.hp-label-icon {
+  width: 18px;
+  height: 18px;
+  color: #0891b2;
+}
+
+.hp-contact-form input,
+.hp-contact-form textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.hp-contact-form input:focus,
+.hp-contact-form textarea:focus {
+  outline: none;
+  border-color: #0891b2;
+}
+
+.hp-contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.hp-contact-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: #0891b2;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.hp-contact-button:hover {
+  background-color: #0e7490;
+}
+
+.hp-button-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.hp-contact-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.hp-info-card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.hp-info-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: #0f172a;
+}
+
+.hp-info-card p {
+  color: #64748b;
+}
+
+.hp-footer {
+  background-color: #0f172a;
+  color: white;
+  padding: 2rem;
+}
+
+.hp-footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hp-footer-section {
+  text-align: center;
+}
+
+.hp-footer-section h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.hp-footer-section p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .hp-footer-content {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .hp-footer-section {
+    text-align: left;
+  }
+}

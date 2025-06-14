@@ -7,7 +7,7 @@ const Hopital = {
     },
 
     findById: (id, callback) => {
-        const query = 'SELECT * FROM Hopital WHERE idHôpital = ?';
+        const query = 'SELECT * FROM Hopital WHERE idHopital = ?';
         db.query(query, [id], callback);
     },
 
@@ -19,14 +19,14 @@ const Hopital = {
     findAllWithMedecins: (callback) => {
     const query = `
         SELECT 
-        h.idHôpital,
+        h.idHopital,
         h.nom,
         h.adresse,
         u.idUtilisateur AS medicin_id,
         u.nom AS medicin_nom,
         u.prenom AS medicin_prenom
         FROM Hopital h
-        LEFT JOIN Utilisateur u ON h.idHôpital = u.idHôpital AND u.role = 'Médecin'
+        LEFT JOIN Utilisateur u ON h.idHopital = u.idHopital AND u.role = 'Médecin'
     `;
     db.query(query, (err, results) => {
         if (err) {
@@ -36,16 +36,16 @@ const Hopital = {
         // Regrouper manuellement les médecins par hôpital
         const hopitauxMap = {};
         results.forEach(row => {
-        if (!hopitauxMap[row.idHôpital]) {
-            hopitauxMap[row.idHôpital] = {
-            idHôpital: row.idHôpital,
+        if (!hopitauxMap[row.idHopital]) {
+            hopitauxMap[row.idHopital] = {
+            idHopital: row.idHopital,
             nom: row.nom,
             adresse: row.adresse,
             medecins: [],
             };
         }
         if (row.medicin_id) {
-            hopitauxMap[row.idHôpital].medecins.push({
+            hopitauxMap[row.idHopital].medecins.push({
             id: row.medicin_id,
             nom: row.medicin_nom,
             prenom: row.medicin_prenom,
@@ -58,12 +58,12 @@ const Hopital = {
     },
 
     update: (id, hopitalData, callback) => {
-        const query = 'UPDATE Hopital SET nom = ?, adresse = ?, ville = ? WHERE idHôpital = ?';
+        const query = 'UPDATE Hopital SET nom = ?, adresse = ?, ville = ? WHERE idHopital = ?';
         db.query(query, [hopitalData.nom, hopitalData.adresse, hopitalData.ville, id], callback);
     },
 
     delete: (id, callback) => {
-        const query = 'DELETE FROM Hopital WHERE idHôpital = ?';
+        const query = 'DELETE FROM Hopital WHERE idHopital = ?';
         db.query(query, [id], callback);
     }
 };

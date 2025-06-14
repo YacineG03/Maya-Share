@@ -10,7 +10,7 @@ const generateIdentifiant = (nom, prenom) => {
 };
 
 exports.register = (req, res) => {
-    const { nom, prenom, motDePasse, email, idHôpital, telephone } = req.body;
+    const { nom, prenom, motDePasse, email, idHopital, telephone } = req.body;
 
     // Générer un identifiant unique en utilisant la fonction generateIdentifiant
     const identifiant = generateIdentifiant(nom, prenom);
@@ -22,9 +22,9 @@ exports.register = (req, res) => {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: 'Adresse e-mail invalide.' });
     if (!telephone || telephone.trim() === '') return res.status(400).json({ message: 'Le numéro de téléphone est requis.' });
 
-    // Les patients s'inscrivent sans hôpital (idHôpital sera null)
+    // Les patients s'inscrivent sans hôpital (idHopital sera null)
     const role = 'Patient';
-    const userData = { nom, prenom, role, identifiant, motDePasse, email, idHôpital: null, telephone }; // idHôpital null pour les patients
+    const userData = { nom, prenom, role, identifiant, motDePasse, email, idHopital: null, telephone }; // idHopital null pour les patients
 
     // Vérification si l'email existe déjà
     User.findByEmail(email, (err, results) => {
@@ -65,6 +65,6 @@ exports.login = (req, res) => {
         });
 
         // Réponse avec le token et les informations utilisateur
-        res.json({ token, user: { id: user.idUtilisateur, nom: user.nom, prenom: user.prenom, role: user.role, idHôpital: user.idHôpital, telephone: user.telephone } });
+        res.json({ token, user: { id: user.idUtilisateur, nom: user.nom, prenom: user.prenom, role: user.role, idHopital: user.idHopital, telephone: user.telephone } });
     });
 };

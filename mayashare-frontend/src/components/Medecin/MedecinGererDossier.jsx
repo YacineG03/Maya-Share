@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -26,6 +27,7 @@ import {
   Alert,
   Fade,
 } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import ShareIcon from '@mui/icons-material/Share';
@@ -401,12 +403,25 @@ const ConsultationDetailsModal = ({
   fetchDossiers,
   isCreationMode = false,
   scrollToConsultation,
+  handleOpenFileViewer,
+  user,
 }) => {
   const [notes, setNotes] = useState(consultation?.notes || '');
-  const [imageFiles, setImageFiles] = useState([]);
+  const [imageFiles, setImageFiles] = useState(
+    consultation?.images?.map((img) => ({ ...img, isExisting: true })) || []
+  );
+  const [newFiles, setNewFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [ordonnance, setOrdonnance] = useState(consultation?.ordonnance || '');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+  setNotes(consultation?.notes || '');
+  setImageFiles(consultation?.images?.map((img) => ({ ...img, isExisting: true })) || []);
+  setNewFiles([]);
+  setOrdonnance(consultation?.ordonnance || '');
+}, [consultation]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -420,8 +435,8 @@ const ConsultationDetailsModal = ({
         });
         const newConsultationId = response.data.id;
 
-        if (imageFiles.length > 0) {
-          for (const file of imageFiles) {
+        if (newFiles.length > 0) {
+          for (const file of newFiles) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('idDossier', dossier.idDossier);
@@ -432,15 +447,13 @@ const ConsultationDetailsModal = ({
 
         toast.success('Consultation créée avec succès.');
       } else {
-        // Mise à jour des notes si elles ont changé
         if (notes !== consultation.notes) {
           await updateConsultation(consultation.idConsultation, { notes });
           toast.success('Notes mises à jour avec succès.');
         }
 
-        // Ajout de nouveaux fichiers à la consultation existante
-        if (imageFiles.length > 0) {
-          for (const file of imageFiles) {
+        if (newFiles.length > 0) {
+          for (const file of newFiles) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('idDossier', dossier.idDossier);
@@ -457,12 +470,8 @@ const ConsultationDetailsModal = ({
         scrollToConsultation(consultation.idConsultation);
       }
     } catch (error) {
-      console.error(
-        'Erreur lors de la création/mise à jour de la consultation:',
-        error
-      );
-      const errorMessage =
-        error.response?.data?.message || error.message || 'Erreur inconnue';
+      console.error('Erreur lors de la création/mise à jour de la consultation:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Erreur inconnue';
       toast.error(`Erreur : ${errorMessage}`);
     } finally {
       setIsLoading(false);
@@ -471,43 +480,65 @@ const ConsultationDetailsModal = ({
 
   const handleAddFiles = (e) => {
     const files = Array.from(e.target.files);
-    setImageFiles((prev) => [...prev, ...files]);
+    setNewFiles((prev) => [...prev, ...files]);
+    setImageFiles((prev) => [...prev, ...files.map((f) => ({ file: f, isExisting: false }))]);
   };
 
-  const handleRemoveFile = (index) => {
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveFile = (index, isExisting) => {
+    if (isExisting) {
+      const fileToRemove = imageFiles[index];
+      handleDeleteExistingFile(fileToRemove.idImage);
+    } else {
+      setNewFiles((prev) => prev.filter((_, i) => i !== index));
+      setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleDownloadOrdonnance = () => {
+  if (!ordonnance) {
+    toast.error('Aucune ordonnance à télécharger.');
+    return;
+  }
+
+  try {
+    import('jspdf').then((jsPDF) => {
+      const doc = new jsPDF.default();
+      doc.setFontSize(12);
+      doc.text('Ordonnance Médicale', 10, 10);
+      doc.text(`Médecin : ${user?.prenom || 'Non spécifié'} ${user?.nom || 'Non spécifié'}`, 10, 20);
+      doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 10, 30);
+      doc.text('Contenu :', 10, 40);
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(ordonnance, 180); // Ajuste la largeur à 180mm
+      doc.text(lines, 10, 50);
+      doc.save(`ordonnance_${consultation?.idConsultation || 'new'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success('Ordonnance téléchargée avec succès.');
+    });
+  } catch (error) {
+    toast.error('Erreur lors de la génération du PDF.');
+  }
+};
+
+  const handleDeleteExistingFile = async (imageId) => {
+    try {
+      await deleteImage(imageId);
+      setImageFiles((prev) => prev.filter((f) => f.idImage !== imageId));
+      toast.success('Fichier supprimé avec succès.');
+      await fetchDossiers();
+    } catch (error) {
+      toast.error('Erreur suppression fichier : ' + (error.response?.data?.message || 'Erreur inconnue'));
+    }
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      closeAfterTransition
-      sx={{ backdropFilter: 'blur(5px)' }}
-    >
+    <Modal open={open} onClose={onClose} closeAfterTransition sx={{ backdropFilter: 'blur(5px)' }}>
       <Fade in={open}>
         <Box sx={modalStyle}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600, color: colors.text }}
-            >
-              {isCreationMode
-                ? 'Créer une consultation complète'
-                : `Détails de la consultation`}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant='h6' sx={{ fontWeight: 600, color: colors.text }}>
+              {isCreationMode ? 'Créer une consultation complète' : `Détails de la consultation`}
             </Typography>
-            <IconButton
-              onClick={onClose}
-              size='small'
-              sx={{ color: colors.text }}
-            >
+            <IconButton onClick={onClose} size='small' sx={{ color: colors.text }}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -515,11 +546,7 @@ const ConsultationDetailsModal = ({
 
           <form onSubmit={handleSubmit}>
             <Box sx={{ mb: 3 }}>
-              <Typography
-                variant='body2'
-                gutterBottom
-                sx={{ fontWeight: 500, color: colors.textSecondary }}
-              >
+              <Typography variant='body2' gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
                 Notes
               </Typography>
               <TextField
@@ -541,13 +568,109 @@ const ConsultationDetailsModal = ({
             </Box>
 
             <Box sx={{ mb: 3 }}>
-              <Typography
-                variant='body2'
-                gutterBottom
-                sx={{ fontWeight: 500, color: colors.textSecondary }}
-              >
-                Ajouter des fichiers
+              <Typography variant='body2' gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
+                Ordonnance (facultatif)
               </Typography>
+              <TextField
+                value={ordonnance}
+                onChange={(e) => setOrdonnance(e.target.value)}
+                fullWidth
+                multiline
+                rows={3}
+                variant='outlined'
+                placeholder='Saisissez l ordonnance (ex. : Prendre 1 comprimé par jour)...'
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    '&:hover fieldset': { borderColor: colors.secondary },
+                    '&.Mui-focused fieldset': { borderColor: colors.primary },
+                  },
+                }}
+              />
+              {ordonnance && (
+                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                  <motion.div whileHover='hover' whileTap='tap' variants={buttonVariants}>
+                    <Button
+                      variant='outlined'
+                      color='primary'
+                      startIcon={<DownloadIcon />}
+                      onClick={handleDownloadOrdonnance}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Télécharger l'ordonnance
+                    </Button>
+                  </motion.div>
+                </Box>
+              )}
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant='body2' gutterBottom sx={{ fontWeight: 500, color: colors.textSecondary }}>
+                Fichiers associés ({imageFiles.length})
+              </Typography>
+              {imageFiles.length > 0 && (
+                <Paper variant='outlined' sx={{ p: 2, borderRadius: 2, borderColor: colors.divider, mb: 2, maxHeight: '200px', overflow: 'auto' }}>
+                  {imageFiles.map((file, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1,
+                        mb: 1,
+                        borderRadius: 1,
+                        bgcolor: colors.background,
+                        '&:last-child': { mb: 0 },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {file.format?.toLowerCase().includes('dicom') || file.nomFichier?.toLowerCase().endsWith('.dcm') ? (
+                          <MedicalServicesIcon fontSize='small' sx={{ color: colors.primary }} />
+                        ) : file.format?.toLowerCase().includes('image') || (file.file && file.file.type.includes('image')) ? (
+                          <PhotoIcon fontSize='small' sx={{ color: colors.primary }} />
+                        ) : (
+                          <DescriptionIcon fontSize='small' sx={{ color: colors.primary }} />
+                        )}
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            color: colors.text,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {file.nomFichier || file.file.name}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Tooltip title='Visualiser'>
+                          <IconButton
+                            onClick={() => handleOpenFileViewer(file)}
+                            size='small'
+                            sx={{ color: colors.primary }}
+                            disabled={!file.idImage && !file.isExisting}
+                          >
+                            <VisibilityIcon fontSize='small' />
+                          </IconButton>
+                        </Tooltip>
+                        <IconButton
+                          onClick={() => handleRemoveFile(index, file.isExisting)}
+                          size='small'
+                          sx={{ color: colors.error }}
+                        >
+                          <DeleteIcon fontSize='small' />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  ))}
+                </Paper>
+              )}
               <Box
                 sx={{
                   border: '2px dashed',
@@ -572,89 +695,14 @@ const ConsultationDetailsModal = ({
                   accept='.dcm,.pdf,.jpg,.jpeg,.png,.docx,.txt'
                   multiple
                 />
-                <PhotoIcon
-                  sx={{ fontSize: 40, color: colors.primary, mb: 1 }}
-                />
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500, color: colors.text }}
-                >
+                <PhotoIcon sx={{ fontSize: 40, color: colors.primary, mb: 1 }} />
+                <Typography variant='body1' sx={{ fontWeight: 500, color: colors.text }}>
                   Cliquez pour sélectionner des fichiers
                 </Typography>
                 <Typography variant='body2' color={colors.textSecondary}>
                   ou glissez-déposez vos fichiers ici
                 </Typography>
               </Box>
-
-              {imageFiles.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant='body2'
-                    gutterBottom
-                    sx={{ fontWeight: 500, color: colors.textSecondary }}
-                  >
-                    Fichiers sélectionnés ({imageFiles.length})
-                  </Typography>
-                  <Paper
-                    variant='outlined'
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      borderColor: colors.divider,
-                      maxHeight: '150px',
-                      overflow: 'auto',
-                    }}
-                  >
-                    {imageFiles.map((file, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1,
-                          mb: 1,
-                          borderRadius: 1,
-                          bgcolor: colors.background,
-                          '&:last-child': { mb: 0 },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <DescriptionIcon
-                            fontSize='small'
-                            sx={{ color: colors.primary }}
-                          />
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              color: colors.text,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {file.name}
-                          </Typography>
-                        </Box>
-                        <IconButton
-                          onClick={() => handleRemoveFile(index)}
-                          size='small'
-                          sx={{ color: colors.error }}
-                        >
-                          <DeleteIcon fontSize='small' />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Paper>
-                </Box>
-              )}
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
@@ -679,12 +727,7 @@ const ConsultationDetailsModal = ({
                 Annuler
               </Button>
 
-              <motion.div
-                whileHover='hover'
-                whileTap='tap'
-                variants={buttonVariants}
-                style={{ width: '100%' }}
-              >
+              <motion.div whileHover='hover' whileTap='tap' variants={buttonVariants} style={{ width: '100%' }}>
                 <Button
                   type='submit'
                   variant='contained'
@@ -701,13 +744,7 @@ const ConsultationDetailsModal = ({
                     boxShadow: 'none',
                   }}
                 >
-                  {isLoading ? (
-                    <CircularProgress size={24} sx={{ color: 'white' }} />
-                  ) : isCreationMode ? (
-                    'Créer la consultation'
-                  ) : (
-                    'Mettre à jour'
-                  )}
+                  {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : isCreationMode ? 'Créer la consultation' : 'Mettre à jour'}
                 </Button>
               </motion.div>
             </Box>
@@ -768,6 +805,8 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
   const [lienPartage, setLienPartage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEtat, setFilterEtat] = useState('tous');
+  const [user, setUser] = useState(''); // Remplacez par votre logique d'authentification
+
 
   // Références pour le conteneur de défilement et les consultations
   const dossiersContainerRef = useRef(null);
@@ -1916,7 +1955,8 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
                                                   e.stopPropagation();
                                                   handleOpenConsultationDetailsModal(
                                                     consultation,
-                                                    dossier
+                                                    dossier,
+                                                    user
                                                   );
                                                 }}
                                                 size='small'
@@ -1947,7 +1987,61 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
                                               'Aucune note pour cette consultation.'}
                                           </Typography>
                                         </Box>
-
+                                        {consultation.ordonnance && (
+                                          <Box sx={{ mb: 2 }}>
+                                            <Typography variant='subtitle2' sx={{ color: colors.textSecondary, mb: 1 }}>
+                                              Ordonnance
+                                            </Typography>
+                                            <Paper
+                                              sx={{
+                                                p: 2,
+                                                borderRadius: 2,
+                                                bgcolor: 'white',
+                                                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)',
+                                                border: '1px solid rgba(0, 0, 0, 0.05)',
+                                              }}
+                                            >
+                                              <Typography variant='body2' sx={{ color: colors.text, whiteSpace: 'pre-wrap' }}>
+                                                {consultation.ordonnance}
+                                              </Typography>
+                                              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                                <motion.div whileHover='hover' whileTap='tap' variants={buttonVariants}>
+                                                  <Button
+                                                    variant='outlined'
+                                                    color='primary'
+                                                    startIcon={<DownloadIcon />}
+                                                    onClick={() => {
+                                                      const pdfContent = `
+                                                        Ordonnance Médicale
+                                                        ==================
+                                                        Médecin : ${user?.prenom || 'Non spécifié'} ${user?.nom || 'Non spécifié'}
+                                                        Date : ${new Date().toLocaleDateString('fr-FR')}
+                                                        Contenu : ${consultation.ordonnance}
+                                                      `;
+                                                      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+                                                      const url = window.URL.createObjectURL(blob);
+                                                      const link = document.createElement('a');
+                                                      link.href = url;
+                                                      link.download = `ordonnance_${consultation.idConsultation}_${new Date().toISOString().split('T')[0]}.pdf`;
+                                                      document.body.appendChild(link);
+                                                      link.click();
+                                                      document.body.removeChild(link);
+                                                      window.URL.revokeObjectURL(url);
+                                                      toast.success('Ordonnance téléchargée avec succès.');
+                                                    }}
+                                                    sx={{
+                                                      borderRadius: 2,
+                                                      textTransform: 'none',
+                                                      fontWeight: 500,
+                                                    }}
+                                                  >
+                                                    Télécharger
+                                                  </Button>
+                                                </motion.div>
+                                              </Box>
+                                            </Paper>
+                                          </Box>
+                                        )}
                                         <Typography
                                           variant='subtitle2'
                                           sx={{
@@ -3180,7 +3274,8 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
         fetchDossiers={fetchDossiers}
         isCreationMode={!selectedConsultation}
         scrollToConsultation={scrollToConsultation}
-      />
+        user={user} // Ajout de la prop user
+      /> 
     </Box>
   );
 };

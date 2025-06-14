@@ -82,6 +82,29 @@ const colors = {
   shadowHover: '0 12px 40px rgba(0, 0, 0, 0.15)',
 };
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 0.1, 0.25, 1.0],
+    },
+  },
+  hover: {
+    backgroundColor: colors.hover,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+    transition: { duration: 0.2 },
+  },
+  exit: {
+    opacity: 0,
+    y: -20,
+    transition: {
+      duration: 0.3,
+    },
+  },
+};
 // Animation variants
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -1302,83 +1325,173 @@ const InfirmierGererRV = () => {
       </Dialog>
 
       <Dialog
-        open={openSharedDialog}
-        onClose={() => {
-          setOpenSharedDialog(false);
-          setSelectedPartage(null);
-          setSelectedSharedRdv(null);
-        }}
-        aria-labelledby='shared-dialog-title'
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-            maxWidth: 400,
-          },
-        }}
-      >
-        <DialogTitle id='shared-dialog-title' sx={{ pb: 1 }}>
-          Détails de l'agenda partagé
-        </DialogTitle>
-        <DialogContent>
-          {selectedPartage && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant='body2' color='text.secondary' gutterBottom>
-                Période du partage : du {formatDate(selectedPartage.dateDebut)} au {formatDate(selectedPartage.dateFin)}
-              </Typography>
-              <Calendar
-                value={[new Date(selectedPartage.dateDebut), new Date(selectedPartage.dateFin)]}
-                tileClassName={({ date, view }) => {
-                  if (view === 'month') {
-                    const start = new Date(selectedPartage.dateDebut);
-                    const end = new Date(selectedPartage.dateFin);
-                    if (date >= start && date <= end) {
-                      return 'highlight';
-                    }
-                  }
-                  return null;
-                }}
-                calendarType='iso8601' // Corrected from 'ISO 8601' to 'iso8601'
-                minDetail='month'
-                maxDetail='month'
-                showNeighboringMonth={false}
-                sx={{
-                  '& .highlight': {
-                    backgroundColor: colors.infoLight,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                }}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button
-            onClick={() => {
-              setOpenSharedDialog(false);
-              setSelectedPartage(null);
-              setSelectedSharedRdv(null);
-            }}
-            variant='outlined'
+  open={openSharedDialog}
+  onClose={() => {
+    setOpenSharedDialog(false);
+    setSelectedPartage(null);
+    setSelectedSharedRdv(null);
+  }}
+  aria-labelledby="shared-dialog-title"
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+      maxWidth: 400,
+    },
+  }}
+>
+  <DialogTitle id="shared-dialog-title" sx={{ pb: 1 }}>
+    Détails de l'agenda partagé
+  </DialogTitle>
+  <DialogContent>
+    {selectedPartage && (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Période du partage : du {formatDate(selectedPartage.dateDebut)} au {formatDate(selectedPartage.dateFin)}
+        </Typography>
+        <Paper
+          sx={{
+            p: { xs: 1, sm: 2 },
+            borderRadius: 2,
+            boxShadow: colors.shadow,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
             sx={{
-              borderColor: colors.primary,
-              color: colors.primary,
-              '&:hover': {
-                borderColor: colors.secondary,
-                color: colors.secondary,
-              },
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 500,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 1,
             }}
           >
-            Fermer
-          </Button>
-        </DialogActions>
-      </Dialog>
+            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+              <Typography
+                key={day}
+                sx={{
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  color: colors.textSecondary,
+                  py: 1,
+                }}
+              >
+                {day}
+              </Typography>
+            ))}
+          </Box>
+
+          <Divider sx={{ mb: 1 }} />
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 1,
+              mt: 1,
+            }}
+          >
+            {(() => {
+              // Calcul de monthData et weeks comme dans MedecinAgenda.jsx
+              const getMonthData = () => {
+                const year = new Date(selectedPartage.dateDebut).getFullYear();
+                const month = new Date(selectedPartage.dateDebut).getMonth();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDay = new Date(year, month, 1).getDay();
+                const days = [];
+
+                // Ajuster pour commencer par lundi (0-based index adjusted)
+                for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+                  days.push(null);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                  days.push(new Date(year, month, day));
+                }
+
+                return days;
+              };
+
+              const monthData = getMonthData();
+              const weeks = [];
+              for (let i = 0; i < monthData.length; i += 7) {
+                weeks.push(monthData.slice(i, i + 7));
+              }
+
+              return weeks.map((week, weekIndex) =>
+                week.map((day, dayIndex) => {
+                  const isInRange = selectedPartage && day && day >= new Date(selectedPartage.dateDebut) && day <= new Date(selectedPartage.dateFin);
+                  const isToday = day && formatDate(day) === formatDate(new Date());
+
+                  return (
+                    <motion.div
+                      key={weekIndex * 7 + dayIndex}
+                      variants={itemVariants} // Utilisation de itemVariants
+                      initial="hidden"
+                      animate="visible"
+                      whileHover={day ? "hover" : undefined}
+                      sx={{
+                        border: '1px solid',
+                        borderColor: isToday ? colors.primary : colors.divider,
+                        p: { xs: 0.5, sm: 1 },
+                        minHeight: { xs: 80, sm: 100, md: 120 },
+                        backgroundColor: isInRange ? colors.infoLight : isToday ? colors.today : day ? 'white' : '#f5f5f5',
+                        borderRadius: 2,
+                        cursor: day ? 'pointer' : 'default',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: day ? colors.primary : colors.divider,
+                          backgroundColor: day && !isInRange ? colors.hover : isInRange ? colors.infoLight : '#f5f5f5',
+                        },
+                      }}
+                    >
+                      {day && (
+                        <Typography
+                          sx={{
+                            fontWeight: isToday ? 700 : 500,
+                            color: isToday ? colors.primary : colors.text,
+                            mb: 1,
+                            fontSize: { xs: '0.875rem', sm: '1rem' },
+                            textAlign: 'center',
+                          }}
+                        >
+                          {day.getDate()}
+                        </Typography>
+                      )}
+                    </motion.div>
+                  );
+                }),
+              );
+            })()}
+          </Box>
+        </Paper>
+      </Box>
+    )}
+  </DialogContent>
+  <DialogActions sx={{ px: 3, pb: 3 }}>
+    <Button
+      onClick={() => {
+        setOpenSharedDialog(false);
+        setSelectedPartage(null);
+        setSelectedSharedRdv(null);
+      }}
+      variant="outlined"
+      sx={{
+        borderColor: colors.primary,
+        color: colors.primary,
+        '&:hover': {
+          borderColor: colors.secondary,
+          color: colors.secondary,
+        },
+        borderRadius: 2,
+        textTransform: 'none',
+        fontWeight: 500,
+      }}
+    >
+      Fermer
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };

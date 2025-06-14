@@ -8,7 +8,7 @@ exports.createConsultation = (req, res) => {
         return res.status(403).json({ message: 'Accès interdit : seuls les patients, médecins et infirmiers peuvent créer une consultation.' });
     }
 
-    const { idDossier, notes } = req.body;
+    const { idDossier, notes, ordonnance } = req.body;
     if (!idDossier || isNaN(idDossier)) {
         return res.status(400).json({ message: 'idDossier doit être un nombre valide.' });
     }
@@ -37,7 +37,8 @@ exports.createConsultation = (req, res) => {
         proceedWithCreation();
 
         function proceedWithCreation() {
-            Consultation.create({ idDossier, notes }, (err, result) => {
+            const signatureMedecin = req.user.role === 'Médecin' ? `${req.user.prenom} ${req.user.nom}` : null;
+            Consultation.create({ idDossier, notes: notes || '', ordonnance: ordonnance || null, signatureMedecin }, (err, result) => {
                 if (err) {
                     console.error('Erreur lors de la création de la consultation:', err);
                     return res.status(500).json({ message: 'Erreur lors de la création de la consultation.' });
@@ -95,6 +96,8 @@ exports.getConsultationsByDossier = (req, res) => {
                     idConsultation: c.idConsultation,
                     dateConsultation: c.dateConsultation,
                     notes: c.notes,
+                    ordonnance: c.ordonnance,
+                    signatureMedecin: c.signatureMedecin,
                     imageIds: c.imageIds ? c.imageIds.split(',').map(Number).filter(id => id) : []
                 }));
 
@@ -106,7 +109,7 @@ exports.getConsultationsByDossier = (req, res) => {
 
 exports.updateConsultation = (req, res) => {
     const { idConsultation } = req.params;
-    const { notes } = req.body;
+    const { notes, ordonnance } = req.body;
 
     if (!idConsultation || isNaN(idConsultation)) {
         return res.status(400).json({ message: 'idConsultation doit être un nombre valide.' });
@@ -148,7 +151,8 @@ exports.updateConsultation = (req, res) => {
             proceedUpdate();
 
             function proceedUpdate() {
-                Consultation.update(idConsultation, { notes }, (err, result) => {
+                const signatureMedecin = req.user.role === 'Médecin' ? `${req.user.prenom} ${req.user.nom}` : consultation.signatureMedecin;
+                Consultation.update(idConsultation, { notes, ordonnance: ordonnance || null, signatureMedecin }, (err, result) => {
                     if (err) {
                         console.error('Erreur lors de la mise à jour de la consultation :', err);
                         return res.status(500).json({ message: 'Erreur lors de la mise à jour de la consultation.' });

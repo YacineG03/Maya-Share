@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, { useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -13,6 +14,9 @@ import InfirmierDashboard from './components/Infirmier/InfirmierDashboard';
 import MedecinDashboard from './components/Medecin/MedecinDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import HomePage from './components/HomePage/HomePage';
+import About from './components/About/About';
+import Contact from './components/Contact/Contact';
+import Service from './components/Service/Service'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -202,6 +206,10 @@ function App() {
           }
         />
         <Route path='/' element={<Navigate to='/home' />} />
+         <Route path='/about' element={<About />} />
+         <Route path='/contact' element={<Contact />} />
+         <Route path='/service' element={<Service />} />
+
       </Routes>
     </Router>
   );
