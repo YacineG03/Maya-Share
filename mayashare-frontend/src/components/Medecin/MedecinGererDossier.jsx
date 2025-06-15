@@ -62,6 +62,8 @@ import {
   createConsultation,
   getConsultationsByDossier,
   updateConsultation,
+  getUserInfo,
+  getHopitaux,
 } from '../../services/api';
 import DicomViewer from './DicomViewer';
 
@@ -405,6 +407,8 @@ const ConsultationDetailsModal = ({
   scrollToConsultation,
   handleOpenFileViewer,
   user,
+  patients,
+  hospitals,
 }) => {
   const [notes, setNotes] = useState(consultation?.notes || '');
   const [imageFiles, setImageFiles] = useState(
@@ -417,11 +421,13 @@ const ConsultationDetailsModal = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
-  setNotes(consultation?.notes || '');
-  setImageFiles(consultation?.images?.map((img) => ({ ...img, isExisting: true })) || []);
-  setNewFiles([]);
-  setOrdonnance(consultation?.ordonnance || '');
-}, [consultation]);
+    console.log('User received in modal:', user);
+    console.log('Hospitals received:', hospitals); // Ajoute ceci
+    setNotes(consultation?.notes || '');
+    setImageFiles(consultation?.images?.map((img) => ({ ...img, isExisting: true })) || []);
+    setNewFiles([]);
+    setOrdonnance(consultation?.ordonnance || '');
+  }, [consultation, user, hospitals]); // Ajoute hospitals comme dépendance
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -494,24 +500,46 @@ const ConsultationDetailsModal = ({
     }
   };
 
-  const handleDownloadOrdonnance = () => {
+const handleDownloadOrdonnance = () => {
   if (!ordonnance) {
     toast.error('Aucune ordonnance à télécharger.');
     return;
   }
 
+  console.log('Download - User:', user, 'ID Hopital:', user.idHopital, 'Hospitals:', hospitals);
   try {
     import('jspdf').then((jsPDF) => {
       const doc = new jsPDF.default();
+      const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {};
+      const patientName = `${patient.prenom || 'Non spécifié'} ${patient.nom || 'Non spécifié'}`.trim();
+      const medecin = user && user.prenom && user.nom
+        ? `${user.prenom} ${user.nom}`
+        : user.id ? `Médecin ID ${user.id}` : 'Médecin Non Identifié';
+      const currentDate = new Date();
+      const formattedDate = currentDate.toLocaleDateString('fr-FR');
+      const formattedTime = currentDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const hospitalName = user?.idHopital && hospitals && hospitals[user.idHopital]
+        ? hospitals[user.idHopital]
+        : 'Hôpital inconnu (ID manquant)';
+
+      doc.setFontSize(18);
+      doc.text('Mayashare', 10, 20);
+      doc.setFontSize(14);
+      doc.text('Ordonnance Médicale', 10, 30);
+
       doc.setFontSize(12);
-      doc.text('Ordonnance Médicale', 10, 10);
-      doc.text(`Médecin : ${user?.prenom || 'Non spécifié'} ${user?.nom || 'Non spécifié'}`, 10, 20);
-      doc.text(`Date : ${new Date().toLocaleDateString('fr-FR')}`, 10, 30);
-      doc.text('Contenu :', 10, 40);
+      doc.text(`Médecin : ${medecin}`, 10, 40);
+      doc.text(`Patient : ${patientName}`, 10, 50);
+      doc.text(`Date : ${formattedDate}`, 10, 60);
+      doc.text(`Heure : ${formattedTime}`, 10, 70);
+      doc.text(`Hôpital : ${hospitalName}`, 10, 80);
+      doc.text('Contenu :', 10, 90);
+
       doc.setFontSize(10);
-      const lines = doc.splitTextToSize(ordonnance, 180); // Ajuste la largeur à 180mm
-      doc.text(lines, 10, 50);
-      doc.save(`ordonnance_${consultation?.idConsultation || 'new'}_${new Date().toISOString().split('T')[0]}.pdf`);
+      const lines = doc.splitTextToSize(ordonnance, 180);
+      doc.text(lines, 10, 100);
+
+      doc.save(`ordonnance_${consultation?.idConsultation || 'new'}_${formattedDate}.pdf`);
       toast.success('Ordonnance téléchargée avec succès.');
     });
   } catch (error) {
@@ -805,33 +833,53 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
   const [lienPartage, setLienPartage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEtat, setFilterEtat] = useState('tous');
-  const [user, setUser] = useState(''); // Remplacez par votre logique d'authentification
+  const [hospitals, setHospitals] = useState({});
 
+  const [user, setUser] = useState({});
 
   // Références pour le conteneur de défilement et les consultations
   const dossiersContainerRef = useRef(null);
   const consultationRefs = useRef({});
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await getUsers({ role: 'Patient' });
-        setPatients(response.data.users || []);
-        const infirmiersResponse = await getUsers({ role: 'Infirmier' });
-        setInfirmiers(infirmiersResponse.data.users || []);
-        const medecinsResponse = await getUsers({ role: 'Médecin' });
-        setMedecins(medecinsResponse.data.users || []);
-      } catch (error) {
-        toast.error(
-          'Erreur récupération utilisateurs : ' +
-            (error.response?.data?.message || 'Erreur inconnue')
-        );
-      }
-    };
-    fetchUsers();
-    fetchDossiers();
-  }, []);
+useEffect(() => {
+  const fetchUsersAndUserInfo = async () => {
+    try {
+      const response = await getUsers({ role: 'Patient' });
+      setPatients(response.data.users || []);
+      const infirmiersResponse = await getUsers({ role: 'Infirmier' });
+      setInfirmiers(infirmiersResponse.data.users || []);
+      const medecinsResponse = await getUsers({ role: 'Médecin' });
+      setMedecins(medecinsResponse.data.users || []);
 
+      const userInfo = await getUserInfo();
+      console.log('User Info raw:', userInfo.data);
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        console.log('User after set:', JSON.parse(storedUser));
+      } else if (userInfo.data.data || userInfo.data) {
+        setUser(userInfo.data.data || userInfo.data);
+      }
+
+      const hospitalsResponse = await getHopitaux();
+      const hospitalMap = hospitalsResponse.data.reduce((acc, h) => {
+        acc[h.idHopital] = h.nom || 'Hôpital non nommé';
+        return acc;
+      }, {});
+      setHospitals(hospitalMap); // Utilise l'objet mappé
+      console.log('Hospitals mapped:', hospitalMap);
+    } catch (error) {
+      console.error('Erreur getUserInfo:', error.response || error);
+      toast.error('Erreur récupération utilisateurs : ' + (error.message || 'Erreur inconnue'));
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+  };
+  fetchUsersAndUserInfo();
+  fetchDossiers();
+}, []);
   const fetchDossiers = async () => {
     setLoading(true);
     setRefreshing(true);
@@ -3274,7 +3322,9 @@ const MedecinGererDossier = ({ dossiersLoaded }) => {
         fetchDossiers={fetchDossiers}
         isCreationMode={!selectedConsultation}
         scrollToConsultation={scrollToConsultation}
-        user={user} // Ajout de la prop user
+        user={user}
+        patients={patients}
+        hospitals={hospitals}
       /> 
     </Box>
   );

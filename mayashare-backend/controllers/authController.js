@@ -68,3 +68,15 @@ exports.login = (req, res) => {
         res.json({ token, user: { id: user.idUtilisateur, nom: user.nom, prenom: user.prenom, role: user.role, idHopital: user.idHopital, telephone: user.telephone } });
     });
 };
+
+exports.getUserInfo = (req, res) => {
+  const user = {
+    id: req.user.id,
+    nom: req.user.nom,
+    prenom: req.user.prenom,
+    role: req.user.role,
+    idHopital: req.user.idHopital,
+    telephone: req.user.telephone,
+  };
+  res.json({ data: user });
+};

@@ -44,8 +44,25 @@ export const register = (data) =>
     telephone: data.telephone,
   });
 
-export const getUserInfo = () => api.get('/auth/me');
+// export const getUserInfo = () => api.get('/auth/me');
+export const getUserInfo = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Aucun token trouvé.');
+    }
 
+    const response = await api.get(`/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Erreur récupération utilisateur.');
+    }
+};
 // Utilisateurs
 export const getUsers = (filters) =>
   api.get('/users', {
