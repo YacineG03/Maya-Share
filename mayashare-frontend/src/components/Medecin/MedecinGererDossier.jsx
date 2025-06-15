@@ -434,11 +434,15 @@ const ConsultationDetailsModal = ({
     setIsLoading(true);
 
     try {
+      const consultationData = {
+        idDossier: dossier.idDossier,
+        notes: notes || null,
+        ordonnance: ordonnance || '', // Forcer une chaîne vide si rien n'est saisi
+      };
+      console.log('Sending consultation data:', consultationData);
+
       if (isCreationMode) {
-        const response = await createConsultation({
-          idDossier: dossier.idDossier,
-          notes: notes || null,
-        });
+        const response = await createConsultation(consultationData);
         const newConsultationId = response.data.id;
 
         if (newFiles.length > 0) {
@@ -453,9 +457,9 @@ const ConsultationDetailsModal = ({
 
         toast.success('Consultation créée avec succès.');
       } else {
-        if (notes !== consultation.notes) {
-          await updateConsultation(consultation.idConsultation, { notes });
-          toast.success('Notes mises à jour avec succès.');
+        if (notes !== consultation.notes || ordonnance !== consultation.ordonnance) {
+          await updateConsultation(consultation.idConsultation, consultationData);
+          toast.success('Consultation mise à jour avec succès.');
         }
 
         if (newFiles.length > 0) {
@@ -500,52 +504,52 @@ const ConsultationDetailsModal = ({
     }
   };
 
-const handleDownloadOrdonnance = () => {
-  if (!ordonnance) {
-    toast.error('Aucune ordonnance à télécharger.');
-    return;
-  }
+  const handleDownloadOrdonnance = () => {
+    if (!ordonnance) {
+      toast.error('Aucune ordonnance à télécharger.');
+      return;
+    }
 
-  console.log('Download - User:', user, 'ID Hopital:', user.idHopital, 'Hospitals:', hospitals);
-  try {
-    import('jspdf').then((jsPDF) => {
-      const doc = new jsPDF.default();
-      const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {};
-      const patientName = `${patient.prenom || 'Non spécifié'} ${patient.nom || 'Non spécifié'}`.trim();
-      const medecin = user && user.prenom && user.nom
-        ? `${user.prenom} ${user.nom}`
-        : user.id ? `Médecin ID ${user.id}` : 'Médecin Non Identifié';
-      const currentDate = new Date();
-      const formattedDate = currentDate.toLocaleDateString('fr-FR');
-      const formattedTime = currentDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-      const hospitalName = user?.idHopital && hospitals && hospitals[user.idHopital]
-        ? hospitals[user.idHopital]
-        : 'Hôpital inconnu (ID manquant)';
+    console.log('Download - User:', user, 'ID Hopital:', user.idHopital, 'Hospitals:', hospitals);
+    try {
+      import('jspdf').then((jsPDF) => {
+        const doc = new jsPDF.default();
+        const patient = patients.find((p) => p.idUtilisateur === dossier.idPatient) || {};
+        const patientName = `${patient.prenom || 'Non spécifié'} ${patient.nom || 'Non spécifié'}`.trim();
+        const medecin = user && user.prenom && user.nom
+          ? `${user.prenom} ${user.nom}`
+          : user.id ? `Médecin ID ${user.id}` : 'Médecin Non Identifié';
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleDateString('fr-FR');
+        const formattedTime = currentDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const hospitalName = user?.idHopital && hospitals && hospitals[user.idHopital]
+          ? hospitals[user.idHopital]
+          : 'Hôpital inconnu (ID manquant)';
 
-      doc.setFontSize(18);
-      doc.text('Mayashare', 10, 20);
-      doc.setFontSize(14);
-      doc.text('Ordonnance Médicale', 10, 30);
+        doc.setFontSize(18);
+        doc.text('Mayashare', 10, 20);
+        doc.setFontSize(14);
+        doc.text('Ordonnance Médicale', 10, 30);
 
-      doc.setFontSize(12);
-      doc.text(`Médecin : ${medecin}`, 10, 40);
-      doc.text(`Patient : ${patientName}`, 10, 50);
-      doc.text(`Date : ${formattedDate}`, 10, 60);
-      doc.text(`Heure : ${formattedTime}`, 10, 70);
-      doc.text(`Hôpital : ${hospitalName}`, 10, 80);
-      doc.text('Contenu :', 10, 90);
+        doc.setFontSize(12);
+        doc.text(`Médecin : ${medecin}`, 10, 40);
+        doc.text(`Patient : ${patientName}`, 10, 50);
+        doc.text(`Date : ${formattedDate}`, 10, 60);
+        doc.text(`Heure : ${formattedTime}`, 10, 70);
+        doc.text(`Hôpital : ${hospitalName}`, 10, 80);
+        doc.text('Contenu :', 10, 90);
 
-      doc.setFontSize(10);
-      const lines = doc.splitTextToSize(ordonnance, 180);
-      doc.text(lines, 10, 100);
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(ordonnance, 180);
+        doc.text(lines, 10, 100);
 
-      doc.save(`ordonnance_${consultation?.idConsultation || 'new'}_${formattedDate}.pdf`);
-      toast.success('Ordonnance téléchargée avec succès.');
-    });
-  } catch (error) {
-    toast.error('Erreur lors de la génération du PDF.');
-  }
-};
+        doc.save(`ordonnance_${consultation?.idConsultation || 'new'}_${formattedDate}.pdf`);
+        toast.success('Ordonnance téléchargée avec succès.');
+      });
+    } catch (error) {
+      toast.error('Erreur lors de la génération du PDF.');
+    }
+  };
 
   const handleDeleteExistingFile = async (imageId) => {
     try {
