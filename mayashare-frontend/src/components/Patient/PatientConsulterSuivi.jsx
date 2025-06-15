@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -128,7 +129,9 @@ const PatientConsulterSuivi = () => {
       setError(null);
       const response = await getRendezVousByPatient();
       console.log('Réponse de getRendezVousByPatient:', response.data);
-      setRendezVous(Array.isArray(response.data) ? response.data : []);
+      // Assurez-vous que rendezVous est extrait correctement
+      const rdvData = response.data.rendezVous || response.data; // Gère les deux cas possibles
+      setRendezVous(Array.isArray(rdvData) ? rdvData : []);
     } catch (error) {
       console.error('Erreur lors de la récupération des rendez-vous:', error);
       const errorMessage =
@@ -184,7 +187,7 @@ const PatientConsulterSuivi = () => {
   };
 
   const getStatusLabel = (status) => {
-    switch (status) {
+    switch (status.toLowerCase()) { // Normalisation des majuscules/minuscules
       case 'en attente':
         return (
           <Chip
@@ -251,10 +254,11 @@ const PatientConsulterSuivi = () => {
     });
   };
 
-  // Filtrer les rendez-vous selon l'onglet actif
+  // Filtrer les rendez-vous selon l'onglet actif avec normalisation
   const filteredRendezVous = rendezVous.filter((rdv) => {
+    const rdvEtat = rdv.etat ? rdv.etat.toLowerCase() : '';
     if (activeTab === 'tous') return true;
-    return rdv.etat === activeTab;
+    return rdvEtat === activeTab.toLowerCase();
   });
 
   // Rendu des squelettes de chargement
@@ -689,7 +693,7 @@ const PatientConsulterSuivi = () => {
                         </Box>
                       </CardContent>
 
-                      {rdv.etat === 'en attente' && (
+                      {rdv.etat.toLowerCase() === 'en attente' && (
                         <CardActions sx={{ p: 3, pt: 0 }}>
                           <motion.div
                             variants={buttonVariants}

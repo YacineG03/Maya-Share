@@ -533,6 +533,7 @@ const ConsultationDetailsModal = ({ open, onClose, consultation, dossier }) => {
                   </Box>
                 }
               />
+              <Tab label='Ordonnance' />
             </Tabs>
 
             {activeTab === 0 && (
@@ -678,6 +679,57 @@ const ConsultationDetailsModal = ({ open, onClose, consultation, dossier }) => {
                     </Typography>
                   </Box>
                 )}
+              </Box>
+            )}
+
+            {activeTab === 2 && (
+              <Box sx={{ mb: 3 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    bgcolor: colors.successLight,
+                    borderRadius: 2,
+                    border: `1px solid ${colors.divider}`,
+                    minHeight: 120,
+                  }}
+                >
+                  {consultation.ordonnance ? (
+                    <>
+                      <Typography
+                        variant='body1'
+                        sx={{ whiteSpace: 'pre-wrap', mb: 2 }}
+                      >
+                        {consultation.ordonnance}
+                      </Typography>
+                      <Button
+                        variant='contained'
+                        startIcon={<DownloadIcon />}
+                        href={`data:text/plain;charset=utf-8,${encodeURIComponent(consultation.ordonnance)}`}
+                        download={`ordonnance_${consultation.idConsultation}.txt`}
+                        sx={{
+                          bgcolor: colors.primary,
+                          '&:hover': { bgcolor: colors.secondary },
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          py: 1,
+                          px: 3,
+                          fontWeight: 500,
+                        }}
+                      >
+                        Télécharger
+                      </Button>
+                    </>
+                  ) : (
+                    <Typography
+                      variant='body1'
+                      color={colors.textSecondary}
+                      sx={{ textAlign: 'center' }}
+                    >
+                      Aucune ordonnance disponible pour cette consultation.
+                    </Typography>
+                  )}
+                </Paper>
               </Box>
             )}
 
