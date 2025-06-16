@@ -103,8 +103,12 @@ export const getWadoUrl = (instanceId) =>
   });
 
 // Partages
-export const shareDossier = (idDossier, data) => api.post('/shares/dossier', data);
-
+export const shareDossier = (data) => {
+    console.log("Données envoyées:", data); // Vérifier les données
+    return api.post('/shares/dossier', data, {
+        headers: { 'Content-Type': 'application/json' } // Forcer le type
+    });
+};
 export const getShares = () => api.get('/shares');
 
 export const getShareById = (id) => api.get(`/shares/${id}`);

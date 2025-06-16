@@ -1,4 +1,4 @@
-/* eslint-disable prettier/prettier */
+/* eslint-disable */
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -50,7 +50,7 @@ import {
   shareAgenda,
 } from '../../services/api';
 
-// Palette de couleurs modernisée
+// Palette de couleurs
 const colors = {
   primary: '#0077B6',
   primaryLight: '#0096C7',
@@ -109,7 +109,7 @@ const MedecinGererRV = () => {
   const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [rendezVous, setRendezVous] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedRdv, setSelectedRdv] = useState(null);
@@ -122,11 +122,7 @@ const MedecinGererRV = () => {
   const [shareDateDebut, setShareDateDebut] = useState('');
   const [shareDateFin, setShareDateFin] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => {
-    console.log('Current filter:', filter);
-    fetchData();
-  }, [filter]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     console.log('Rendez-vous state:', rendezVous);
@@ -138,14 +134,15 @@ const MedecinGererRV = () => {
       setRefreshing(true);
 
       const response = await getRendezVousByMedecin();
-      console.log('Raw response.data:', response.data); // Log pour débogage
+      console.log('Raw response.data:', response.data);
       const data = Array.isArray(response.data) ? response.data : (response.data.rendezVous || []);
-      console.log('Fetched data:', data); // Log des données traitées
+      console.log('Fetched data:', data);
       setRendezVous(data);
       setError(null);
 
       const usersResponse = await getUsers({ role: 'Infirmier' });
       setInfirmiers(usersResponse.data.users || []);
+      setDataLoaded(true);
     } catch (err) {
       const errorMessage =
         err.response?.data?.message || 'Erreur de chargement des rendez-vous';
@@ -198,7 +195,6 @@ const MedecinGererRV = () => {
           });
           toast.success('Rendez-vous assigné avec succès');
 
-          // Si les dates de partage sont renseignées, partager l'agenda avec idRendezVous
           if (shareDateDebut && shareDateFin) {
             if (new Date(shareDateDebut) > new Date(shareDateFin)) {
               toast.error('La date de début doit être antérieure à la date de fin');
@@ -313,6 +309,16 @@ const MedecinGererRV = () => {
   console.log('Filtered rendez-vous:', filteredRendezVous);
 
   const renderMobileView = () => {
+    if (!dataLoaded && !loading) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant='body1' color='text.secondary'>
+            Cliquez sur "Charger les rendez-vous" pour afficher la liste.
+          </Typography>
+        </Box>
+      );
+    }
+
     if (loading && !refreshing) {
       return Array.from(new Array(3)).map((_, index) => (
         <Card
@@ -422,108 +428,119 @@ const MedecinGererRV = () => {
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 1,
-                justifyContent:
-                  rdv.etat === 'en attente' ? 'space-between' : 'flex-end',
+                justifyContent: rdv.etat === 'en attente' ? 'space-between' : 'flex-end',
               }}
             >
-              {rdv.etat === 'en attente' && (
+              {rdv.etat === 'annulé' || rdv.etat === 'décliné' || rdv.etat === 'accepté' ? (
+                <Typography variant='body2' sx={{ color: colors.textSecondary }}>
+                  Aucune action disponible
+                </Typography>
+              ) : (
                 <>
-                  <motion.div
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <Button
-                      variant='contained'
-                      color='success'
-                      size='small'
-                      onClick={() => {
-                        setSelectedRdv(rdv);
-                        setActionType('accept');
-                        setOpenDialog(true);
-                      }}
-                      sx={{
-                        fontWeight: 500,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        boxShadow: 'none',
-                      }}
-                    >
-                      Accepter
-                    </Button>
-                  </motion.div>
-                  <motion.div
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <Button
-                      variant='outlined'
-                      color='error'
-                      size='small'
-                      onClick={() => {
-                        setSelectedRdv(rdv);
-                        setActionType('decline');
-                        setOpenDialog(true);
-                      }}
-                      sx={{
-                        fontWeight: 500,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                      }}
-                    >
-                      Refuser
-                    </Button>
-                  </motion.div>
+                  {rdv.etat === 'en attente' && (
+                    <>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <Button
+                          variant='contained'
+                          color='success'
+                          size='small'
+                          onClick={() => {
+                            setSelectedRdv(rdv);
+                            setActionType('accept');
+                            setOpenDialog(true);
+                          }}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            boxShadow: 'none',
+                          }}
+                        >
+                          Accepter
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <Button
+                          variant='outlined'
+                          color='error'
+                          size='small'
+                          onClick={() => {
+                            setSelectedRdv(rdv);
+                            setActionType('decline');
+                            setOpenDialog(true);
+                          }}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                          }}
+                        >
+                          Refuser
+                        </Button>
+                      </motion.div>
+                    </>
+                  )}
+                  {(rdv.etat === 'en attente') && (
+                    <>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <Button
+                          variant='outlined'
+                          color='primary'
+                          size='small'
+                          startIcon={<ShareIcon />}
+                          onClick={() => {
+                            setSelectedRdv(rdv);
+                            setActionType('assign');
+                            setOpenAssignModal(true);
+                          }}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                          }}
+                        >
+                          Assigner
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        variants={buttonVariants}
+                        whileHover="hover"
+                        whileTap="tap"
+                      >
+                        <Button
+                          variant='outlined'
+                          color='error'
+                          size='small'
+                          onClick={() => {
+                            setSelectedRdv(rdv);
+                            setActionType('cancel');
+                            setOpenDialog(true);
+                          }}
+                          sx={{
+                            fontWeight: 500,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                          }}
+                        >
+                          Annuler
+                        </Button>
+                      </motion.div>
+                    </>
+                  )}
                 </>
               )}
-              <motion.div
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <Button
-                  variant='outlined'
-                  color='primary'
-                  size='small'
-                  startIcon={<ShareIcon />}
-                  onClick={() => {
-                    setSelectedRdv(rdv);
-                    setActionType('assign');
-                    setOpenAssignModal(true);
-                  }}
-                  sx={{
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                  }}
-                >
-                  Assigner
-                </Button>
-              </motion.div>
-              <motion.div
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <Button
-                  variant='outlined'
-                  color='error'
-                  size='small'
-                  onClick={() => {
-                    setSelectedRdv(rdv);
-                    setActionType('cancel');
-                    setOpenDialog(true);
-                  }}
-                  sx={{
-                    fontWeight: 500,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                  }}
-                >
-                  Annuler
-                </Button>
-              </motion.div>
             </Box>
           </CardContent>
         </Card>
@@ -532,6 +549,16 @@ const MedecinGererRV = () => {
   };
 
   const renderDesktopView = () => {
+    if (!dataLoaded && !loading) {
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant='body1' color='text.secondary'>
+            Cliquez sur "Charger les rendez-vous" pour afficher la liste.
+          </Typography>
+        </Box>
+      );
+    }
+
     return (
       <TableContainer
         component={Paper}
@@ -590,7 +617,7 @@ const MedecinGererRV = () => {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredRendezVous.length === 0 ? (
+            ) : filteredRendezVous.length === 0 && dataLoaded ? (
               <TableRow>
                 <TableCell colSpan={7} align='center' sx={{ py: 4 }}>
                   <Typography color='text.secondary'>
@@ -633,106 +660,116 @@ const MedecinGererRV = () => {
                   <TableCell>{getStatusLabel(rdv.etat)}</TableCell>
                   <TableCell>{rdv.nomInfirmier || 'Non assigné'}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      {rdv.etat === 'en attente' && (
-                        <>
-                          <motion.div
-                            variants={buttonVariants}
-                            whileHover="hover"
-                            whileTap="tap"
-                          >
-                            <Button
-                              variant='contained'
-                              color='success'
-                              size='small'
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('accept');
-                                setOpenDialog(true);
-                              }}
-                              sx={{
-                                fontWeight: 500,
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                boxShadow: 'none',
-                              }}
+                    {rdv.etat === 'annulé' || rdv.etat === 'décliné' || rdv.etat === 'accepté'  ? (
+                      <Typography variant='body2' sx={{ color: colors.textSecondary }}>
+                        Aucune action disponible
+                      </Typography>
+                    ) : (
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        {rdv.etat === 'en attente' && (
+                          <>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover="hover"
+                              whileTap="tap"
                             >
-                              Accepter
-                            </Button>
-                          </motion.div>
-                          <motion.div
-                            variants={buttonVariants}
-                            whileHover="hover"
-                            whileTap="tap"
-                          >
-                            <Button
-                              variant='outlined'
-                              color='error'
-                              size='small'
-                              onClick={() => {
-                                setSelectedRdv(rdv);
-                                setActionType('decline');
-                                setOpenDialog(true);
-                              }}
-                              sx={{
-                                fontWeight: 500,
-                                borderRadius: 2,
-                                textTransform: 'none',
-                              }}
+                              <Button
+                                variant='contained'
+                                color='success'
+                                size='small'
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('accept');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  fontWeight: 500,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  boxShadow: 'none',
+                                }}
+                              >
+                                Accepter
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover="hover"
+                              whileTap="tap"
                             >
-                              Refuser
-                            </Button>
-                          </motion.div>
-                        </>
-                      )}
-                      <motion.div
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        <Button
-                          variant='outlined'
-                          color='primary'
-                          size='small'
-                          startIcon={<ShareIcon />}
-                          onClick={() => {
-                            setSelectedRdv(rdv);
-                            setActionType('assign');
-                            setOpenAssignModal(true);
-                          }}
-                          sx={{
-                            fontWeight: 500,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                          }}
-                        >
-                          Assigner
-                        </Button>
-                      </motion.div>
-                      <motion.div
-                        variants={buttonVariants}
-                        whileHover="hover"
-                        whileTap="tap"
-                      >
-                        <Button
-                          variant='outlined'
-                          color='error'
-                          size='small'
-                          onClick={() => {
-                            setSelectedRdv(rdv);
-                            setActionType('cancel');
-                            setOpenDialog(true);
-                          }}
-                          sx={{
-                            fontWeight: 500,
-                            borderRadius: 2,
-                            textTransform: 'none',
-                          }}
-                        >
-                          Annuler
-                        </Button>
-                      </motion.div>
-                    </Box>
+                              <Button
+                                variant='outlined'
+                                color='error'
+                                size='small'
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('decline');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  fontWeight: 500,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                }}
+                              >
+                                Refuser
+                              </Button>
+                            </motion.div>
+                          </>
+                        )}
+                        {(rdv.etat === 'en attente') && (
+                          <>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover="hover"
+                              whileTap="tap"
+                            >
+                              <Button
+                                variant='outlined'
+                                color='primary'
+                                size='small'
+                                startIcon={<ShareIcon />}
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('assign');
+                                  setOpenAssignModal(true);
+                                }}
+                                sx={{
+                                  fontWeight: 500,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                }}
+                              >
+                                Assigner
+                              </Button>
+                            </motion.div>
+                            <motion.div
+                              variants={buttonVariants}
+                              whileHover="hover"
+                              whileTap="tap"
+                            >
+                              <Button
+                                variant='outlined'
+                                color='error'
+                                size='small'
+                                onClick={() => {
+                                  setSelectedRdv(rdv);
+                                  setActionType('cancel');
+                                  setOpenDialog(true);
+                                }}
+                                sx={{
+                                  fontWeight: 500,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                }}
+                              >
+                                Annuler
+                              </Button>
+                            </motion.div>
+                          </>
+                        )}
+                      </Box>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -800,23 +837,6 @@ const MedecinGererRV = () => {
               {filter !== 'tous' ? `(${filter})` : 'au total'}
             </Typography>
           </Box>
-          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-            <motion.div
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
-              <Button
-                variant='contained'
-                color='primary'
-                startIcon={<EventAvailableIcon />}
-                onClick={() => fetchData()}
-                sx={{ textTransform: 'none', fontWeight: 500 }}
-              >
-                Liste des rendez-vous
-              </Button>
-            </motion.div>
-          </Box>
         </Box>
 
         <Box
@@ -876,7 +896,7 @@ const MedecinGererRV = () => {
                 width: { xs: '100%', sm: 'auto' },
               }}
             >
-              {refreshing ? 'Actualisation...' : 'Actualiser'}
+              {refreshing ? 'Actualisation...' : dataLoaded ? 'Actualiser' : 'Charger les rendez-vous'}
             </Button>
           </motion.div>
         </Box>

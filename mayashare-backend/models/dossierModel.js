@@ -95,6 +95,36 @@ const Dossier = {
             id
         ], callback);
     },
+
+    assignUser: (dossierData, callback) => {
+        const query = `
+            INSERT INTO DossierUtilisateur (idDossier, idUtilisateur, roleUtilisateur)
+            SELECT ?, ?, ?
+            WHERE NOT EXISTS (
+                SELECT 1 FROM DossierUtilisateur
+                WHERE idDossier = ? AND idUtilisateur = ? AND roleUtilisateur = ?
+            )
+        `;
+        db.query(query, [
+            dossierData.idDossier,
+            dossierData.idUtilisateur,
+            dossierData.roleUtilisateur,
+            dossierData.idDossier,
+            dossierData.idUtilisateur,
+            dossierData.roleUtilisateur
+        ], callback);
+    },
+
+    getAssignedUsers: (idDossier, callback) => {
+        const query = `
+            SELECT du.idUtilisateur, u.role, u.nom, u.prenom
+            FROM DossierUtilisateur du
+            JOIN Utilisateur u ON du.idUtilisateur = u.idUtilisateur
+            WHERE du.idDossier = ?
+        `;
+        db.query(query, [idDossier], callback);
+    }
+
 };
 
 module.exports = Dossier;
