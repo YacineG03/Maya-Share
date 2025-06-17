@@ -1,0 +1,33 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "plugins": ["react", "prettier"],
+  "settings": {
+    "react": {
+      "version": "detect"  // Détecte automatiquement la version de React
+    }
+  },
+  "rules": {
+    "react/prop-types": "off",              // Désactivé si vous ne voulez pas utiliser PropTypes
+    "react/no-unescaped-entities": "off",   // Désactivé pour l'instant (géré par Prettier)
+    "no-unused-vars": "warn",               // Réduit à un avertissement
+    "react/react-in-jsx-scope": "off"       // Désactivé pour React 17+ qui n'exige pas l'import de React
+  }
+}

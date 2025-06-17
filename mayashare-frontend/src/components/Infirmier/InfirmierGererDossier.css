@@ -1,0 +1,888 @@
+
+:root {
+  --primary: #2E5BBA;
+  --primary-light: #0077B6;
+  --secondary: #FF9800;
+  --success: #4CAF50;
+  --error: #F44336;
+  --warning: #FF9800;
+  --info: #2196F3;
+  --background: #FAFAFA;
+  --surface: #FFFFFF;
+  --text: #212121;
+  --text-secondary: #757575;
+  --border: #E0E0E0;
+  --button-outline: #E3F2FD;
+  --gradient: linear-gradient(45deg, #2E5BBA, #0077B6);
+}
+
+.main-container {
+  padding: 2rem;
+  background-color: var(--background);
+  min-height: 100vh;
+}
+
+@media (min-width: 960px) {
+  .main-container {
+    padding: 4rem;
+  }
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 520px;
+  background-color: var(--surface);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  border-radius: 1rem;
+  outline: none;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 600px) {
+  .modal-content {
+    width: 520px;
+  }
+}
+
+.file-viewer-modal {
+  width: 95%;
+  max-width: 1000px;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.modal-header {
+  background: var(--button-outline);
+  padding: 1rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  margin-bottom: 1.5rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-avatar {
+  background-color: var(--surface) !important;
+  color: var(--surface) !important;
+}
+
+.modal-title {
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+
+.file-chip {
+  margin-top: 0.5rem !important;
+  border-color: var(--surface) !important;
+  color: var(--surface) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  background-color: #ffebee;
+  border-radius: 0.5rem;
+}
+
+.error-icon {
+  font-size: 60px !important;
+  color: var(--error) !important;
+  margin-bottom: 1rem !important;
+}
+
+.error-text {
+  color: var(--error) !important;
+}
+
+.dicom-viewer {
+  height: 500px;
+  width: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-container {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+}
+
+.file-download-container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--button-outline);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-icon {
+  width: 60px !important;
+  height: 60px !important;
+  background-color: var(--info) !important;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.file-hint {
+  color: var(--text-secondary) !important;
+}
+
+.download-button {
+  background-color: var(--primary) !important;
+  color: var(--surface) !important;
+  transition: all 0.2s !important;
+}
+
+.download-button:hover {
+  background-color: var(--primary-light) !important;
+  transform: scale(1.05) !important;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-button {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  transition: all 0.2s !important;
+}
+
+.cancel-button:hover {
+  border-color: var(--primary-light) !important;
+  background-color: var(--button-outline) !important;
+  transform: scale(1.05) !important;
+}
+
+.consultation-modal {
+  width: 95%;
+  width: 100%;
+}
+
+.date-chip {
+  margin-top: 0.5rem !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text) !important;
+}
+
+.consultation-info {
+  color: var(--text-secondary) !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1rem !important;
+  background-color: var(--background) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.consultation-tabs {
+  margin-bottom: 1.5rem !important;
+}
+
+.consultation-tabs .MuiTab-root {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.consultation-tabs .Mui-selected {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+.consultation-tabs .MuiTabs-indicator {
+  background-color: var(--primary) !important;
+  height: 3px !important;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-badge .MuiBadge-badge {
+  background-color: var(--success) !important;
+}
+
+.notes-container {
+  padding: 1.5rem !important;
+  background-color: var(--background) !important;
+  min-height: 140px !important;
+  border-radius: 0.5rem !important;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+}
+
+.section-title {
+  font-weight: 700 !important;
+  color: var(--primary) !important;
+}
+
+.section-content {
+  white-space: pre-wrap !important;
+  line-height: 1.8 !important;
+  color: var(--text) !important;
+}
+
+/* Amélioration de la section des fichiers dans la modale de consultation */
+.file-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--surface);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.file-item-card {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--button-outline);
+  cursor: pointer;
+}
+
+.file-item-card:hover {
+  background-color: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.file-item-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  margin: 0 auto 0.5rem;
+  background-color: transparent !important;
+}
+
+.file-item-name {
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.file-item-date {
+  color: var(--text-secondary) !important;
+  font-size: 0.8rem !important;
+}
+
+.file-item-action {
+  color: var(--primary) !important;
+  margin-top: 0.5rem;
+}
+
+.file-item-action:hover {
+  background-color: var(--button-outline) !important;
+  border-radius: 50%;
+}
+
+/* Ajustement pour petits écrans */
+@media (max-width: 600px) {
+  .file-items-grid {
+    grid-template-columns: 1fr; /* Une colonne sur mobile */
+  }
+
+  .file-item-card {
+    padding: 0.75rem;
+  }
+}
+
+/* Message quand aucun fichier */
+.no-files-container {
+  text-align: center;
+  padding: 2rem;
+  background-color: var(--background);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.no-files-icon {
+  font-size: 60px !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.5 !important;
+  margin-bottom: 1rem !important;
+}
+
+.no-files-text {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.ordonnance-container {
+  padding: 1.5rem !important;
+  background-color: #e8f5e8 !important;
+  min-height: 140px !important;
+  border-radius: 0.5rem !important;
+}
+
+.download-ordonnance-button {
+  background-color: var(--success) !important;
+  color: var(--surface) !important;
+  transition: all 0.2s !important;
+}
+
+.download-ordonnance-button:hover {
+  background-color: #45a049 !important;
+  transform: scale(1.05) !important;
+}
+
+.no-ordonnance-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-ordonnance-icon {
+  font-size: 60px !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.3 !important;
+  margin-bottom: 1rem !important;
+}
+
+.no-ordonnance-text {
+  color: var(--text-secondary) !important;
+}
+
+.close-button {
+  background-color: var(--primary) !important;
+  color: var(--surface) !important;
+  transition: all 0.2s !important;
+}
+
+.close-button:hover {
+  background-color: var(--primary-light) !important;
+  transform: scale(1.05) !important;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: var(--background);
+}
+
+.loading-text {
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  font-size: 1.2rem !important;
+  margin-top: 1rem !important;
+}
+
+.header-motion {
+  margin-bottom: 2rem;
+}
+
+.header-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  background-color: var(--surface);
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 600px) {
+  .header-container {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  background-color: var(--primary-light) !important;
+}
+
+.header-title {
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  letter-spacing: -0.5px !important;
+}
+
+.header-subtitle {
+  color: var(--text-secondary) !important;
+  font-size: 0.9rem !important;
+}
+
+.refresh-button {
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+  background-color: var(--button-outline) !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 1.5rem !important;
+  transition: all 0.2s !important;
+}
+
+.refresh-button:hover {
+  border-color: var(--primary-light) !important;
+  background-color: var(--primary-light) !important;
+  color: var(--surface) !important;
+  transform: scale(1.05) !important;
+}
+
+.search-motion {
+  margin-bottom: 2rem;
+}
+
+.search-container {
+  padding: 1.5rem !important;
+  border-radius: 0.75rem !important;
+  background-color: var(--surface) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.search-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 960px) {
+  .search-content {
+    flex-direction: row;
+  }
+}
+
+.search-input-container {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
+@media (min-width: 960px) {
+  .search-input-container {
+    width: auto;
+  }
+}
+
+.search-input .MuiOutlinedInput-root {
+  border-radius: 0.5rem !important;
+}
+
+.search-input .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+}
+
+.search-input .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+}
+
+.search-input .MuiInputAdornment-root svg {
+  color: var(--text-secondary) !important;
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-container svg {
+  color: var(--text-secondary) !important;
+}
+
+.filter-select {
+  min-width: 180px !important;
+  border-radius: 0.5rem !important;
+}
+
+.filter-select:hover .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+}
+
+.filter-select.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--primary) !important;
+}
+
+.filter-select .MuiSelect-select {
+  padding: 0.6rem 1rem !important;
+}
+
+.no-dossiers-motion {
+  margin-top: 2rem;
+}
+
+.no-dossiers-container {
+  text-align: center !important;
+  padding: 3rem !important;
+  border-radius: 0.75rem !important;
+  background-color: var(--surface) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.no-dossiers-icon {
+  font-size: 80px !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.5 !important;
+  margin-bottom: 1rem !important;
+}
+
+.no-dossiers-text {
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.refresh-dossiers-button {
+  background-color: var(--primary) !important;
+  color: var(--surface) !important;
+  transition: all 0.2s !important;
+  padding: 0.5rem 1.5rem !important;
+}
+
+.refresh-dossiers-button:hover {
+  background-color: var(--primary-light) !important;
+  transform: scale(1.05) !important;
+}
+
+.dossiers-list {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.dossiers-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dossier-item {
+  width: 100%;
+}
+
+.dossier-motion {
+  width: 100%;
+}
+
+.dossier-card {
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--border) !important;
+  background-color: var(--surface) !important;
+  transition: all 0.3s !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dossier-card.expanded {
+  border: 2px solid var(--primary) !important;
+  background-color: var(--surface) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dossier-header {
+  cursor: pointer !important;
+  background-color: transparent !important;
+  padding: 1rem !important;
+}
+
+.dossier-header.expanded {
+  background-color: var(--button-outline) !important;
+}
+
+.dossier-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 1.2rem !important;
+  background-color: var(--primary-light) !important;
+}
+
+.dossier-title-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dossier-title {
+  font-weight: 700 !important;
+  text-transform: capitalize !important;
+  color: var(--text) !important;
+  letter-spacing: -0.5px !important;
+}
+
+.status-chip {
+  font-weight: 600 !important;
+  color: white !important;
+  padding: 0 0.5rem !important;
+}
+
+.status-chip.MuiChip-root[aria-label="en cours"] {
+  background-color: var(--secondary) !important;
+}
+
+.status-chip.MuiChip-root[aria-label="traité"] {
+  background-color: var(--success) !important;
+}
+
+.dossier-subheader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.id-chip {
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.dossier-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-motion {
+  display: inline-block;
+}
+
+.edit-button {
+  color: var(--primary) !important;
+}
+
+.edit-button:hover {
+  background-color: var(--button-outline) !important;
+}
+
+.add-file-button {
+  color: var(--success) !important;
+}
+
+.add-file-button:hover {
+  background-color: var(--button-outline) !important;
+}
+
+.expand-motion {
+  display: inline-block;
+}
+
+.expand-button {
+  color: var(--primary) !important;
+}
+
+.expand-button:hover {
+  background-color: var(--button-outline) !important;
+}
+
+.dossier-content-motion {
+  overflow: hidden;
+}
+
+.dossier-content {
+  padding-top: 0 !important;
+  padding: 1.5rem !important;
+}
+
+.patient-info-container,
+.medical-info-container,
+.additional-info-container {
+  padding: 1.5rem !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  margin-bottom: 1.5rem !important;
+  width: 100% !important;
+}
+
+.patient-info-container {
+  background-color: var(--button-outline) !important;
+}
+
+/* medical-info-container enhancements */
+.medical-info-container {
+  padding: 1.5rem !important;
+  border-radius: 1rem !important; /* More rounded corners for a softer look */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important; /* Slightly deeper shadow for depth */
+  margin-bottom: 1.5rem !important;
+  width: 100% ;
+  background-color: #e8f5e8 !important; /* Keep existing background color */
+  transition: transform 0.3s ease, box-shadow 0.3s ease !important; /* Smooth hover animation */
+  position: relative;
+  overflow: hidden;
+}
+
+.medical-info-container:hover {
+  transform: translateY(-5px) !important; /* Lift effect on hover */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important; /* Enhanced shadow on hover */
+}
+
+/* Add a subtle decorative element (e.g., a top border gradient) */
+.medical-info-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--gradient); /* Use existing gradient for consistency */
+}
+
+/* Enhance the info-list for a more dynamic layout */
+.medical-info-container .info-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+/* Style individual info items with a card-like effect */
+.medical-info-container .info-item,
+.medical-info-container .info-list > div {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white background for contrast */
+  padding: 1rem;
+  border-radius: 0.75rem;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.medical-info-container .info-item:hover,
+.medical-info-container .info-list > div:hover {
+  transform: scale(1.03); /* Slight scale-up on hover */
+  background-color: rgba(255, 255, 255, 0.8); /* Brighter background on hover */
+}
+
+/* Enhance the allergies warning with a more vibrant look */
+.medical-info-container .allergies-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #ffebee;
+  border-radius: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid var(--error);
+  animation: pulse 2s infinite; /* Subtle pulsing animation for emphasis */
+}
+
+/* Keyframes for the pulse animation */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 54, 54, 0);
+  }
+}
+
+/* Style icons for a more playful look */
+.medical-info-container .info-item svg {
+  color: var(--primary) !important; /* Use primary color for icons */
+  font-size: 24px !important; /* Slightly larger icons */
+  transition: transform 0.2s ease;
+}
+
+.medical-info-container .info-item:hover svg {
+  transform: rotate(15deg); /* Playful icon rotation on hover */
+}
+
+/* Enhance typography for labels and content */
+.medical-info-container .info-label {
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  color: var(--primary) !important; /* Use primary color for emphasis */
+  font-size: 1rem !important;
+}
+
+.medical-info-container .info-content,
+.medical-info-container .info-text {
+  color: var(--text) !important;
+  font-size: 0.95rem !important;
+  line-height: 1.6 !important;
+}
+
+.additional-info-container {
+  background-color: #fff3e0 !important;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: row; /* Changé de column à row pour une disposition horizontale */
+  flex-wrap: wrap; /* Permet aux éléments de passer à la ligne si nécessaire */
+  gap: 1.5rem; /* Espacement entre les éléments */
+  align-items: flex-start;
+}
+
+.info-item, 
+.info-list > div {
+    flex: 1; /* Each element takes equal space */
+    min-width: 200px; /* Minimum width to prevent items from being too narrow */
+    display: flex;
+    flex-direction: column; /* Label and content remain stacked vertically inside */
+}
